@@ -185,6 +185,80 @@ via TWRP when you need a recovery shell in between.
 * Once pmOS is up: `ssh $FP3_USER@$FP3_DEV_IP` over the USB NCM link
   (`scripts/fp3-ssh.sh` wraps it, `scripts/fp3-link.sh` brings up the host address).
 
+#### Slot `_b` runs out of space, and that turns into a boot loop
+
+This is the single most common way the dev slot dies, and it looks like a
+firmware bug, so it is worth understanding before it happens.
+
+**Why it is tight.** `system_b` (`/dev/mmcblk0p31`) is about 3 GB, and it does
+not hold a filesystem directly — a *whole DOS-partitioned disk image* is written
+onto it raw, so `blkid` reports `PTTYPE="dos"` and no filesystem on `p31`
+itself. Inside are two partitions: `p1` = `pmOS_boot` (ext2) and `p2` =
+`pmOS_root` (ext4). The rootfs is ~2.1 GB in a ~2.4 GB partition, so it sits
+around 90 % full from day one. There is no room to grow into.
+
+**What fills it.** A deploy campaign — repeatedly building, sideloading and
+cold-booting kernels — plus the systemd journal from every crash and ADSP
+subsystem restart. The two real hogs are `/var/cache/apk/` (balloons to ~64 MB
+once the device has network for `apk`) and `/var/log/journal/`.
+
+**How it fails.** Two different faults that produce the same symptom:
+
+1. **Disk full** — deploys start failing in confusing ways (a half-written
+   package, a partial module install) and the next boot loops.
+2. **Dirty filesystem** — any unclean cycle (a crash, a forced power-cycle, an
+   ADSP wedge) leaves a recovering journal and orphaned inodes. This, not
+   disk-full, was the actual cause in the real reboot-loop runs.
+
+Two traps in the diagnosis:
+
+* **`fsck` alone does not break the loop.** After repairing, a *cold power-cycle*
+  is the reliable boot; a warm `fastboot reboot` keeps looping.
+* **A slot dropping to fastboot is almost never the `adsp.mbn` you just
+  flashed.** Co-processor firmware loads post-kernel via remoteproc, so a bad
+  ADSP image cannot stop the kernel from booting. Fsck the rootfs instead of
+  reflashing firmware.
+
+**Repair it from the healthy slot — no reflash, about two minutes.** Boot the
+oracle (Ubuntu Touch on `_a`, which boots reliably) and reach into the dead
+slot's rootfs offline:
+
+```sh
+# by-name symlinks are absent here, so find the partition with blkid
+blkid | grep -i dos                      # pmOS lives on mmcblk0p31 (system_b)
+
+LD=$(losetup -fP --show /dev/mmcblk0p31) # note: loop0 is the oracle's own
+                                         # rootfs, so this lands on loop1
+/sbin/e2fsck -fy ${LD}p1                 # pmOS_boot  (ext2)
+/sbin/e2fsck -fy ${LD}p2                 # pmOS_root  (ext4)
+
+mkdir -p /mnt/pmroot && mount ${LD}p2 /mnt/pmroot
+rm -f /mnt/pmroot/var/cache/apk/*
+find /mnt/pmroot/var/log/journal -name '*.journal*' -delete
+
+sync && umount /mnt/pmroot && losetup -d $LD
+```
+
+Details that cost real time when you get them wrong:
+
+* **Fsck *both* inner partitions.** In an actual loop run the ext2 boot
+  partition was dirty too (`FILE SYSTEM WAS MODIFIED`), not just the ext4 root.
+* That cleanup freed about 90 MB in one run — enough to boot and keep working.
+* **A successful `losetup -d` is itself the "safe to switch slots" check.** It
+  fails with `busy` if anything still holds the loop device, so it doubles as
+  proof the unmount was clean.
+* On the oracle, `e2fsck` may not be on `sudo`'s `PATH` (`which` finds nothing)
+  — call it by absolute path, `/sbin/e2fsck`.
+* Do all of it rooted through the oracle's own `sudo`
+  (`adb shell 'echo <pw> | sudo -S sh -c "…"'`), never `sudo adb`.
+* Leave `/home/*` alone — staging left there is not yours to delete.
+
+**Prevent it instead.** Before a measurement or deploy campaign: check `df`,
+cap the journal (`journalctl --vacuum-size=`, or `SystemMaxUse=` in
+`journald.conf`), and clear the apk cache. Gate the campaign on free space
+*and* on a clean rootfs — and never force an unclean reboot on a healthy
+system, because that is what dirties the loop-rootfs for the next boot.
+
 ## What is deliberately not here
 
 * **No vendor firmware.** The ADSP image (`adsp.mbn`) and everything extracted
