@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Attack the QSR wall: resolve terse (0x92) ADSP F3 messages against adsp.mbn.
 #
 # QShrink terse messages replace the embedded fmt/fname strings with a POINTER

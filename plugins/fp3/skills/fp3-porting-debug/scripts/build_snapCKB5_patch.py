@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapCKB5 = DISCOVERY of what the accessor 0xf04df0ac actually targets (folyt.123 #1).
 # CKB4 (filter r2==0xee00d01c) MISSED -> 0xf04df0ac never writes the framer CBCR. But we can't
 # tell "called for other regs" from "never called". This is the same splice (0xf04df0b4,

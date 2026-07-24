@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Stage-3: SAME proven-clean entry splice on f04bfb68 as Stage-1, but the cave
 # captures the DAL-clock driver global cluster 0xf0913640..0xf0913658 (steers
 # get/enable to bypass vs real) plus ctx+0xe14/0x74. Non-crashing entry trace.

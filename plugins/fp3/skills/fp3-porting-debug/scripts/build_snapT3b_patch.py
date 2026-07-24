@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # SNTb (T3 hop-2): dump the config-group cfg block HEAD 0xf0c85400..0xf0c8544c (20 words) —
 # the region the hop-1 pointers (0xf0c85404/28/30) reference; hop-1 already has 0xf0c85440..6c.
 # Same proven splice (f04bfba0, stock 11406070), same cave slot. Straight-line, exit to RET.

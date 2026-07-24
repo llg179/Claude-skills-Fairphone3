@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Keep pages mapped, sample fast, log every register transition during a re-triggered power_up.
 import mmap, os, struct, time
 PG = 0x1000

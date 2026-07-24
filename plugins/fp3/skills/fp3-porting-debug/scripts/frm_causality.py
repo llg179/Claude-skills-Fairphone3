@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Causality test on the framer state bits that differ working(UT)->dead(pmOS):
 #   +0x804 bit23 (UT=1,pmOS=0)  and  +0x430 bit4 (UT=1,pmOS=0).
 # Set each from the AP via /dev/mem and watch FRM_STAT(+0x404). If FRM_STAT goes

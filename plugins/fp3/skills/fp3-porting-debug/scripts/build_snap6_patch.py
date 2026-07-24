@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Stage-6 (SNP6): RING-capture at the proven-clean caller splice f04bfba0.
 # NO guessed-pointer deref (that faulted the ADSP in Stage-5). Only reads r0 (=rc
 # of the f0191c68 clock-op call at f04bfb94), ctx+0xe14 (clock id arg), ctx+0x74

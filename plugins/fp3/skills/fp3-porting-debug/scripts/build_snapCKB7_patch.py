@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapCKB7 = CBCR branch-ENABLE capture, CORRECTED (folyt.127).
 # ★ CKB4/CKB5 (folyt.123-124) spliced 0xf04df0b4 and concluded "0xf04df0ac never runs for the
 # framer". BUG: the set-bit fn 0xf04df0ac has TWO paths that only converge at 0xf04df0c8:

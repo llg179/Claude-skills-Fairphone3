@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Read NGD + SLIMbus-BAM (v1.7.0) registers via /dev/mem to decide WHY mainline gets
 # zero RX / TX-timeout: is the RX BAM pipe connected & is the framer moving pointers?
 import mmap, os, struct

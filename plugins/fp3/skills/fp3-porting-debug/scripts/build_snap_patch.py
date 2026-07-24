@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Stage-1 SMEM-snapshot patch for adsp.mbn.
 # Hooks f04bfb68 ("turn on satellite ref clock") entry -> cave stub that stashes
 # {magic, ctx+0x74, +0xe14, +0xe18, +0xe1c, +0x7c, +0x88, +0xdec} into SMEM

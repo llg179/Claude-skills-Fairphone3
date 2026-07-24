@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # build_ut_cave_min.py — PARAMETRIZED minimal-change UT-PIL-TZ resign (generalizes build_ut_cave_minimal.py,
 # folyt.165). Keeps stock QC split-MDT hashseg format byte-for-byte; changes only:
 #   - adsp.b04 (.text): splice SPLICE_VA -> CAVE_VA (payload = <cavebin>, identical placement to the pmOS mbn)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapCKB9 = the framer-clock RCGR RATE/SOURCE (folyt.128b). CKB8 proved the branch CBCR
 # (0xee012014/18) is enabled+running IDENTICAL both sides -> not the differentiator. But CKB8 did
 # NOT read the RCGR CFG (source-mux + M/N/D divider = the actual RATE). The rate-update method

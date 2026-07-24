@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # SNT3 (T3 hop-1): the config-group path (f0191c68) was NEVER walked (snapD walked the
 # NPA-vote side). Splice at the proven-safe f04bfba0 (rc of f0191c68), capture:
 #  - r0 = config-group rc

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Minimal qrtr-lookup replacement: enumerate QRTR services via kernel name service.
 import socket, struct, sys
 

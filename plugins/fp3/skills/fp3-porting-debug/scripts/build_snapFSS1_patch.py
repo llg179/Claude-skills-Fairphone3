@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapFSS1 = privileged-side FRAMER-STATUS snapshot at the capability-timeout instant (staged 2026-07-14).
 #
 # WHY: two-sided AP-alias /dev/mem dumps proved the framer register file is byte-identical except its

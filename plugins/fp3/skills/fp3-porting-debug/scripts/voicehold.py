@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Open both playback+capture of the q6voice VoiceMMode1 PCM (hw:0,4) and HOLD
 # them open without transferring data. The Gerhold q6voice driver starts the
 # CS-voice DSP session only when BOTH substreams are open (started==3); it has

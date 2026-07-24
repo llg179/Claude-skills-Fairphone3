@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapFSS2 = does the framer ENABLE/CONFIG write (FN_B) execute on the DEAD side, and does it latch?
 # (staged 2026-07-14, motivated by FSS1/folyt.159: at the capability-timeout instant the dead framer reads
 #  +0x600=0 / +0x610=0 -- i.e. NOT enabled -- while the resting AP-alias dump showed 1/7, now known to be an

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Full ADSP F3 dump: all readable EXT (0x79) msgs grouped by ss_id + source file,
 # plus QSR (0x92) msgs with line/hash/args and best-effort pointer-arg resolution.
 #   f3_dump.py <raw_f3.bin> <adsp.mbn>

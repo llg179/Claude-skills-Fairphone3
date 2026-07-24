@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 import mmap, os, struct, sys, hashlib
 BASE=0x86300000; SIZE=0x100000
 fd=os.open("/dev/mem", os.O_RDONLY)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapCKB reader: framer-clock (0x12014) RCGR register block. SAFE bounded SMEM mmap.
 import mmap, struct
 SMEM_PA=0x86300000; WIN=0x40000; HDR=0x2ab0

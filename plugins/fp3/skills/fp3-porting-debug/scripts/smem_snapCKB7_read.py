@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapCKB7 reader: CBCR branch-ENABLE capture (corrected path, folyt.127).
 # Answers: does the framer branch-CBCR (0xee00d01c) get ENABLE-set at all, from where, and
 # what else gets enabled. SAFE bounded SMEM mmap.

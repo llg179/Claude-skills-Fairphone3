@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Read SMEM region base via /dev/mem (RAM read; blocked if STRICT_DEVMEM=y).
 import mmap, os, sys
 PG = 0x1000

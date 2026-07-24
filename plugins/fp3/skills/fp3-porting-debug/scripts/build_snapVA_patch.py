@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapVA: capture the CONSTANT SMEM base ADSP-VA (= value of *(0xf090fcd4)) so it can be
 # hardcoded into an EARLY-phase leaf cave (where *(0xf090fcd4) is still null). Splice at the
 # proven-safe SMEM-READY config-group point f04bfba0 (same as snapT3; stock 11406070 = r17=r0),

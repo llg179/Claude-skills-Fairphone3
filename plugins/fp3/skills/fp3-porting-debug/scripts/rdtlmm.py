@@ -1,4 +1,4 @@
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 import mmap, struct
 PAGE=0x1000
 def rd(pa):

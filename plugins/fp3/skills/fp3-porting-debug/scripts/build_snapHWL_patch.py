@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # HWL0 = the HalHwIo/PLL-lock LEAF trace (deeper than snapT3's config-group splice).
 # Splices the CGC-enable+poll leaf's RETURN packet (f019abb0, the dead immext word of
 # {immext; r0=0; jump 0xf001a864}) and, for EVERY clock enabled through this leaf,

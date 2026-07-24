@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Stage-5 (SNP5): at the PROVEN-CLEAN caller splice f04bfba0 (same as Stage-2b),
 # after the slim-core clock enable has returned (rc in r0), walk the DAL handle
 # (ctx+0xe18) to the CBCR reg_addr the enable-stub used and read *reg_addr back,

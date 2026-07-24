@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Stage-8 (SNP8): dump the f0191c68 clock-group input+output arrays at splice
 # f04bfba0 (after enable, rc in r0). From Stage-7: cfg r1=0xf0c85450 has
 # +0x8=0xf0c85430 (input array, 4 entries x 8B = {type, sub_ptr}) and

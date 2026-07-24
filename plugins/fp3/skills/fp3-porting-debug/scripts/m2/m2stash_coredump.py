@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # m2stash_coredump.py  (runs ON the pmOS device, as root) — Plan (C) exfil.
 #
 # Deploy the PURE-STASH image (adsp-m2stash-signed.mbn) and read the early-boot

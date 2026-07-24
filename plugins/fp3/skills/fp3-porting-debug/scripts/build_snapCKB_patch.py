@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapCKB = runtime capture of the framer-clock (0x12014) RCGR/CBCR MMIO BASE (folyt.118 next).
 # (a) proved: enable-method 0xf04df244 reads r17=memw(handle+0)=base (data field, NO immediate).
 # This splices at 0xf04df260 (pkt5), where r0=handle AND r17=base are both live (r0 is clobbered

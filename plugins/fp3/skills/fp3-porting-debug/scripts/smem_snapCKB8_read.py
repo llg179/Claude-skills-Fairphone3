@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapCKB8 reader: after the framer-branch enable, the bounded-poll CBCR readback (CLK_OFF=bit31)
 # + root RCGR (0xee012000, ROOT_OFF=bit31). Confirms whether the branch is enabled-but-not-running,
 # and whether the root/source is supplying.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # SAFE: single bounded mmap of ONLY 0x86300000. Reads the SNP0 snapshot stash
 # at SMEM item-469 slot#12 +0x40 (in-SMEM 0x2ab0) written by the ADSP hook.
 import mmap, struct

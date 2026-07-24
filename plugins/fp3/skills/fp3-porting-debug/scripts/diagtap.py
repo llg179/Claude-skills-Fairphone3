@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Minimal DIAG-over-rpmsg tap for mainline pmOS (msm8953).
 # The ADSP/modem DIAG SMD channels are exposed as /dev/rpmsgN char devices.
 # This speaks classic DIAG HDLC framing to prove the channel and (later) enable F3.

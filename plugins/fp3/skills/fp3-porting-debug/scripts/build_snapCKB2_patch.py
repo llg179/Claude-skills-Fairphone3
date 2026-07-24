@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapCKB2 = POST-ENABLE framer-clock RCGR capture (folyt.119 phase-4, the latch test).
 # Phase-3 (snapCKB) spliced at 0xf04df260 (pre-write) -> saw reset state CMD=0x80000000 (ROOT_OFF).
 # The method then writes CFG/M/N/D and SPIN-POLLS CMD_RCGR bit0(UPDATE) at 0xf04df2e4<->0xf04df2e8

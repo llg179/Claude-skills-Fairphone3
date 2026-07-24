@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Resolve ADSP VIRTUAL addresses (0xf0xxxxxx) into the remoteproc COREDUMP, which is indexed by PHYSICAL
 # address. Bridge = the static adsp.mbn phdr table (each LOAD gives vaddr+paddr) for VA->PA, then the
 # coredump phdr table (vaddr field = PA) for PA->file-offset. Reads RUNTIME values (heap/BSS populated),

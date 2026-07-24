@@ -10,3 +10,6 @@ fp3-env.local.sh
 *.bin
 *.o
 *.tar.gz
+
+# Personal report/outreach drafts and raw device captures — kept local.
+references/report-attachments/

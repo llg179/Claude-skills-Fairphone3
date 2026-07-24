@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapCGP reader: dynamic-capture of the runtime-dispatched clock poke fn-pointer.
 # Reads PA 0x86302ab0 (stash *(0xf090fcd4)+0x640). SAFE: single bounded SMEM mmap.
 import mmap, struct

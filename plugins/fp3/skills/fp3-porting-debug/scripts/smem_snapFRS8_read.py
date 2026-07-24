@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Reads the FRS8 ctx-scan stash: SMEM PA 0x86300000 + 0x2ab0. Layout: 'FRS8' | count | up to 8 (off,val) pairs.
 # FRS8 records ctx fields holding EITHER an LPASS MMIO pointer (0xee..) OR an ADSP image/data pointer (0xf0..).
 # +0x5c = framer base (0xee140000, known). A 0xf0xxxxxx field = the parent/device struct pointer -> chase it

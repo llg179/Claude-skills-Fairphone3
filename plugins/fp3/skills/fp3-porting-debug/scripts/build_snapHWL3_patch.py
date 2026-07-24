@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # HWL1 (v3) = MINIMAL, SMEM-safe HalHwIo CGC-enable leaf trace.
 # v2's 704-byte ring likely OVERRAN the SMEM stash item (snapT3 proved only ~0x50B safe)
 # and degraded the ADSP/audio -> UT container fell to File-Stor. v3 writes a single tiny

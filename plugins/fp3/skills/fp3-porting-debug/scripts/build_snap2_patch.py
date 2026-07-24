@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Stage-2: capture the clock-enable rc. Splice over f04bfba0 (the `r17=r0 ;
 # if(rc==0) jump 0xf04bfbd8` packet). Cave stashes {SNP1, rc, ctx+0xe14,
 # ctx+0x88, ctx+0xdfc, ctx+0xdec} then replicates the conditional via two

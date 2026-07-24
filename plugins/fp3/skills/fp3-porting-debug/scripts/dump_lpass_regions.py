@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Method-matched /dev/mem region dumper for the framer + LPASS clock-controller,
 # usable IDENTICALLY on UT (downstream) and pmOS (mainline). Auto-force-resumes
 # the NGD so the LPASS_AP alias window is clocked (folyt.139), reads both regions,

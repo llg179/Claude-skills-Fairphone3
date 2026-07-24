@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Step-1 (SNPB): resolve the DAL physical-clock LEAF + device-object slice.
 # Reuses the PROVEN Stage-2b splice site f04bfba0 (`r17=r0`, stock 11406070),
 # where r16 = slim driver ctx is live and f04bfaa0 (the DAL core-clk enable via

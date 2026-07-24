@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapFMD2 = UNCONDITIONAL entry-capture of the framer mode-update fn 0xf04c36e0 (folyt.130b).
 # FMD1 spliced the transition-gated LOG calls -> neither fired on pmOS SSR (a mode-update that
 # doesn't CHANGE mode emits no log). FMD2 splices the fn ENTRY (0xf04c36e8 `{ r16 = r0 }`, single

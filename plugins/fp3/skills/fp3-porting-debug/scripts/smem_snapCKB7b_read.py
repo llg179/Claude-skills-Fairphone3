@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapCKB7b reader: framer-block branch-enable caller+value (0xee012014 / 0xee012018).
 import mmap, struct
 SMEM_PA=0x86300000; WIN=0x40000; HDR=0x2ab0

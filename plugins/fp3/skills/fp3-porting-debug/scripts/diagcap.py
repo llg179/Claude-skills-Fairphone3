@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Capture ADSP F3 debug messages across an SSR (fresh SLIMbus framer bring-up).
 # Re-arms DIAG F3 masks continuously so the fresh ADSP starts streaming ASAP.
 # Devices are rediscovered by name+parent because /dev/rpmsgN minors change on SSR.

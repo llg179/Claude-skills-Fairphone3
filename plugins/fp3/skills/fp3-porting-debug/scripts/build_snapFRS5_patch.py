@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapFRS5 = WORKING-side framer register read (folyt.132, C2 baseline). FRS2's enumerate-timeout
 # splice is dead-side-only (doesn't run on clean UT bring-up), so use the laddr-assign fn 0xf04c8b7c
 # ("Assigning device logical address" @0xf04c8bdc) which DOES run on UT (wcd9335 gets a laddr after

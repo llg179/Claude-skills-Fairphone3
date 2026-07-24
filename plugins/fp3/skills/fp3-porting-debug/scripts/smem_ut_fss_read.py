@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Reads the UT-side FSS1 cave (WORKING side): framer regs at the framing-START code point when capability
 # SUCCEEDS. Same SMEM slot/layout as FSS1 (magic 'FSS1'). SMEM PA 0x86300000 + 0x2ab0.
 # On UT the STRICT_DEVMEM path is OFF, so /dev/mem RAM reads (SMEM is DDR, not gated MMIO) work.

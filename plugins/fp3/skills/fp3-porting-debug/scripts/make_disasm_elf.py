@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Wrap a raw code blob into a minimal ELF32-hexagon with one .text section at a given VA,
 # so llvm-objdump -d gives real addresses + packet grouping. Usage: make_disasm_elf.py in.bin baseVA out.elf
 import sys, struct

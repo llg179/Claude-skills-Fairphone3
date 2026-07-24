@@ -87,11 +87,13 @@ anything that touches a partition.
 
 ## License
 
-GPL-2.0-or-later. See [LICENSE](LICENSE).
+Two licenses, per file, marked with an SPDX identifier:
 
-The scripts here generate and analyse patches against the Linux kernel and
-carry register maps and disassembly notes derived from that work, so the whole
-repository uses the kernel's own license rather than a separate one for the
-prose. Individual files carry:
+| What | License | File |
+|---|---|---|
+| Python helpers (`*.py`) | MIT | [LICENSE.MIT](LICENSE.MIT) |
+| Everything else — shell scripts, skills, reference notes | GPL-2.0-or-later | [LICENSE](LICENSE) |
 
-    SPDX-License-Identifier: GPL-2.0-or-later
+The Python tooling is standalone analysis code, so it is permissive. The shell
+scripts drive kernel builds and carry register maps and disassembly notes
+derived from kernel work, so they stay under the kernel's own license.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapFRS7 = FILTERED ctx-struct scan (folyt.135->136, C1/C3 target-finder).
 # folyt.135 proved the framer base 0xee140000 / clock 0xee012014 are NOT firmware literals -- they are
 # config/property-supplied at runtime and live in the framer ctx struct (framer base = memw(ctx+0x5c), FRS1).

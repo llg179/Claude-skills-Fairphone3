@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # snapCGP2b = SAFE pointer-only variant of snapCGP2 (folyt.114 crash-fix).
 # snapCGP2 crashed on the DEAD side by dereferencing s3c=memw(handle+0x3c) when it was
 # uninitialised garbage -> NoC fault -> boot-loop. This variant captures ONLY the handle

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # m2rc_decode.py <coredump> — decode the m2rc DAL-rc stash (marker 0x5A700029).
 # fields: [0]=marker [4]=DAL_rc [8]=handle_ptr [12]=handle+0x2c(after) [16]=count
 import sys, struct

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # adsp-smem-log.py — read Qualcomm SMEM_LOG ring from the AP on mainline pmOS.
 #
 # SMEM_LOG is a shared-memory event ring (QMI/SMD/messaging trace between APPS and

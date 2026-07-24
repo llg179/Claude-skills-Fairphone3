@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # SAFE: reads ONLY the proven-safe SMEM base 0x86300000 (single bounded mmap).
 # Parses the legacy SMEM header + TOC to locate item id=469 (IMAGE_VERSION_TABLE)
 # and dump the ADSP version slot (#12). No speculative PAs. Rule-4b compliant.

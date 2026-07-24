@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Reads the FSS2 trace: does FN_B (framer +0x610=7 enable/config write) execute on the DEAD side & latch?
 # SMEM PA 0x86300000 + 0x2ab0. Layout: 'FSS2' | base | +0x610 | +0x600 | +0x604 | +0x404 | +0x804 | ec4 | count
 import mmap, struct

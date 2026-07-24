@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # build_ut_cave_minimal.py — MINIMAL-CHANGE packaging of the FSS1 cave for UT PIL-TZ (folyt.163).
 # The qtestsign path is rejected by subsys-pil-tz (rc:-22, folyt.162). This keeps the stock QC metadata
 # format byte-for-byte and changes only what MUST change:

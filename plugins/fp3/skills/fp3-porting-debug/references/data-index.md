@@ -1,4 +1,8 @@
 # FP3 — DATA-INDEX (kereshető kulcsszavakkal)
+
+> **Note:** paths under `report-attachments/` are kept locally and are not part of
+> this repository (personal outreach drafts and raw device captures). The entries
+> below are retained as a record of what was collected.
 # Cél: gyorsan felismerni, hogy egy témát MÁR megvizsgáltunk-e, és MELYIK fájlban van.
 # Használat: keress rá a témádra (pl. "bb_clk1", "proxy", "QMI", "PLL", "mem_setup") — a
 # találat sora megmondja, hol nézd meg, mielőtt újra futtatnád.

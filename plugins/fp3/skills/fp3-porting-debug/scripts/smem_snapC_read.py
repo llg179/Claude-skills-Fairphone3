@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # SAFE single mmap of 0x86300000. SNPC: class object (class_ptr) field dump.
 import mmap, struct
 SMEM_PA=0x86300000; WIN=0x40000; STASH=0x2ab0

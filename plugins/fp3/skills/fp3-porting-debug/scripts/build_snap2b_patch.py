@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # Stage-2b: capture the clock-enable rc with a SIMPLE mid-function splice (no
 # conditional replication / trampolines - the fragile part of Stage-2). Splice
 # over f04bfba0 (`r17=r0`); cave stashes {SNP4, rc=r0, ctx+0xe14, ctx+0x88,

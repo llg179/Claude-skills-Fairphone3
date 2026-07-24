@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: MIT
 # SAFE: single bounded mmap of ONLY 0x86300000. Stage-6 (SNP6) RING @0x2ab0:
 # header {SNP6, count}; then ring[4] x {id(ctx+0xe14), rc(f0191c68), gate(ctx+0x74)}
 import mmap, struct
