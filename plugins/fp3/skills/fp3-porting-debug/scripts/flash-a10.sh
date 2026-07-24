@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Faithful, NON-INTERACTIVE re-implementation of Fairphone's flash_fp3_factory.sh
 # for FP3-REL-Q-3.A.0136 (Android 10), with TWO deliberate deviations:
 #   * RELOCK_BOOTLOADER disabled  (we MUST stay unlocked for UT + pmOS restore)

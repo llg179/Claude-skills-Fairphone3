@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Runs ON pmOS (slot_b). Deploys FST1 via SSR-reload (no reboot), captures the LIVE framing-START
 # capability-wait result on the DEAD side, writes the readout DIRECTLY to a synced disk file, then
 # restores stock + heals. Preflight gate (folyt.134) aborts if the rootfs is too full.

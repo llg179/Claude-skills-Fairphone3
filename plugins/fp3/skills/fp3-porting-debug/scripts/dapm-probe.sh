@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Why is the earpiece silent despite aplay rc=0 + verified mixers?
 # Hypothesis: the DAPM path MultiMedia1 -> PRI_MI2S_RX BE -> internal codec ->
 # analog EAR does not complete, so the BE never powers and no audio leaves the

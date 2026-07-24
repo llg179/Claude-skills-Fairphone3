@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # DUTY-CYCLE töltés-teszt harness (user-protokoll: rövid pmOS burst → TWRP hő-ellenőrzés).
 # Cél: kísérleti charger-kód TERMIKUSAN biztonságos tesztelése felügyelet nélkül.
 #   - pmOS-ben fut a (kísérleti) charger; csak rövid ideig (PMOS_DWELL).

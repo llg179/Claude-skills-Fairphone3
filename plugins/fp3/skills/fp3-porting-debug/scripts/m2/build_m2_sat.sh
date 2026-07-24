@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m2_gear.sh — PURE-STASH boot-trace image, cave@f064e098 + site@f04bfaa0.
 set -euo pipefail
 cd "$(dirname "$0")"

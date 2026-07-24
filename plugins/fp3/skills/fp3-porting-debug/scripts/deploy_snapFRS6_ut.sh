@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_snapFRS6_ut.sh — GOLDEN FRS6 on the UT oracle (framer ALIVE, PIL cold boot).
 # Reads back the framer-branch CBCR (CLK_OFF=bit31) + root guess after the enable, to diff vs the
 # pmOS/dead side (folyt.128). UT is PIL: push FRS6-injected p1 -> dd over /dev/mmcblk0p1 -> clean

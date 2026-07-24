@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_snapHWL_ut.sh — v4 FIXED-VA positive control (does f019abb0 run at UT boot?).
 # UT is PIL: firmware = split on vfat /dev/mmcblk0p1 (RO in LXC). Recipe (proven, T3-A):
 #   push whole HWL-injected p1 image -> dd over /dev/mmcblk0p1 -> clean reboot -> read SMEM ring.

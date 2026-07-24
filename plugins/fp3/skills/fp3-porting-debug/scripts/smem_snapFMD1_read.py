@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapFMD1 reader: framer-MODE decision (folyt.130). FMDA block = ACTIVE branch taken,
 # FMDE block = EXTERNAL branch taken. Exactly one should be present per boot/SSR.
 import mmap, struct

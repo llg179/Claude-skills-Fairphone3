@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 set +e
 echo "=== Amp Mode enum items ==="
 amixer -c F3 cget numid=$(amixer -c F3 controls | grep -i "'Amp Mode'" | sed 's/numid=//;s/,.*//') 2>/dev/null

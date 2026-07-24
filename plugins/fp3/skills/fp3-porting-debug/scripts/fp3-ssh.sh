@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # fp3-ssh — SSH/scp to the FP3 dev device (pmOS) over the stable NCM link.
 # Ensures the host IP is present first (handles the pre-reboot enx* phase and
 # the post-reboot stable "fp3" iface identically). NEVER pokes the USB layer.

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 set +e
 echo "=== Amp Mode + headphone/speaker volume sane defaults ==="
 amixer -c F3 cget name='Amp Mode' 2>/dev/null | tail -2

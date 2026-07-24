@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # P2 reader — works on pmOS (mainline) and UT (downstream 4.9).
 # Reads: enabled clocks (ec>0), focusing on lpass/slim/audio; codec+slimbus enum state.
 import os,glob,re,sys

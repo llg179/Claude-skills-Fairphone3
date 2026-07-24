@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapFST1 = LIVE framing-START capability-wait TRACE (folyt.148->149).
 # The framing-START routine 0xf04d14cc posts capability request(s) (opcodes 0xf/0x10 via the ctx+0xe08
 # callable, in 0xf04d166c) then blocks on the QuRT queue-recv-with-timeout 0xf0174eb4 (r2=#0x1388=5000ms).

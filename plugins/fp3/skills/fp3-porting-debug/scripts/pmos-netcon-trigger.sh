@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # pmos-netcon-trigger.sh HOST_MAC  — run on pmOS as root.
 # Bring up netconsole over the RNDIS link (device $FP3_DEV_IP -> host
 # $FP3_HOST_IP:6666), then modprobe the patched rpmsg_char which binds the ADSP

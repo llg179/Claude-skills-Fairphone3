@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Deploy a freshly-built sdm632-fairphone-fp3.dtb to the live pmOS /boot (extlinux
 # loads it standalone), reboot, then capture the SLIMbus/NGD bring-up dmesg to diff
 # vs the proven downstream working trace. dtb-only = minimal + reversible (.bak kept).

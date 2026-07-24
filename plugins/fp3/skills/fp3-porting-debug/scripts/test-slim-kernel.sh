@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Install the freshly-built patched kernel into the pmOS rootfs, flash it to
 # system_b (dual-slot), boot, and capture the slim/NGD bring-up dmesg (incl. the
 # experiment's per-retry NGD register dump). Device must be in pmOS (slot_b) or

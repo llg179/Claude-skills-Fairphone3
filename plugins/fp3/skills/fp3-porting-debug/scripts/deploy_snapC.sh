@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_snapC.sh — SNPC COLD-BOOT deploy (boot-time-once event).
 # Deploy signed patch -> cold reboot -> read SMEM class-object dump -> restore -> heal.
 

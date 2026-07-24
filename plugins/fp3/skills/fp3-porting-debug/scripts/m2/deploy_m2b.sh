@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_m2b.sh — v2 capture: recovery=ENABLED so rproc_coredump() runs (v1 bug:
 # recovery=disabled also disabled the dump). Poll fast for the devcd, grab it, then
 # restore stock to break the crash-reload loop. Reversible; a few controlled crashes.

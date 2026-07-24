@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapFMD1 SSR-RELOAD deploy (dead/pmOS side, reboot-free). Framer-MODE decision capture (folyt.130).
 # Zero stash(0x60) -> swap adsp.mbn -> stop/start ADSP remoteproc (re-request_firmware + re-init =>
 # framer bring-up re-runs => mode-decision cave fires) -> read SMEM -> restore stock + SSR heal.

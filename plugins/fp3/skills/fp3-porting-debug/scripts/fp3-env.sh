@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # FP3 bring-up — shared environment. Source this from the other scripts.
 #
 # Every setting below is `${VAR:-default}`: export the variable before running

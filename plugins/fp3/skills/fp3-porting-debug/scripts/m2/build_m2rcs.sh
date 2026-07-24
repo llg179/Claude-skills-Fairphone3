@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m2rc.sh — DAL-op RC boot-trace (folyt.29). Applies to a FRESH stock:
 #   (1) force-patch  @f04bfab4  word0 74816011 -> 7e806151  (gear r17=0xA, folyt.28-verified)
 #   (2) rc-cave site @f04bfaf4  (12B call packet -> jump cave)

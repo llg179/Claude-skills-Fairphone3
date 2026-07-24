@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # pmos-rpmsg-diag.py — read the ADSP's DIAG stream on pmOS via rpmsg_char, and
 # (optionally) push the F3 message mask on the DIAG_CNTL channel so the ADSP
 # actually emits its debug log during framer bring-up.

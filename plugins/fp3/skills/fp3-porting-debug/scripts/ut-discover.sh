@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # READ-ONLY discovery on UT (downstream slot_a) to find the real node paths the
 # SLIMbus framer SSR-recovery trace will need, before we trigger anything.
 # Requires adb in DEVICE mode (USB debugging ON). NEVER use `sudo adb`.

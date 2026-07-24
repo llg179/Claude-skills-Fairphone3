@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
 # m2rc_ondev.sh — runs ON the pmOS device as root, nohup'd (survives SSH drop +
 # a possible panic-reboot 120s later). Assumes the PATCHED fw is ALREADY
 # cold-booted & running (cave stash already written to the ADSP carveout during

@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 set +e
 S=alsa_output.platform-c051000.sound-card.HiFi__Speaker__sink
 pactl set-default-sink "$S" 2>&1

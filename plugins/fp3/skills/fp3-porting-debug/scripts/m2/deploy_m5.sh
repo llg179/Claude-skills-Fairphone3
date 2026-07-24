@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_m5.sh — NON-crashing clock-work ENTRY exfil. Deploy patched fw, ONE SSR
 # reload (ADSP boots normally, trampoline aggregates counters into SMEM item-469),
 # read SMEM PA 0x86302a70, decode, restore stock, heal. MINIMAL SSR (2 cycles).

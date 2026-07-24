@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # TWRP indítás. Mivel `fastboot boot twrp.img` az FP3 abooton FAILED ('unknown reason'),
 # két megbízható út van:
 #   1) flash a boot_b slotra + set_active b + reboot  (boot_a-n maradhat lk2nd!)  -> twrp.sh flash-b

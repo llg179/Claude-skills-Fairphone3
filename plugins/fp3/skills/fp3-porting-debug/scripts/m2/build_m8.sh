@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m8.sh — M8 post-DAL-enable rc capture. Splices TWO pieces into stock adsp.mbn:
 #   (a) a 4-byte relative `jump 0xf064e098` OVER the single-word packet
 #       `{ jump 0xf04bfb5c }` at 0xf04bfb00 (right after the DAL enable call),

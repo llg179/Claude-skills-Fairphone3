@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # ut-diag-adsp.py  — on-device (UT) ADSP/LPASS diag F3 capture via /dev/diag
 # Pure python, no compilation. Constants verified against downstream source:
 #   hadk22/kernel/fairphone/sdm632/drivers/char/diag/

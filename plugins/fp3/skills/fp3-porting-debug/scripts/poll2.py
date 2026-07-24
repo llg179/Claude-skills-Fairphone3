@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Trigger slim-ngd rebind, then sample pipe3 RX + NGD over 8s with 150ms heartbeat,
 # to see (a) how long the RX pipe stays connected vs the 1s capability wait, and
 # (b) whether p3_EVNT (HW write ptr) ever advances = framer writing capability.

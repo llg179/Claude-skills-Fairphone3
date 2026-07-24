@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 import mmap,os,struct
 def dump(base,offs,label):
     fd=os.open("/dev/mem",os.O_RDONLY|os.O_SYNC)

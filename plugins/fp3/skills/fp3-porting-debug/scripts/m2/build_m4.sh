@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m4.sh — M4 non-crashing SMEM exfil. Splices TWO pieces into stock adsp.mbn:
 #   (a) an 8-byte `{ jump ##0xf064e098 }` over the prologue packet at 0xf04c36e0,
 #   (b) the m4trace.s cave stub at 0xf064e098 (SMEM write + displaced prologue).

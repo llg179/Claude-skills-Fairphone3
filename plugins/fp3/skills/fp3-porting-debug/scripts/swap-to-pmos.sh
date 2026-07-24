@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Installer-free, hands-free swap BACK to postmarketOS from the UT backup state.
 # Flashes the z3ntu dtbo (the proven native-boot blocker fix) to both slots, then
 # runs the normal pmOS flasher (vbmeta-disable + lk2nd->boot + the freshly-built

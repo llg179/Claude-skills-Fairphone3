@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # GYORS AKKU-MERÍTÉS a duty-cycle charger-teszthez.
 # pmOS-ben NINCS töltés → ott full terheléssel fogyasztjuk az akkut, amíg a TWRP-ben
 # mért kapacitás le nem megy a célértékre (alapból 65%).

@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m5.sh — M5 clock-work ENTRY exfil. Splices TWO pieces into stock adsp.mbn:
 #   (a) a 4-byte relative `jump 0xf064e098` over the FIRST word of the entry-prologue
 #       packet at 0xf04bfaa0 (the generic clock enable/disable worker fn),

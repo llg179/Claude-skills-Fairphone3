@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapFRS2 = wider framer register window (folyt.131b, C2). FRS1 found framer_base=0xee140000, safe,
 # +0x604=0 (FS/SFS/MS=0 dead), +0x600=1. Now read config 0x000-0x01c + control 0x600-0x61c (16 regs)
 # to characterise the dead framer block and locate the framing-enable control. Same splice as FRS1

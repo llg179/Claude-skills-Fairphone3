@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Runs ON pmOS (slot_b). Deploys FSS2 via SSR-reload (NO reboot), captures the framer STATUS registers
 # read from the ADSP's OWN privileged view at the capability-timeout instant on the DEAD side, writes the
 # readout DIRECTLY to a synced disk file, then restores stock + heals. Mirrors the proven FST1 onboard.

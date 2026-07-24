@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # SN97 (folyt.97): resolve the RUNTIME-DISPATCHED physical framer-clock poke leaf.
 # Static RE bottomed out: f01a12bc does `callr memw(memw(subobj+4)+4)` where subobj+4 is a
 # runtime-registered driver node (fn addr set at init, not in rodata/text). Walk it dynamically.

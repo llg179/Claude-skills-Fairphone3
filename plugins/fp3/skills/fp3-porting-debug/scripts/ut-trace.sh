@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # DOWNSTREAM (Ubuntu Touch / Halium 10, downstream 4.9.218 kernel) SLIMbus trace.
 # Run from HOST while phone is booted into UT with adb (Halium adb runs as phablet; use sudo).
 # Captures the WORKING SLIMbus framer bring-up to diff vs pmOS (mainline) baseline.

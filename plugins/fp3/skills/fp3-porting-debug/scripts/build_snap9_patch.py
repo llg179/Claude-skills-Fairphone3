@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Stage-9 (SNP9): dump the f0191c68 config-struct window at the caller splice
 # f04bfba0. The clock-op is called (f04bfb94) as f0191c68(r0=id, r1=##0xf0c85450);
 # f0191c68 reads r1+0x0/+0x4/+0x8/+0xc and early-returns if +0x8==0 or +0xc==0.

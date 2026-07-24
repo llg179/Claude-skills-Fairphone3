@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m3.sh — M3 clock-work rc/handle trace. Splices TWO pieces into stock adsp.mbn:
 #   (a) a 4-byte relative `jump 0xf064e098` over the packet at 0xf04bfb00
 #       (the post-DAL-call `jump 0xf04bfb5c` in the SLIMbus clock-work fn),

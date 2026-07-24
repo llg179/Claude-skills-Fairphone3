@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Installer-free, hands-free restore of the developer-enabled Ubuntu Touch backup
 # (slot a, captured 2026-06-30) so pmOS<->UT can be swapped without the UBports GUI
 # installer or any user interaction.

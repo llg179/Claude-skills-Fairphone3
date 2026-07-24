@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # UT (downstream 4.9 diagchar) ADSP F3 capture via /dev/diag.
 # Unlike mainline rpmsg, UT uses the classic Qualcomm diagchar node:
 #   1. ioctl DIAG_IOCTL_SWITCH_LOGGING(7) -> MEMORY_DEVICE_MODE(2), all peripherals

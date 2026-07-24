@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # TWRP-adb úton image partícióra írása (mert `fastboot boot` az FP3 abooton tiltott/megbízhatatlan).
 # Sparse Android image-et simg2img-gal ír; nyers image-et dd-vel.
 # usage: twrp-dd.sh <local.img> <by-name-part|/dev/block/...> [raw|sparse]

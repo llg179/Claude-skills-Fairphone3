@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapCKB7b = pin the framer-block branch-ENABLE caller+value (folyt.127, after CKB7).
 # CKB7 (UT/golden) proved the enable primitive 0xf04df0c8 RUNS (34 stores) and the framer-block
 # targets are 0xee012014 & 0xee012018 (= RCGR base 0xee012000 +0x14/+0x18; clock id 0x12014 -> +0x14),

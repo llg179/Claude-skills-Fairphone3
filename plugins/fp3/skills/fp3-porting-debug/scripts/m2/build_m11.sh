@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m11.sh — M11 slim CBCR enable trace. TWO edits to stock adsp.mbn:
 #   (a) cave stub m11trace.s at 0xf064e098 (replicates f04df0ac enable + ring-logs),
 #   (b) DATA patch: vtable word @0xf0889538 (the slim clock vtable[0]) f04df0ac -> cave.

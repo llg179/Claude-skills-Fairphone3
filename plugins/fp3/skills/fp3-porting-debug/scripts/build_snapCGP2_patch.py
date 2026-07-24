@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapCGP2 = deeper hop of the runtime clock-poke dispatch chain (folyt.114).
 # snapCGP resolved: memw(handle+0x48) = 0xf019eb40 (resolver) -> 0xf01a1280, which does
 #   r2 = memw(handle+0x3c); r4 = memw(r2+0); callr r4   = callr memw(memw(handle+0x3c)+0)

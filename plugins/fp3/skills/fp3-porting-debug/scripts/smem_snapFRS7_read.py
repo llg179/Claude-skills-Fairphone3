@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Reads the FRS7 ctx-scan stash: SMEM PA 0x86300000 + 0x2ab0. Layout: 'FRS7' | count | up to 8 (off,val) pairs.
 # Each pair = an offset into the framer ctx whose value is an LPASS MMIO pointer (0xeexxxxxx). +0x5c = framer
 # base (0xee140000, known); ANY OTHER offset = a clock/pad sibling base -> the C1/C3 target.

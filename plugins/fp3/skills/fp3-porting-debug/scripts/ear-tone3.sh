@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Earpiece OUTPUT test v3 -- GUARANTEE the ALSA card is free first.
 # Previous run failed with "Resource busy": PA auto-respawned / PipeWire held
 # hw:0,0 before aplay could open it. Here we set autospawn=no, stop ALL user

@@ -87,4 +87,11 @@ anything that touches a partition.
 
 ## License
 
-Not yet chosen — open an issue if you want to reuse this.
+GPL-2.0-or-later. See [LICENSE](LICENSE).
+
+The scripts here generate and analyse patches against the Linux kernel and
+carry register maps and disassembly notes derived from that work, so the whole
+repository uses the kernel's own license rather than a separate one for the
+prose. Individual files carry:
+
+    SPDX-License-Identifier: GPL-2.0-or-later

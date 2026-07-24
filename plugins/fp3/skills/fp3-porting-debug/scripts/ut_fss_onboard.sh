@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Runs ON UT / Ubuntu Touch (slot_a, the ORACLE). Deploys the caved adsp.mdt+bNN, triggers a framer bring-up,
 # reads the framer-status SMEM stash (working side), then restores stock. UT loads the ADSP via PIL
 # (subsys-pil-tz) from /vendor/firmware_mnt/image. Prefers an SSR restart node (re-runs PIL bring-up without a

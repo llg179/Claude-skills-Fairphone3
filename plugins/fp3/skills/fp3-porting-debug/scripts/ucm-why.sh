@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 set +e
 echo "=== ucm2 lib includes exist? ==="
 ls -l /usr/share/alsa/ucm2/lib/card-init.conf /usr/share/alsa/ucm2/lib/ctl-remap.conf 2>&1

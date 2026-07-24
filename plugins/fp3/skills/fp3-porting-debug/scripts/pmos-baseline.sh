@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
 # pmOS-side (mainline, "broken" SLIMbus) baseline capture for downstream diff
 
 # Config lives in fp3-env.sh; every value there has a documented default.

@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapCGP2 COLD-BOOT deploy (boot-time-once leaf event, fixed-VA stash).
 # Deploy signed patch -> cold reboot -> read SMEM CGP stash -> framer snapshot -> restore -> heal.
 

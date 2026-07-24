@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapCKB7b COLD-BOOT deploy (boot-time-once leaf event, fixed-VA stash).
 # Deploy signed patch -> cold reboot -> read SMEM CKB7b stash -> framer snapshot -> restore -> heal.
 

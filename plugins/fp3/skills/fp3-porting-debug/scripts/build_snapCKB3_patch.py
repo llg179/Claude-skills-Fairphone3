@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapCKB3 = framer BRANCH-CLOCK (CBCR) capture (folyt.121 next: the real gate).
 # folyt.119-121: the framer-clock RCGR (base 0xee012000) is byte-identical working<->dead
 # (CMD=0x80000000, CFG src=5/div=9); CMD ROOT_EN(bit1)=0 => this RCG is gated at the BRANCH

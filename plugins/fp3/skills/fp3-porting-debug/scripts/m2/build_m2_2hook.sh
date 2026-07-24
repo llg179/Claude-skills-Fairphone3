@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m2_2hook.sh — build the NON-CRASHING two-hook trace image:
 #   EARLY  (pure stash, no emit): cave m2_stash_cave.s  @ 0xf064e098
 #          site  m2_stash_site.s  @ 0xf04d1664 (toggle-detection RETURN)

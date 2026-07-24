@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # TWRP → vissza pmOS-re.  set_active a → lk2nd(boot_a) → pmOS bootol.
 # (pmOS qbootctl-openrc mark_boot_successful → slot a retry-count visszaáll.)
 # usage: to-pmos.sh       (TWRP-ből/recovery-ből vagy fastbootból is)

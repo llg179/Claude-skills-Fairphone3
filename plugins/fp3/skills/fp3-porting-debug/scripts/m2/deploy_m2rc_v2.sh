@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_m2rc_v2.sh — HARDENED cold-boot crash-capture (folyt.30 lessons).
 # Fixes vs v1: (a) coredump grabbed to PERSISTENT $HOME by an on-device
 # nohup script (survives the SSH drop AND a panic-reboot); (b) stock restored

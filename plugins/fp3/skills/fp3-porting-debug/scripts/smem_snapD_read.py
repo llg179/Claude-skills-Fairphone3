@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # SAFE single mmap of 0x86300000. SNPD: apply/set_rate object (obj2=subobj+0x04).
 import mmap, struct
 SMEM_PA=0x86300000; WIN=0x40000; STASH=0x2ab0

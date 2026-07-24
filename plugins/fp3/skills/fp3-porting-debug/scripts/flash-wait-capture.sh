@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Wait for the device to appear in fastboot (user puts it there with Power+VolDown),
 # then flash the already-built rootfs (pmb install already ran) to system_b, boot
 # pmOS, and capture the power_req/framer bring-up result. Fully autonomous once the

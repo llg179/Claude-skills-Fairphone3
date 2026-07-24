@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapCGP = DYNAMIC-CAPTURE of the runtime-dispatched clock poke fn-pointer.
 # Static RE (2026-07-12): the real clock-enable dispatch is inside the DAL clock op
 # 0xf019f134 (called at f04bfaf4 with r0=handle=ctx+0xe18, r1=#6=enable):

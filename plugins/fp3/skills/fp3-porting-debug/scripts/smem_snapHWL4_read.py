@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapHWL4 reader: fixed-VA HalHwIo CGC-enable leaf trace (magic 'HWL4', fresh tag).
 # Reads PA 0x86302ab0 (= stash VA 0xe1302ab0). SAFE: single bounded mmap of SMEM only.
 import mmap, struct

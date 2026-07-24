@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_snapCKB7bb_ut.sh — GOLDEN CBCR branch-enable capture on the UT oracle (framer ALIVE).
 # CKB7b = corrected branch-enable hook (0xf04df0c8, both selector paths; folyt.127 fixes the
 # CKB4/5 path-blindness). UT is PIL: push CKB7b-injected p1 -> dd over /dev/mmcblk0p1 -> clean

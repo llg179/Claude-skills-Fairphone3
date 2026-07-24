@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m14.sh — M14 framer-GATE 5-condition trace. Splices TWO pieces into stock:
 #   (a) the m14trace.s cave stub at 0xf064e098 (replicates the f04c97d0 gate +
 #       logs all 5 conditions + which branch to SMEM),

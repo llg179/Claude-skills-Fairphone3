@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 set +e
 C=/sys/kernel/debug/dynamic_debug/control
 for x in 'module pdr_interface +p' 'module qcom_pd_mapper +p' 'module slim_qcom_ngd_ctrl +p' 'file qcom_pd_mapper.c +p' 'file pdr_interface.c +p'; do echo "$x" > $C 2>/dev/null; done

@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Runs ON pmOS (slot_b). Deploys FRS6 via SSR-reload (no reboot), reads SMEM to BOTH stdout and a disk
 # file (/root/frs6-result.txt) so a flaky USB link can't lose the measurement, then restores stock + heals.
 

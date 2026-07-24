@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Call-independent earpiece OUTPUT test: route MultiMedia1 -> PRI_MI2S_RX ->
 # PM8953 WCD earpiece and play a local tone. Proves codec earpiece + MI2S
 # clocking independent of the modem/q6voice path.

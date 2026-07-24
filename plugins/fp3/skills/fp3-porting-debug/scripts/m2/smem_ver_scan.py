@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Scan the SAFE legacy-SMEM window for the ADSP image-version string, and report
 # which SMEM TOC item it lands in. Read-only mmap(PROT_READ) of 0x86300000 — the
 # proven exfil region (no carveout, no wedge). Run on device as root.

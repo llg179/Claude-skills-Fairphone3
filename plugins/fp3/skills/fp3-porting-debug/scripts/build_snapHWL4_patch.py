@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # HWL1 (v4): FIXED-VA variant of v3 — stash at hardcoded 0xe1302ab0 (=*(0xf090fcd4)0xe1302470 +0x640)
 # v2's 704-byte ring likely OVERRAN the SMEM stash item (snapT3 proved only ~0x50B safe)
 # and degraded the ADSP/audio -> UT container fell to File-Stor. v3 writes a single tiny

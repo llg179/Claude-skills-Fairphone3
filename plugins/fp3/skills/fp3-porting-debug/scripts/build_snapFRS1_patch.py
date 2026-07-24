@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapFRS1 = framer HW register-state capture at the enumerate-timeout handler (folyt.131, C2).
 # mode=active (FMD2) + clock runs (CKB9) yet no framing => read the framer HW block directly.
 # Framer MMIO base = memw(ctx+0x5c); status reg = base+0x604 (FS bit0xb / SFS 0xc / MS 0xd) — proven

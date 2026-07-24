@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapFRS6 = WHOLE-PAGE reconnaissance of the framer register block (folyt.134, C2 extension).
 # folyt.133 proved the 16 regs {+0x000..+0x01c, +0x600..+0x61c} are BYTE-IDENTICAL working<->dead
 # except +0x604 (status/output). FRS6 surveys the REST of the proven-clocked page

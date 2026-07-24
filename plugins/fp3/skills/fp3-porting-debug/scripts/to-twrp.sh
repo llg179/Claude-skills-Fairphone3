@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # IDLE → TWRP TÖLTÉS.  A mainline pmOS kernelben NINCS FP3/PMI632 charger+fuelgauge
 # driver (csak qcom,pmi632-typec látszik, CURRENT_NOW=0) → pmOS-ben az akku NEM tölt.
 # A downstream TWRP (4.9 kernel, qpnp-smb5+qpnp-qg) rendesen tölt. Ezért: ha nem

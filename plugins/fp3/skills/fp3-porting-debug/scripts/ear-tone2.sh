@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Call-independent earpiece OUTPUT test with VERIFIED mixer state + MI2S clock check.
 # Routes MultiMedia1 -> PRI_MI2S_RX -> PM8953 WCD earpiece, plays a tone, and
 # inspects whether the PRI_MI2S bit-clock actually runs. No inline-over-SSH

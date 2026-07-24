@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # SAFE: single bounded mmap of ONLY 0x86300000. Stage-7 (SNP7) @0x2ab0:
 # {SNP7, id(ctx+0xe14), rc} then 12 words dumped from 0xf0c85440.
 # f0191c68's actual cfg ptr r1 = 0xf0c85450 = base+0x10 (word index 4);

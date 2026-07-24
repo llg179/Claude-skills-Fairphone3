@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # A/B slot retry-count kezelés (fastboot módban!).
 # usage: slot.sh get | set [a|b] | active [a|b]
 # Megjegyzés: ezen az FP3 abooton a `set_active` NEM mindig nullázza vissza a

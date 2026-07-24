@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 import mmap,struct
 f=open("/dev/mem","rb")
 BASE=0x86300000

@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_m6.sh — NON-crashing clock-work ENTRY decision-capture. One SSR reload,
 # read SMEM PA 0x86302a70, decode (FIXED: parse only the hex data column, not the
 # address), restore stock, heal. Minimal SSR (2 cycles).

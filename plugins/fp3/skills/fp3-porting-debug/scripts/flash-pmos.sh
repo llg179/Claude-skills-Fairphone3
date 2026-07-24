@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # pmOS flash-szekvencia (fastboot módban). Tartalmazza a vbmeta-disable lépést,
 # ami a hybris/AVB-gyanú miatt KELL ("Fairphone powered by android -> fastboot" tünet).
 # usage: flash-pmos.sh [full|lk2nd|vbmeta|rootfs]   (default: full)

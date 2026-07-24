@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # fp3-link — host-side NCM link helper for the FP3 dev device (pmOS).
 #
 # Encodes the hard-won operational lessons (memory: project_fp3_audio_codec):

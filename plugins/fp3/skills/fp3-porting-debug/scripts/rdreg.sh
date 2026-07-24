@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 set +e
 which devmem busybox 2>/dev/null
 echo "--- NGD CFG @0x0c141000 ---"; devmem 0x0c141000 32 2>&1

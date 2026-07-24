@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapCKB9 SSR-RELOAD deploy (dead side, reboot-free). Zero stash -> swap adsp.mbn -> stop/start
 # ADSP remoteproc (re-request_firmware + re-init => cave fires) -> read SMEM -> restore stock + SSR heal.
 

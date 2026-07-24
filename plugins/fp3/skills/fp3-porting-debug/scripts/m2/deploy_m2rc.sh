@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_m2rc.sh — COLD-BOOT crash-capture of the m2rc DAL-rc trace (folyt.29).
 # Framer-bring-up caves need a COLD boot (SSR-warm-reload hangs; folyt.16). Flow:
 #   backup stock -> swap patched -> arm coredump+recovery -> REBOOT (cold) ->

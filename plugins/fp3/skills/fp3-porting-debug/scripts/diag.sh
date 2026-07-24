@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Roncsolásmentes diagnosztika TWRP-ből (retry-t NEM fogyaszt).
 # - boot_a tényleg lk2nd-e?  - utolsó-boot kernel-log (pstore/ramoops)
 # - userdata valid ext4 + /boot?  - vbmeta állapot

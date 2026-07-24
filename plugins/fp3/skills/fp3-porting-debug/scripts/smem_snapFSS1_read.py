@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Reads the FSS1 privileged-side framer-status snapshot: SMEM PA 0x86300000 + 0x2ab0 (same slot as FST1).
 # All framer regs are read by the ADSP itself (base 0xee140000) at the capability-timeout instant.
 # Layout: 'FSS1' | wait-ret | frmbase | +0x204 | +0x404 | +0x430 | +0x604 | +0x804 | +0x600 | +0x610 |

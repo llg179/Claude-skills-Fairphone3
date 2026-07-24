@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Enhanced WORKING-framer capture on Ubuntu Touch (downstream 4.9 kernel) for the
 # on-device A/B vs mainline pmOS. The KEY additions over ut-trace.sh:
 #   1. /d/ipc_logging/  — the slim-msm driver logs its QMI power_req + capability +

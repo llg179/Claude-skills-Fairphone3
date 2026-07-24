@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # SNPD: resolve the physical APPLY/set_rate fn. f01a12bc's 2nd callr is the HW
 # apply: r3=memw(subobj+0x04); r3=memw(r3+0x04); callr r3. subobj+0x04=0xf09b2e50
 # (fixed BSS singleton). So apply_fn = memw(memw(0xf09b2e50+0x04))... actually

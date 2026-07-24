@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # UT ADSP SSR-recovery differenciál-trace (plan: lovely-dazzling-rain).
 # A BIZONYÍTOTTAN működő UT-n (slot_a, halium-10.0 4.9.218) az ADSP-t SSR-rel
 # leállítjuk+újraindítjuk; a friss ADSP framer-recovery szekvenciája a pmOS

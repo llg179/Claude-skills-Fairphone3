@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Reads the FST1 live framing-START capability-wait trace: SMEM PA 0x86300000 + 0x2ab0.
 # Layout: 'FST1' | wait-return | ctx+0xe54 | ctx+0xe0c | ctx+0xe08 | ctx+0xeb0 | ctx+0xeb4 | ctx+0x5c | count
 import mmap, struct

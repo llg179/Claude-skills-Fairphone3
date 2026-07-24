@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_ut_cave.py — package the FSS1 framer-status cave for the UT (PIL / subsys-pil-tz) side.
 #
 # WHY: the disambiguating measurement (folyt.160) is FSS1 run on the WORKING side: read the framer regs at the

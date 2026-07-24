@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapFMD1 = framer-MODE decision capture (folyt.130). Tests hypothesis (C1): under PAS(pmOS) the
 # ADSP framer switches to EXTERNAL framer mode ("due to external clock toggle") -> never drives the
 # SLIMbus framer -> enumeration timeout -> silent; under PIL(UT) it goes ACTIVE ("lack of external

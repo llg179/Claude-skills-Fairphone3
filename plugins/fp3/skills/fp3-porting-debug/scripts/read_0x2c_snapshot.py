@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # F0/§0.1 full-snapshot read: 0x2c marker + neighbour SLIMbus-block sanity + FRM_STAT + timestamp.
 # SAFE: only addresses proven readable on pmOS under PAS (QDSP6SS 0xc200000 block per E1/E3;
 # SLIMbus wrapper FRM_CFG/FRM_STAT per context doc §2). ADSP must be up (state=running).

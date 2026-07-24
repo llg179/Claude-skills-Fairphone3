@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Runs ON pmOS (slot_b). Deploys FRS7 via SSR-reload (no reboot), scans the framer ctx for LPASS pointers,
 # writes the readout DIRECTLY to a synced disk file (NOT a { }|tee pipe — folyt.134: the pipe loses late
 # lines if the device resets mid-run), then restores stock + heals.

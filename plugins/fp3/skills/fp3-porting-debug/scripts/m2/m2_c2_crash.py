@@ -1,4 +1,5 @@
 #!/usr/bin/env python3 -u
+# SPDX-License-Identifier: GPL-2.0-or-later
 # m2_c2_crash.py  (runs ON the pmOS device, as root) — Plan (C') exfil.
 #
 # DIFFERENCE vs m2stash_coredump.py (folyt.16 lesson):

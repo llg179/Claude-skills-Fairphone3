@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapFWT1 = framer register WRITE tracer (folyt.152). Hooks the framer register-write HAL 0xf04bfe54:
 # its tail 0xf04bfe80 `{ r3 = add(r1,r0) }` computes the target address (r0=base, r1=offset) right before
 # the store `memw(r3)=r2` at 0xf04bfe88. Splice there, filter to the framer aperture (0xee14xxxx), and

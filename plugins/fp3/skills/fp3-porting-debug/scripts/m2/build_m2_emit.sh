@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m2_emit.sh — build the NON-CRASHING toggle-return trace image:
 #   (1) assemble the code cave (m2_emit_cave.s) -> splice at VA 0xf064e098
 #       (a verified 3952-byte zero region in the R+X segment), and

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # SAFE: single bounded mmap of ONLY 0x86300000. Stage-5 (SNP5) stash @0x2ab0:
 # {SNP5, rc, handle, reg_addr, *reg (CBCR), ctx+0xe14}
 import mmap, struct

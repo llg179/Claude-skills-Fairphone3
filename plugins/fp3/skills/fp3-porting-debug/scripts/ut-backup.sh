@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Back up developer-enabled UT (slot a) partition images for installer-free pmOS<->UT swap.
 
 # Config lives in fp3-env.sh; every value there has a documented default.

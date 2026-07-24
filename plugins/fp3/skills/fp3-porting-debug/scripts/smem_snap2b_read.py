@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # SAFE: single bounded mmap of ONLY 0x86300000. Reads the Stage-2b (SNP4) stash
 # at SMEM item-469 slot#12 +0x40 (in-SMEM 0x2ab0): {SNP4, rc, ctx+0xe14, ctx+0x88, ctx+0xdec}
 import mmap, struct

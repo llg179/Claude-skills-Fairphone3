@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_m2.sh — deploy the M2 trampoline image, force ONE ADSP crash, capture the
 # devcoredump, extract the trace, then RESTORE stock and heal the ADSP.
 # Runs from the laptop; drives the FP3 over SSH. Reversible; single controlled crash.

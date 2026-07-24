@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # HWL0 reader: the HalHwIo/PLL-lock LEAF ring. SAFE single mmap of 0x86300000.
 # Ring A = last 16 of ALL CGC-enable-leaf invocations; Ring B = last 4 with pollmask!=0.
 # Entry (8 words): handle, base(runtime HWIO), offset(memw 0xf0914258), value/mask,

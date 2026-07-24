@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m2.sh — assemble the M2 framer-trace trampoline, splice it into the stock
 # (unsigned) adsp.mbn at f04c36e0, and re-sign with qtestsign (-v3, secure-boot off).
 # Run from the scratchpad dir. Produces adsp-m2-signed.mbn ready to deploy.

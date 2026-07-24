@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # DOWNSTREAM (LineageOS A15 eng/userdebug, downstream 4.9 kernel) SLIMbus trace capture.
 # Run from HOST while the phone is booted into LineageOS with adb. Captures the WORKING
 # SLIMbus framer bring-up to diff against the pmOS (mainline) baseline in /tmp/pmos-baseline.

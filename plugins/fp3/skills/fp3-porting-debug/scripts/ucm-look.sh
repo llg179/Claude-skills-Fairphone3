@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 set +e
 D=/usr/share/alsa/ucm2/conf.d/Fairphone_3
 echo "############ CURRENT Fairphone_3.conf ############"

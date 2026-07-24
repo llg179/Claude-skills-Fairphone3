@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Deploy the rebuilt slim-qcom-ngd-ctrl.ko (CHECK_FRAMER_STATUS fix) + the
 # slimbus-enabled sdm632-fairphone-fp3.dtb to the live pmOS, reboot, and capture
 # the SLIMbus/NGD bring-up dmesg. Safe minimal swap: CONFIG_MODVERSIONS is off and

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Word-by-word diff of two same-region MMIO dumps produced by dump_lpass_regions.py
 # (the oracle/UT side vs the pmOS/dead side). This is the two-sided differential the
 # whole SLIMbus investigation turns on: identical config words => the layer is NOT

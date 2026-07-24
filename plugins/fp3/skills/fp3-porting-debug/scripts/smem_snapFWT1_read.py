@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Reads the FWT1 framer-write trace ring: SMEM PA 0x86300000 + 0x2af0 (ADSP stash +0x680).
 # Layout: 'FWTF' | count | up to 64 (addr,value) pairs. addr in framer aperture 0xee14xxxx.
 import mmap, struct

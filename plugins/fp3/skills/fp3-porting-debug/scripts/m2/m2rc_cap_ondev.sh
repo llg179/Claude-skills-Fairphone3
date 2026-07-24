@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
 # m2rc_cap_ondev.sh — runs on device via systemd-run (detached; survives SSH
 # drop + a possible panic-reboot). Assumes the m2rc PATCHED fw is ALREADY
 # cold-booted (cave wrote rc to carveout 0xf0ca0000 during bring-up). Fires ONE

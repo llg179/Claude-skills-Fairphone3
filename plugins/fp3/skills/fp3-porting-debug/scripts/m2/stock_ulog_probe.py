@@ -1,4 +1,5 @@
 #!/usr/bin/env python3 -u
+# SPDX-License-Identifier: GPL-2.0-or-later
 # stock_ulog_probe.py (runs ON pmOS device as root) — STOCK image, NO firmware patch.
 #
 # Goal: capture the ADSP's OWN boot-time ULOG (framer-mode / ref-clock / gear log

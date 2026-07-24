@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 set +e
 echo "=== uptime/kernel ==="
 uname -r; cat /proc/uptime

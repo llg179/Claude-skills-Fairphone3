@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 set +e
 D=/usr/share/alsa/ucm2/conf.d/Fairphone_3
 cp "$D/Fairphone_3.conf" "$D/Fairphone_3.conf.bak-slimbus-era" 2>/dev/null

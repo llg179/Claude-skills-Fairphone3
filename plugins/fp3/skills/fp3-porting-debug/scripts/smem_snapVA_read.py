@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 import mmap, struct
 with open("/dev/mem","rb") as f:
     m=mmap.mmap(f.fileno(),0x40000,mmap.MAP_SHARED,mmap.PROT_READ,offset=0x86300000); buf=m.read(0x40000); m.close()

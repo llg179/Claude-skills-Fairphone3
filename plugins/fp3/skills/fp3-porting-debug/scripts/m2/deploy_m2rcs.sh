@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_m2rcs.sh — NON-CRASHING SMEM-exfil of the DAL-op rc (folyt.31).
 # Cold-boot the patched fw (cave writes rc to SMEM 0x2bbf8 during bring-up),
 # then read it live via /dev/mem PA 0x8632bbf8. NO crash, NO coredump.

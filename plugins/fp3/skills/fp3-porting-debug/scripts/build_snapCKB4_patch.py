@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapCKB4 = POST-ENABLE framer CBCR capture (folyt.122 next: does the branch clock turn on?).
 # folyt.122: framer branch CBCR = 0xee00d01c; at the RCGR-enable splice (pkt5, pre-branch-enable)
 # it read 0x80000000 (ENABLE=0, CLK_OFF=1). The CBCR ENABLE itself is method 0xf04df0ac:

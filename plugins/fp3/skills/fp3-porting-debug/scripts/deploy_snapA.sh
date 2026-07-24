@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_snapA.sh — Step-1 (SNPA) COLD-BOOT deploy (boot-time-once event).
 # Deploy signed patch -> reboot -> cold boot -> read SMEM leaf/handle -> restore -> heal.
 

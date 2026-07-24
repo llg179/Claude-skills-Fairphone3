@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_m2rc_cap.sh — m2rc (carveout) crash-capture with a systemd-run detached
 # on-device grab (folyt.33). m2rc boots clean; the grab saves the coredump to
 # persistent $HOME in <1s, surviving the SSH drop + any panic-reboot.

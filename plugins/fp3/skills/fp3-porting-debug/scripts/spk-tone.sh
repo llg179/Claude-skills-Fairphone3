@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 set +e
 echo "=== mixer controls (quinary / speaker / aw8898 routing) ==="
 amixer -c F3 scontrols 2>/dev/null | head

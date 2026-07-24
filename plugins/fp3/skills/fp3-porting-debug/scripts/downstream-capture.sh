@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
 # FUTTASD a MŰKÖDŐ downstream rendszeren (Ubuntu Touch VAGY stock Android),
 # rootként (UT: `sudo`; Android: `adb shell su`). A kimenetet küldd vissza.
 OUT=/tmp/fp3-slim-trace.txt

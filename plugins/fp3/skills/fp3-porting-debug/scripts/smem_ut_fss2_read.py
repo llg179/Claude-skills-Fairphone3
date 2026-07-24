@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Reads the UT-side (WORKING) FSS2 cave: does FN_B (framer ENABLE, +0x610=7) execute on the PIL/working side,
 # and what does the framer read right after? Symmetric to the DEAD-side FSS2 (folyt.160 = MISS/count=0).
 # SMEM PA 0x86300000 + 0x2ab0. On UT the STRICT_DEVMEM path is OFF, so /dev/mem RAM reads work (SMEM is DDR).

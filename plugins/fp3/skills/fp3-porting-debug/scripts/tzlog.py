@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # tzlog.py — TrustZone (TZBSP) diag-log reader for the FP3 (MSM8953).
 #
 # Reads the TZ diagnostic buffer that TZ publishes to HLOS and dumps the

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapCKB6 = LEVER test: force the framer branch CBCR (0xee00d01c) ENABLE bit on and see if the
 # framer frames (folyt.124 -> marker-vs-lever). folyt.122: framer CBCR reads 0x80000000 (ENABLE=0,
 # CLK_OFF=1) = off. The CBCR-enable code is elusive (runtime-dispatched, accessors don't run,

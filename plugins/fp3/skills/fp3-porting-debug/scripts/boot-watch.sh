@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Reboot + kimenet-detektálás: USB-net (=bootolt pmOS) VAGY vissza-fastboot (=bukott).
 # A LOGFÁJL markerét figyeli (nincs pgrep self-match). Háttérben futtatandó (run_in_background).
 # usage: boot-watch.sh [from_fastboot|from_recovery] [watch_secs]

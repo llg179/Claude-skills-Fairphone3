@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # SD-kártya debug-log workflow: ha a telefon az SD-jére írja a boot/debug logot,
 # a (vfat) "dirty bit" miatt máshol nem/koszosan mountolódik. Ez umountol + fsck-zik.
 # Két mód:

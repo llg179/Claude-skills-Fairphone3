@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapFMD2 reader: unconditional entry-capture of framer mode-update fn. 'FMD2' present => fn ran.
 import mmap, struct
 SMEM_PA=0x86300000; WIN=0x40000; HDR=0x2ab0

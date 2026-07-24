@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # SNPC: dump the class object (class_ptr) fields to find the runtime ops-table /
 # MMIO base behind the physical clock poke. Walk (same proven splice f04bfba0,
 # r16=slim ctx live): handle=memw(r16+0xe18); subobj=memw(handle+0x10);

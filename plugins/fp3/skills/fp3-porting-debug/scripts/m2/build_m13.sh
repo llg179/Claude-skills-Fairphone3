@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m13.sh — M13 framer-GATE 5-condition trace. Splices TWO pieces into stock:
 #   (a) the m13trace.s cave stub at 0xf064e098 (replicates the f04c97d0 gate +
 #       logs all 5 conditions + which branch to SMEM),

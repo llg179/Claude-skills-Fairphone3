@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Build a UT p1 (vfat firmware) image from a PAS-signed adsp mbn, using the PROVEN
 # compact-mdt + full-split recipe (folyt.80, confirmed vs ut-p1-hwl4.img):
 #   adsp.b{i:02d} = mbn[ph[i].off : +ph[i].filesz]  for each phdr i with filesz>0

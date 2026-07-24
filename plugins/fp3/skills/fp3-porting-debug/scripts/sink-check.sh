@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 set +e
 export XDG_RUNTIME_DIR=/run/user/$(id -u)
 echo "uid=$(id -u) XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR"

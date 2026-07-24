@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapCKB8 = confirm the PHYSICAL wall after B (folyt.127c). B proved the framer-branch
 # enable memw(0xee012014)|=1 is BYTE-IDENTICAL working(UT) vs dead(pmOS). CKB8 reads back,
 # right after the enable, the CBCR CLK_OFF (bit31 of 0xee012014/18) via a BOUNDED poll, plus

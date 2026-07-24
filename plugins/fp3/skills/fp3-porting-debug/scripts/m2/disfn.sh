@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # disfn.sh <vaddr> [len] : disasm a function from the full-seg elf, highlight MMIO/absolute stores
 VA=$1; LEN=${2:-0xc0}
 END=$(printf '0x%x' $(( VA + LEN )))

@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # ONE-TIME dual-slot install: pmOS -> slot _b (rootfs on system_b), UT stays on _a.
 # After this, OS-swap is a single `fastboot set_active a|b` + reboot (no flashing,
 # no installer, no userdata conflict — FP3 has ONE shared userdata, so pmOS roots

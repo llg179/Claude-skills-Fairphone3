@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # fg-verify.sh — fuel-gauge (pmi632-battery) ellenőrzés pmOS-ben SSH-n.
 # Kiolvassa a battery-psy capacity/voltage/status mezőit és a charger-psy-t,
 # hogy összevethető legyen a TWRP-ben látott SoC-cal.

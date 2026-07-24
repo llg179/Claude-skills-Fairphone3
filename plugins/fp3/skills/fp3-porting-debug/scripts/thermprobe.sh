@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Per-zóna thermal-mintázás sha256sum-load alatt: melyik szenzor megbízható?
 cd $(dirname "$0"); source ./fp3-env.sh 2>/dev/null
 SSH(){ sshpass -p "$FP3_PW" ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=6 "fp3@$FP3_SSH_IP" "$@" 2>/dev/null; }

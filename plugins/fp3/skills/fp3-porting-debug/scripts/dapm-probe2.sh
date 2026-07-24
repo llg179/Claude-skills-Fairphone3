@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
 # DAPM probe v2 -- fixes: (1) card name "Fairphone 3" has a SPACE, so iterate
 # find output space-safely with `while read -r`; (2) keep a CONTINUOUS tone
 # playing while we sample state; (3) capture aplay stderr (catch Resource busy).

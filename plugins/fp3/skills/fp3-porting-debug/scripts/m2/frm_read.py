@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 import mmap,struct,sys
 f=open("/dev/mem","rb")
 def rd(a):

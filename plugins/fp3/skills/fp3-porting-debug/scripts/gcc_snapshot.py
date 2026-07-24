@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Zero-risk full GCC block snapshot for UT<->pmOS environmental diff (context §9 step 1).
 # GCC (msm8953 qcom,gcc-msm8953) reg = <0x01800000 0x80000> is always-on / AHB-clocked,
 # so reading any offset within it is safe (unlike gated LPASS/SLIMbus blocks, rule 4).

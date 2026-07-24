@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # SAFE: single bounded mmap of ONLY 0x86300000. Stage-9 (SNP9) @0x2ab0:
 # {SNP9, id, rc} + 12 words from 0xf0c85400 (leaf structs for entry[2]@0xf0c85404 type4, entry[3]@0xf0c85428 type0xe)
 import mmap, struct

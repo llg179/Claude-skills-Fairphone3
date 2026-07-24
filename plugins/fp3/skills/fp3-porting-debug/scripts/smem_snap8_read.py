@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # SAFE: single bounded mmap of ONLY 0x86300000. Stage-8 (SNP8) @0x2ab0:
 # {SNP8, id, rc} + input-array[4x{type,sub_ptr}] from 0xf0c85430 + output[4] from 0xf0c85468
 import mmap, struct

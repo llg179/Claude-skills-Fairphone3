@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # deploy_m4.sh — NON-crashing SMEM exfil. Deploy patched fw, SSR-reload (ADSP boots
 # normally, trampoline writes SMEM item-469 + continues), read SMEM PA 0x86302a70,
 # restore stock, heal. Every ssh has a hard timeout so a stuck SSR can't hang us.

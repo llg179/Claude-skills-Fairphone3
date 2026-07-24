@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Bisection: does the WCD ANALOG codec produce ANY sound? Route MM1 -> PRI_MI2S
 # -> WCD and drive the HEADPHONE (HPHL/HPHR PA) instead of EAR. ~15s tone so the
 # user can listen on plugged-in headphones. If HPH sounds but EAR didn't ->

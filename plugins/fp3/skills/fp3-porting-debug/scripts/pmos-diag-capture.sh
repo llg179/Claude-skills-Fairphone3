@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # pmos-diag-capture.sh — run on pmOS as root (echo PW | sudo -S bash THISFILE).
 # Bind the ADSP DIAG (data) + DIAG_CNTL (gated to c200000), push the F3 mask,
 # and capture the ADSP's debug log — first on the running ADSP (validate the

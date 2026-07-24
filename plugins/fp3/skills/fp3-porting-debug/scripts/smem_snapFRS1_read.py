@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # snapFRS1 reader: framer HW register-state at enumerate-timeout. Decodes FS/SFS/MS from base+0x604.
 import mmap, struct
 SMEM_PA=0x86300000; WIN=0x40000; HDR=0x2ab0

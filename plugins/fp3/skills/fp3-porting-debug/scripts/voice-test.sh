@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Live in-call audio test harness for FP3 q6voice.
 #   $1 = earpiece | speaker   $2 = duration seconds
 # Frees the ALSA card from PulseAudio, sets the Voice Call routing, then holds

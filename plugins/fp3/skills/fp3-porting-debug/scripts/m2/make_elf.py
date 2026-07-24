@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-2.0-or-later
 # Wrap a raw code blob into a minimal elf32-hexagon with one .text at a given vaddr,
 # so llvm-objdump -d gives correct PCs. Usage: make_elf.py in.bin out.elf 0xVADDR
 import struct, sys

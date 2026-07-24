@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
 # build_m2_stash.sh — build the PURE-STASH single-hook image for Plan (C)
 # (bss-stash + devcoredump-exfil). NO diag emit anywhere => proven run-1 safe
 # (folyt.13 point 2: the load/store stash path ran clean, no reboot).
