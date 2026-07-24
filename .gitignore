@@ -1,0 +1,12 @@
+# Local, machine-specific overrides — never commit these.
+fp3-env.local.sh
+**/scripts/generated/
+**/__pycache__/
+*.pyc
+
+# Vendor firmware and anything extracted from it must not be redistributed.
+*.mbn
+*.elf
+*.bin
+*.o
+*.tar.gz

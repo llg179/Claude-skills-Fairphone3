@@ -1,0 +1,8 @@
+# Copy to fp3-env.local.sh (git-ignored) and fill in your own values.
+# Anything you do not set falls back to the documented default in fp3-env.sh.
+
+export FP3_PW=changeme                  # pmOS user password you chose at install
+export FP3_SERIAL=XXXXXXXXXXXX          # `fastboot devices` / `adb devices`
+export FP3_ROOT=$HOME/fp3               # where you keep images, dumps, the journal
+export FP3_PMOS=$HOME/pmos              # parent of the pmbootstrap + kernel trees
+# export FP3_DEV_IP=172.16.42.1         # only if your USB-net uses something else

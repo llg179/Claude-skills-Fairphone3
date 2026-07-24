@@ -1,0 +1,31 @@
+# GOLDEN SLIMbus FRAMER registers, UT slot_a (framer UP), 2026-07-03
+# base 0xc140000 (SLIMbus core), offsets from downstream slim-msm-ctrl.c enum frm_reg
+# FRM_ACTIVE = 1 (bit0 of FRM_CFG)
+FRM_CFG         0x0c140400 = 0x000D0C83   # bit0=ACTIVE set + clk gear/rootfreq config
+FRM_STAT        0x0c140404 = 0x060D1901
+FRM_INT_EN      0x0c140410 = 0x0000000B
+FRM_INT_STAT    0x0c140414 = 0x00000000
+FRM_WAKEUP      0x0c14041c = 0x00000000
+FRM_CLKCTL_DONE 0x0c140420 = 0x00000000
+FRM_IE_STAT     0x0c140430 = 0xFE010010
+FRM_VE_STAT     0x0c140440 = 0x00000000
+# component/core:
+NGD_VERSION     0x0c140000 = 0x01050000
+COMP_CFG        0x0c140004 = 0x00000001
+0x0c140010                 = 0x00000020
+COMP_TRUST_V2   0x0c143000 = 0x00000180
+PGD_OWN_EE_V2   0x0c14300c = 0x00003FFF
+PGD_CFG_V2      0x0c140800 = 0x00000001
+PGD_STAT_V2     0x0c140804 = 0x00C00710
+PGD_INT_EN_V2   0x0c140810 = 0x00000003
+PGD_IE_STAT_V2  0x0c140820 = 0x00010000
+
+# === pmOS slot_b (framer DEAD) comparison, 2026-07-03 ===
+# FRM_CFG        0x0c140400 = 0x000D0C83   IDENTICAL to UT golden (framer CONFIGURED active)
+# FRM_STAT       0x0c140404 = 0x00000000   <== differs (UT=0x060D1901); framer NOT running
+# FRM_INT_EN     0x0c140410 = 0x0000000B   identical
+# FRM_CLKCTL_DONE0x0c140420 = 0x00000000   identical
+# COMP_CFG       0x0c140004 = 0x00000001   identical
+# NGD_CFG        0x0c141000 = 0x00000000   (UT=0x7)
+# => framer config byte-identical; only core_clk (SLIM_ROOT_FREQ=24576000=24.576MHz) missing => FRM_STAT=0
+# downstream framer-start: clk_prepare_enable(rclk 24.576MHz) + writel(1,FRM_WAKEUP@0x41c) + FRM_CFG=0x000D0C83

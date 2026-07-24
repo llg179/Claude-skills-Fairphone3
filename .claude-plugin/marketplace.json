@@ -1,0 +1,20 @@
+{
+  "name": "fp3-claude-skills",
+  "owner": {
+    "name": "Lajosházi, László Gergely",
+    "email": "lajoshazilg@gmail.com"
+  },
+  "metadata": {
+    "description": "Claude Code skills for Fairphone 3 (MSM8953/SDM632) mainline Linux bring-up and debugging",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "fp3",
+      "source": "./plugins/fp3",
+      "description": "Fairphone 3 mainline bring-up: hardware facts, three OS tracks, ground-truth acquisition, and a guard-railed kernel edit-build-flash-capture loop.",
+      "version": "0.1.0",
+      "author": { "name": "Lajosházi, László Gergely" }
+    }
+  ]
+}
