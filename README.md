@@ -281,7 +281,7 @@ and `references/`.
 
 Some notes are in Hungarian; `references/slimbus-audio-context.md` is English.
 
-Related: the kernel fixes this work produced live on the `fp3-709` branch of
+Related: the kernel fixes this work produced live on the `fp3-7.0.9-audio` branch of
 <https://github.com/llg179/linux>.
 
 ## Safety

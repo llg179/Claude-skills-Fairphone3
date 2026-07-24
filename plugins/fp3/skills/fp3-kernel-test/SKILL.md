@@ -63,7 +63,7 @@ reset: it clears the "unbootable"/retry state on a slot you just broke.
 - Kernel source tree is a detached checkout whose `origin` is upstream
   (msm8953-mainline / torvalds) — **never push to `origin`.** Publishing the FP3
   work goes ONLY to the user's personal fork remote (`github.com/llg179/linux`,
-  branch `fp3-709`); commit as the user (author `Lajosházi, László Gergely`,
+  branch `fp3-7.0.9-audio`); commit as the user (author `Lajosházi, László Gergely`,
   `Signed-off-by:` + `Co-authored-by: Claude …`), English comments only, no
   Hungarian in code. ☠️ On the live-USB network a `git push` over SSH port 22
   hangs/`unexpected disconnect while reading sideband packet` even though
