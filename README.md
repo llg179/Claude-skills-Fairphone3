@@ -1,4 +1,4 @@
-# fp3-claude-skills
+# Claude-skills-Fairphone3
 
 Claude Code skills for bringing up and debugging **mainline Linux on the
 Fairphone 3** (MSM8953 / SDM632) — postmarketOS, Sailfish OS (hybris), and the
@@ -20,8 +20,8 @@ from a pin that is actually dead.
 ## Install
 
 ```
-/plugin marketplace add llg179/fp3-claude-skills
-/plugin install fp3@fp3-claude-skills
+/plugin marketplace add llg179/Claude-skills-Fairphone3
+/plugin install fp3@Claude-skills-Fairphone3
 ```
 
 Then invoke with `/fp3-porting-debug` or `/fp3-kernel-test`.
