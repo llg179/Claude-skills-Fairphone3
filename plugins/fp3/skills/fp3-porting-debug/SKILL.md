@@ -51,9 +51,15 @@ audio-routing) is still open — a separate, optional task.
 `references/{safety,firmware-re,recovery,devmem-oracle-kernel}.md`.
 
 **Tooling + source, also bundled:**
-- `scripts/` — all the FP3 tooling (source only; `fp3-env.sh` exports `$GEN` = the `generated/`
-  symlink → `/tmp`, where every runtime output lands, so `scripts/` stays clean). See
-  `scripts/README-generated.md`.
+- `scripts/` — the reusable FP3 tooling, one line per script in `scripts/INDEX.md` (read that
+  first to find the right one). Config comes from `scripts/fp3-env.sh`; every value is
+  `${VAR:-default}` with the default documented inline, and secrets (`FP3_PW`, `FP3_SERIAL`)
+  have none — put yours in the git-ignored `fp3-env.local.sh`. Source only: `$GEN` (the
+  `generated/` symlink → `/tmp`) takes every runtime output, see `scripts/README-generated.md`.
+- `scripts/archive/` — single-use reverse-engineering artifacts from the SLIMbus audio work
+  (`build_snap*` → `deploy_snap*` → `smem_snap*_read` triplets, the Hexagon hooks, and the
+  `m2/` firmware-resigning tree). Kept as a record of what was tried, not as a toolkit; most
+  of it needs vendor firmware that is not redistributable.
 - `src/` — symlinks to the kernel trees + build system, with `src/sources.manifest.md`
   (git URL + branch per tree) so a fresh machine can **clone-if-absent** and re-point the link.
 
