@@ -4,6 +4,9 @@ fp3-env.local.sh
 **/__pycache__/
 *.pyc
 
+# Third-party tooling: fetch it from upstream, do not vendor it here.
+**/qtestsign/
+
 # Vendor firmware and anything extracted from it must not be redistributed.
 *.mbn
 *.elf
@@ -12,4 +15,4 @@ fp3-env.local.sh
 *.tar.gz
 
 # Personal report/outreach drafts and raw device captures — kept local.
-references/report-attachments/
+**/references/report-attachments/
