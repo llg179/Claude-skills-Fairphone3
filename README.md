@@ -45,11 +45,26 @@ Two values deliberately have **no** default, because they are yours:
 * `FP3_PW` — the password of the pmOS user, whatever you set during
   `pmbootstrap init`. The scripts use it for `sshpass` and for `sudo -S` on the
   device.
-* `FP3_SERIAL` — your device's USB serial number, the string `fastboot devices`
-  and `adb devices` print in the first column. The flashing scripts pass it to
-  `fastboot -s` so they act on the right phone if anything else is plugged in;
-  it is also how a script can tell "the phone came back" from "some other
+* `FP3_SERIAL` — your device's USB serial number. The flashing scripts pass it
+  to `fastboot -s` so they act on the right phone if anything else is plugged
+  in, and it is how a script tells "the phone came back" from "some other
   device appeared".
+
+  Read it off the device, whichever mode it is in:
+
+  ```
+  fastboot devices          # in the bootloader
+  A209H47E0202    fastboot
+
+  adb devices               # in Android, TWRP or a booted pmOS with adb
+  A209H47E0202    device
+
+  lsusb -v -d 18d1: 2>/dev/null | grep iSerial   # from the USB descriptor
+  ```
+
+  It is the first column, before the mode word. The same string is printed by
+  `fastboot getvar serialno`. It is a property of the phone, so it does not
+  change when you reflash or switch slots.
 
 Put your own values in `fp3-env.local.sh` next to it — that file is
 git-ignored. Start from `fp3-env.local.sh.example`.
