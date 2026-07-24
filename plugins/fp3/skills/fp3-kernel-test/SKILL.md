@@ -174,6 +174,15 @@ radius of your edit:
   and confirm the deployed DTB md5 matches the one your committed source compiles to.
   (Worked example folyt.208: 4-5 DTB iterations in one session localised the WCD9335
   MCLK `func1` pinmux — each cycle ~2 min, vs a ~45 min apk build.)
+  - **☠️ Once the change also lives in a package, deploy the DTB from the BUILT PACKAGE,
+    not from your source tree.** The host `make …dtb` writes into the tree, and that file
+    goes stale the moment you rebase, cherry-pick or let the package apply patches — you
+    then flash a DTB that does not correspond to the kernel you installed. Symptom: the
+    driver loads, the node is simply absent, and you debug a device tree that was never
+    deployed. (Cost this once: after cherry-picking the camera series onto the audio branch
+    the copied DTB was the pre-cherry-pick one, so `imx363` never probed and the media graph
+    stayed empty.) Extract it from the apk (`boot/dtbs/qcom/<board>.dtb`) whenever the
+    package is the thing you built, and keep the source-tree `make` for pure DT iterations.
 - **Kernel image / built-in (`=y`) code changed → full rootfs flash** (see below;
   slow, must run backgrounded).
 - **ADSP firmware changed → SSR-reload** (see the firmware section; ~2 s, no
@@ -226,6 +235,24 @@ method traps, all learned 07-21 on the FP3 rear camera:
   + `/dev/i2c-3`, no kernel changes.)
 
 ### Step 2 — Build
+☠️ **A kernel version bump can silently DROP config symbols, and the build stays green.**
+Kconfig symbols get renamed upstream; `olddefconfig` discards a name it no longer knows
+**without a word**, so a config carried forward from an older kernel quietly stops building
+whatever that symbol selected. There is no warning, no error, and the package looks normal —
+the failure only appears on the device as a missing feature. (Cost this a full session: the
+FP3 panel driver was `CONFIG_DRM_PANEL_FAIRPHONE_FP3_HX83112B` up to 6.13 and
+`CONFIG_DRM_PANEL_HIMAX_HX83112B` after it. With the stale name the panel module was never
+built; `/dev/dri` did not exist and the compositor looped 73 times on
+`phoc-wlroots-CRITICAL: Found 0 GPUs, cannot create backend` — which reads like a GPU or DRM
+bug, not a config typo.)
+- After any kernel bump, **verify the symbols you depend on still exist**:
+  `grep -c '^config <SYMBOL>$' <tree>/**/Kconfig`, or simply check the module you expect
+  actually appears in the built package (`tar tzf …apk | grep <module>.ko`).
+- Better: assert on the *artifact*, not the config. A one-line "is the .ko in the package"
+  check catches every rename, every dropped dependency, and every `olddefconfig` surprise.
+- The generic lesson: **a green build is not evidence that your change is in the binary.**
+  Whatever you rely on, confirm it exists in the output before you spend time on the device.
+
 ```bash
 rm -rf /tmp/pmbootstrap-local-source-copy
 touch <edited-file>            # force pmb to see the change

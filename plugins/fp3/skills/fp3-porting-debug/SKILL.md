@@ -27,13 +27,17 @@ SKILL body stays small; Read a pack only when you need it). The searchable index
 incl. the "what did we already rule out" map, is
 [`references/data-index.md`](references/data-index.md) — **read it first.**
 
-**Audio / SLIMbus — SOLVED (folyt.208, 2026-07-24): audible clean music on the headphone/earpiece SLIMbus path.**
+**Audio — SOLVED end to end (folyt.208-211, 2026-07-24): playback AND the built-in microphones work.**
 Two breakthroughs: (1) framer wall = QDSP6SS `0x0c20002c` bit3 (folyt.196-199); (2) missing physical
 MCLK = the codec `func1` pinmux never applied because the `gpio-gate-clock` used
-`pinctrl-names="active","sleep"` instead of `"default"` (folyt.208). Fix commits on fork
-`github.com/llg179/linux` branch `fp3-709` (HEAD `2c2fd91`). Volume control = `RX1/RX2 Mix Digital
-Volume` (numid 13/14), not the main-path `RX Digital Volume`. Only the analog **mic** path (AMIC
-audio-routing) is still open — a separate, optional task.
+`pinctrl-names="active","sleep"` instead of `"default"` (folyt.208); (3) capture = a TX front-end
+hold that was asserted and never released, plus the DMIC clock rate and the board routes the codec
+expects from the DT (folyt.211). Volume control = `RX1/RX2 Mix Digital Volume` (numid 13/14), not
+the main-path `RX Digital Volume`. Fix commits on fork `github.com/llg179/linux`: branch `fp3-709`
+(audio only, the submittable series) and `fp3-audio-camera` (the same plus the IMX363 camera — what
+actually runs on the device). The build that produces it: `github.com/llg179/fp3-pmaports`.
+The FP3's built-in mics are **digital** (DMIC0-3 all capture); the analog AMICs carry nothing except
+the headset mic on AMIC2, so a downstream label saying otherwise is not evidence.
 - [`references/slimbus-audio-context.md`](references/slimbus-audio-context.md) — entry doc: top banner
   carries the full resolution; symptom, ruled-out catalogue, component address map (§7), device access.
   **Read first for the audio history/method.**
@@ -244,6 +248,37 @@ your remaining hypotheses in half.
    proved `func1` UNCLAIMED — the real fix; and the DAPM `On` set showed the headphone
    ran through the interpolator SECONDARY/MIX branch, so `RX1/RX2 Mix Digital Volume` was
    the working loudness control while the main-path `RX Digital Volume` did nothing.)
+
+   **When a path is fully powered yet produces exact zeros, look for two board-level fault
+   classes before suspecting the far side.** Exact zeros — not noise, not garbage — mean a
+   digital source of silence, and on this hardware it was never the co-processor:
+   - **A clamp asserted at power-up that nobody releases.** `wcd9335_codec_enable_adc()`
+     asserts the TX front-end hold in `PRE_PMU`, and mainline never calls it with `false`
+     (downstream releases it from a 300 ms delayed work). Grep the driver for every
+     enable/disable *pair* — a helper called only ever with `true` is the smell. ⚠️ Where you
+     release it matters: DAPM powers **mux widgets before ADC widgets**, so releasing from
+     the decimator's `POST_PMU` is undone immediately by the ADC's own `PRE_PMU`. The live
+     register is the arbiter (`0613 = 0x40` meant still clamped).
+   - **A supply or source the codec expects the BOARD to wire.** Widgets with no in-codec
+     route are dead ends until the DT connects them: `MCLK` (wire it to every path that needs
+     it — routing it only through `RX_BIAS` left capture unclocked, so recording worked *only
+     while playback happened to be running*), `MIC BIAS<n>`, and the DMICs. Note a DMIC widget
+     is an **ADC, not an input**: DAPM will not power it from a supply alone, it needs a source
+     endpoint behind it (`"DMIC0", "Digital Mic0"`). Downstream expresses this as the reverse
+     `"MIC BIAS<n>" -> "<name> Mic"` pair, which modern ASoC rejects ("Connecting non-supply
+     widget to supply widget"), so translate it rather than copying it.
+
+   **And board parameters the driver merely guesses.** Mainline wcd9335 had no mic-bias voltage
+   support at all (1.8 V power-on default where the board wants 2.8 V) and derived the DMIC
+   clock from MCLK alone (4.8 MHz where the capsules want 2.4 MHz, so they returned silence).
+   Both are DT properties downstream sets and mainline never read. When a device is quiet
+   rather than broken, diff the downstream DT for `qcom,*` properties nobody parses upstream.
+
+   **Discriminating transport from payload without the far side:** sample the SLIMbus master's
+   per-pipe counters in the AP-visible aperture (`/dev/mem` at the LPASS alias) twice a second
+   apart. They stand still at idle and advance at the same rate for playback and capture when
+   data really flows — which proved the bus was carrying the capture channel and moved the
+   search back into the codec, correcting an earlier conclusion that the ADSP was at fault.
    **To close "is there ANY divergent register in this block" exhaustively (not by sampling),
    pair writer-enumeration with a full-aperture two-sided resting diff — and neither needs the
    device if you already have both dumps.** (a) *Enumerate every writer* of the block from the
