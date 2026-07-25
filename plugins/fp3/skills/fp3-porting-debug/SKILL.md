@@ -562,6 +562,14 @@ Instruments, by the question they answer (choose the lightest that answers yours
   pointers → resolve against `adsp.mbn` rodata (VA→file-offset). Re-arm masks after
   an SSR (it resets them). (Worked example: this recovered a CVD `q6_core_clk`
   clock-lookup failure; the framer's own messages happened to be QSR-hashed.)
+  **Decide decodability offline first, at zero device risk:** `strings -n6 fw.mbn | grep -cE
+  '%[-0-9.]*[dsxulc]'` — a high plaintext-printf count means the log is EXT-readable and a local
+  DIAG/coredump capture suffices; only hashes means QSR and you need the vendor `.qdb`. Settle this
+  *before* anyone asks for an external QXDM capture. **From a coredump you can also prove a branch did
+  NOT run:** a fmt-string whose micro-MSG pointer is absent from a *fresh* (post-re-trigger, before the
+  ring wraps) dump while same-log-level siblings are present means that code path never executed
+  (positive-control the false-negative on the working side). NB `remoteproc` numbering drifts across
+  SSR — `cat …/remoteprocN/name` every time; dump to `/tmp` (tmpfs), not the possibly-full `/`.
   **On the UT oracle DIAG F3 works and the SLIMbus framer's messages are EXT-readable — but you
   must (a) TRIGGER framer activity and (b) filter the peripheral mask.** Idle, the framer logs
   nothing; earpiece playback (`pactl`/`paplay`) elicits `[SlimBus.c]`/`[SlimBusMaster.c]`/

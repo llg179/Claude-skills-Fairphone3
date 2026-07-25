@@ -233,6 +233,73 @@ method traps, all learned 07-21 on the FP3 rear camera:
   (Worked example: found the rear sensor at 0x1a not 0x10, dumped the module EEPROM
   @0x50, and drove the dw9714-class VCM @0x0c through a focus sweep, all via `/dev/mem`
   + `/dev/i2c-3`, no kernel changes.)
+- **Userspace *audio* (pulseaudio UCM) has its own traps, learned 07-24 bringing the WCD9335 up
+  through pulse (full detail in `llg179/fp3-pmaports/userspace-audio/README.md`):**
+  (a) **Validate "works" with the REAL audio server, not raw `aplay`/`arecord`** — apps go through
+  pulseaudio (or pipewire-pulse; `apk info -e` decides which), whose UCM layer behaves nothing like raw
+  ALSA. (b) **pulse's UCM wrapper `_ucm0001.hw:CARD,N` may resolve only for PCM device 0** on a qcom
+  card (`Unknown PCM …,1` while `aplay -D hw:0,1` works); any capture/2nd-playback SectionDevice on a
+  non-0 device then poisons the whole card → `auto_null`. Fix: **multiplex every playback onto device 0**
+  (pick the output with the ADSP front-end mixer, not the PCM number) and **expose capture as a raw
+  `module-alsa-source hw:0,N` from a pulse drop-in, not a UCM device.** (c) **A q6asm front-end opens
+  only once routed** (else `EINVAL`), and pulse runs only the **verb** EnableSequence at profile-probe →
+  the verb must leave a valid default backend route. (d) **Re-cset-ing the codec input mux mid-stream
+  goes silent** (the ADC power sequence, which releases the TX-hold, doesn't re-run) → switch the route
+  only while the capture is idle (pulse suspends `module-alsa-source` between uses). (e) **Isolated
+  profile-probe without wrecking the live session:** throwaway `pulseaudio -n … load-module
+  module-alsa-card device_id=0 use_ucm=yes` + `kill -STOP`/`-CONT` (never `kill`) the greeter pulse.
+  (f) **MBHC headset jack detection — mainline WCD9335 ships none; now SOLVED on the FP3** (branch
+  `wcd9335-mbhc`; ported from the dropped 2018 Kandagatla series then re-worked to this codec's behaviour).
+  Four transferable lessons, each of which cost a build cycle:
+  - **The codec must own its jack.** The generic qcom machine driver (`apq8016_sbc`) hands its jack only to
+    codecs on an *MI2S* link, so a SLIMbus WCD9335 never gets one via `.set_jack` (prove it: a `dev_info` in
+    the codec's set_jack never fires) and every report goes to a NULL jack. Fix: create the jack in the
+    **codec's** component probe (`snd_soc_card_jack_new(component->card, …)`). You then get **two**
+    `Fairphone 3 Headset Jack` evdev nodes — the codec's (created first in component probe, lower `eventN`)
+    is the live one; the machine driver's is dead. Test with `evtest --query /dev/input/eventN EV_SW
+    SW_HEADPHONE_INSERT` (rc 10 = inserted, 0 = out), not the numid 70/71 controls (those are the dead jack).
+  - **A status register read *inside* the IRQ handler can be the transient value.** `ANA_MBHC_RESULT_3`
+    bit 3 (unplugged) reads its settling value 0 for the whole active-detection window after the edge — so a
+    removal looks identical to an insertion and the jack sticks "inserted"; `msleep(400)` was not enough. The
+    same register read in *steady state* (via debugfs, or at init) is reliable. Lesson: don't trust a volatile
+    detection register sampled at the edge; drive direction from a **software state** flipped per IRQ and
+    **seeded once at init** from the settled read.
+  - **Edge-triggered detect blocks often detect one direction at a time.** WCD9335 `MECH_DETECT_TYPE` must be
+    re-armed (written) on *every* edge or the opposite transition (in practice, every removal) never fires an
+    IRQ at all — the jack silently sticks on the first insertion. Watch `/proc/interrupts` count: if it stops
+    incrementing after one direction, you dropped the re-arm.
+  - Verified by watching the evdev `SW_*` state track physical plug/unplug across many cycles with no drift;
+    boot-with-headset-plugged handled by the init seed.
+- **Voice-CALL audio on mainline qcom (msm8953/msm8916/sdm845…) is a SOLVED but not-upstreamed problem —
+  don't reimplement it.** The pieces: (1) the **q6voice kernel patches** (Stephan Gerhold's msm8916 set:
+  q6mvm+q6cvp+q6cvs+q6voice-dai) — `q6voice_path_start` creates a **passive/modem-controlled MVM + a CVP**
+  (which binds the codec AFE Tx/Rx ports) and sends `START_VOICE`; it does **not** create a CVS session, and
+  `q6cvs.c` being a ~36-line APR-registration is **normal** (same shape as q6cvp.c/q6mvm.c), NOT a stub bug —
+  during a call the modem takes control of LPASS and owns the vocoder stream. (2) The **`q6voiced` userspace
+  daemon** (`apk add q6voiced`; config `/usr/share/q6voiced/q6voiced.conf` → `q6voice_card`/`q6voice_device`
+  for the voice PCM, e.g. hw:0,4=VoiceMMode1) — it opens/closes that PCM on call start/end. It listens on
+  **both** `org.ofono.VoiceCallManager` **and** `org.freedesktop.ModemManager1.Call` dbus signals (check with
+  `strings`), so on a ModemManager device you do **not** need oFono. (3) The **codec voice route** (earpiece/
+  speaker downlink + mic uplink mixers) must be set — normally by a UCM "Voice Call" verb via callaudiod, and
+  it must be set **before** q6voiced opens the PCM (same route-before-open EINVAL trap as media q6asm FEs).
+  Opening the voice PCM by hand (`aplay`/`arecord`) is the wrong tool: it xruns/EINVALs — the FE only needs
+  open+prepare (no data transfer), which q6voiced does correctly. Reference: postmarketOS q6voice(d) project
+  + pmaports MR !1233. **The modem side also needs `soc-qcom-msm8953-modem` (pulls `tqftpserv` — the modem's
+  EFS/NV access over QMI); enable `tqftpserv`+`rmtfs`, and REBOOT so the modem boots with EFS access** (a
+  modem that came up without it won't pick up voice/NV config until restarted). ⚠️ **FP3 status (corrected
+  2026-07-25): the modem↔LPASS bridge DOES work — proven live.** An earlier "both directions silent, bridge
+  doesn't carry audio" conclusion was WRONG: it only ever tested the **earpiece** downlink (SLIMBUS_0_RX,
+  through the WCD9335). Routing voice to the **speaker** instead (`QUIN_MI2S_RX Voice Mixer VoiceMMode1 1` →
+  the AW8898 amp on MI2S, *not* the codec) put the far end's audio out the loudspeaker. The real gap is
+  narrower and AP-side: **q6voice opens the AFE port via the CVP directly and never triggers the WCD9335's
+  SLIMbus DAI** the way media DPCM does (`.hw_params` on the codec backend), so *anything through the codec*
+  (earpiece SLIMBUS_0_RX, every mic SLIMBUS_0_TX) is silent in-call while the MI2S speaker works standalone.
+  The CVP binds whichever Voice Mixer was set **last** (`q6voice-dai.c` `q6voice_set_port(…, mc->reg)`).
+  Mic-path idea (untested end-to-end): co-open the media capture (`hw:0,1` → SLIMBUS_0_TX ↔ AIF1_CAP DPCM)
+  during the call to power the codec Tx chain the CVP reads. Two traps that invalidated hours of testing:
+  (a) **a second session running the audio selftest/`hwtest` contends for the one sound card** — during a
+  live call, only ONE session may touch it; (b) login re-runs the HiFi UCM verb, ZEROing the codec downlink
+  muxes — re-apply the voice route AFTER the call goes active.
 
 ### Step 2 — Build
 ☠️ **A kernel version bump can silently DROP config symbols, and the build stays green.**
@@ -252,6 +319,21 @@ bug, not a config typo.)
   check catches every rename, every dropped dependency, and every `olddefconfig` surprise.
 - The generic lesson: **a green build is not evidence that your change is in the binary.**
   Whatever you rely on, confirm it exists in the output before you spend time on the device.
+
+🐢 **The kernel build silently bypasses ccache → every build is a full ~30-min recompile, even for a
+one-line module change.** `cache_ccache_$ARCH/` exists and looks used, but the chroot's `/etc/abuild.conf`
+ships `#USE_CCACHE=1` **commented out** (Alpine default), so abuild never prepends `/usr/lib/ccache/bin` to
+`PATH` and the make calls the real `/usr/bin/aarch64-…-gcc`, not the ccache wrapper. Worse, **`--force`
+zaps and recreates the buildroot every run**, resetting that file — and `--force` overrides `--lax`, so
+`--lax --force` still zaps. Diagnose in seconds from a running compile: the parent of a `cc1` process
+(`awk '{print $4}' /proc/<cc1-pid>/stat` → that pid's cmdline) is `/usr/bin/…gcc` when bypassed vs
+`/usr/lib/ccache/bin/…` when active; and `cache_ccache_$ARCH/*/stats` mtimes are stale. **To actually use
+it:** (1) uncomment `USE_CCACHE=1` in `work/chroot_native/etc/abuild.conf`; (2) set `hash_dir = false` +
+`base_dir = /home/pmos` in `cache_ccache_$ARCH/ccache.conf` (each `_commit` builds in a different
+`linux-<commit>` dir, so the default path-hash misses every file); (3) build with **`--lax` and *no*
+`--force`** — and bump `pkgrel` to a value not yet in the work repo so `--lax` still rebuilds it without a
+zap. First such build repopulates (slow); subsequent ones are cache-hit-dominated (~2–5 min). See the
+[[feedback_pmbootstrap_ccache]] memory. (An env/SSD reshuffle can also orphan a previously-warm cache.)
 
 ```bash
 rm -rf /tmp/pmbootstrap-local-source-copy
@@ -299,6 +381,36 @@ line is gone *and* `/sys/bus/slimbus/devices/` shows a codec laddr; **fail/basel
 = `capability exchange timed-out`, NGD `STATUS=0x40c CFG=0x0 INT_STAT=0x0`, no
 soundcard.) A result that matches neither is usually "code didn't run" — check
 your DBG breadcrumb.
+
+### Step 4h — Human-in-the-loop physical tests: strict handshake, never a timer
+Some signals only exist while a human performs a physical act you cannot script:
+plug/unplug the 3.5 mm jack, press a headset button, insert/remove the SIM,
+connect the charger, speak into the mic, listen on the speaker, place/answer a
+call. For these, **a read is only meaningful against a *confirmed* physical
+state.** Discipline (learned the hard way — a timing-window test produced hours
+of invalid data because the human was multitasking and an edited chat message
+desynced us):
+
+- **One action at a time, then wait for the human's explicit "done".** Never
+  "plug in sometime in the next 30 s" and sample on a timer — the human
+  multitasks; the window and your reads will not line up, and you will draw a
+  confident wrong conclusion. Say exactly one action, stop, and read *only after*
+  they confirm it is complete.
+- **Baseline first.** Capture the instrument in the known starting state (jack
+  out) before any action, so the A/B delta is unambiguous.
+- **Re-confirm the physical state before interpreting** — a late or edited
+  message can retroactively invalidate a read. If a reading is surprising, the
+  first hypothesis is "we were out of sync", not "the hardware is broken".
+- **Keep a monotonic ledger** the human cannot desync you on: an edge counter
+  (`/proc/interrupts`) or a **volatile** status register that tracks the physical
+  state live (find one — cached regmap values show the last *written* value, not
+  the pin; only `volatile_reg` entries read through to hardware). One IRQ /
+  status-flip per confirmed action = clean; a mismatch = you are desynced, redo.
+- **Separate "HW detects it" from "the stack reports it".** The edge firing +
+  the volatile status flipping proves the *hardware* path; the userspace surface
+  (jack kcontrol, input `SW_*`, `evtest --query`) not moving despite that proves
+  the *report* is lost downstream (e.g. a NULL jack pointer, or set_jack wired to
+  the wrong codec). Read both every step so you know which half is broken.
 
 ---
 
