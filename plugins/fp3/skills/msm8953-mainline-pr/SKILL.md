@@ -3,28 +3,35 @@ name: msm8953-mainline-pr
 description: >-
   How to turn the FP3 (MSM8953/SDM632) local kernel work — the fp3-integration
   topic branches: audio/wcd9335, camera/imx363, charger/smb2, voice — into a
-  clean submission for the msm8953-mainline project (github.com/msm8953-mainline/linux),
-  and how the same work would later go upstream to LKML. Encodes the maintainer
-  guidance received on the msm8953-mainline Matrix channel: one branch per
-  subsystem (not sub-split), few well-formed commits, and never mix DTS with
-  driver code. Use whenever preparing a pull request or patch series from the
-  llg179/linux fork.
+  clean upstream submission. Because this work is AI-assisted, LKML is the only
+  open destination: msm8953-mainline does not merge AI-assisted work and
+  postmarketOS bans it outright. Encodes the maintainer guidance received on the
+  msm8953-mainline channel: one branch per subsystem (not sub-split), few
+  well-formed commits, and never mix DTS with driver code. Use whenever
+  preparing a patch series from the llg179/linux fork.
 ---
 
-# msm8953-mainline pull-request preparation
+# FP3 kernel work → upstream submission
 
 This is a **process** skill: how to take device-support work that currently lives
 on the personal fork (`github.com/llg179/linux`, the `fp3-7.0.9-*` topic branches
-and `fp3-integration`) and shape it into something a maintainer will accept —
-either as a **pull request to the msm8953-mainline project** or, later, as a
-**patch series to LKML**. The audio/WCD9335 series is the running worked example;
-its exact commit SHAs age, so treat them as illustrations of the *shape*, not as
-current fact.
+and `fp3-integration`) and shape it into something a maintainer will accept. The
+audio/WCD9335 series is the running worked example.
 
 The whole point: the fork's topic branches are ordered by *discovery* (one commit
 per thing you learned, DTS and driver interleaved). Upstream wants them ordered by
 *logic* (few commits, each one self-contained, DTS and driver never in the same
 commit). This skill is the translation.
+
+> **Read this first — the destination changed.** An earlier revision of this skill
+> recommended a **pull request to msm8953-mainline as the easy first target** and
+> stated that it had "no AI ban". **That is wrong and has been corrected below.**
+> On 2026-07-25 the msm8953-mainline maintainer (barni2000), replying in
+> [issue #197](https://github.com/msm8953-mainline/linux/issues/197), stated:
+> *"we don't merge AI assisted work, it is only allowed at upstream."*
+> For AI-assisted work the ordering of strictness is **inverted** from the usual
+> assumption: postmarketOS = total ban, msm8953-mainline = will not merge,
+> mainline Linux = permitted with disclosure. **Upstream is the only open door.**
 
 ---
 
@@ -34,67 +41,108 @@ A recurring trap: the `msm8953-mainline` branch names look like a private versio
 scheme, but they are **real torvalds versions**.
 
 - Linus bumped the major after 6.19 → `7.0` → `7.1`. So `Linux 7.1.3` is a **real
-  mainline stable release** (tagged 2026-07-04), not a relabel.
-- `msm8953-mainline` names each integration branch after the **real mainline base
-  it sits on**: `7.0.9/main` is built on torvalds `7.0.9`, `7.1.3/main` on torvalds
-  `7.1.3`. The Makefile `VERSION/PATCHLEVEL/SUBLEVEL` in those branches is the
-  genuine upstream one.
-- Verify, don't assume, which is newest: fetch the branch and check. As of this
-  writing `7.1.3/main` is the newest integration branch (≈232 device commits on
-  top of torvalds 7.1.3).
+  release**, not a relabel.
+- **But 7.1.3 is a *stable point release*, not a mainline tag.** `torvalds/linux`
+  carries `v7.1` and then moves straight on to `v7.2-rc*`; the `.3` comes from the
+  stable tree. Consequence, verified the hard way: **`v7.1.3` does not exist as a
+  ref in `torvalds/linux`**, so any recipe that compares the fork branch against a
+  torvalds tag of that number returns 404 / "unknown revision". Do not write one.
+- `msm8953-mainline` names each integration branch after the **real base it sits
+  on**: `7.0.9/main` on 7.0.9, `7.1.3/main` on 7.1.3. The Makefile
+  `VERSION/PATCHLEVEL/SUBLEVEL` in those branches is the genuine upstream one —
+  and that is the check that actually works.
+- As of 2026-07-25, `7.1.3/main` is the newest integration branch (confirmed by
+  listing the repo's branches; the `.../main` series runs 6.14 → 6.15 → 6.16.3 →
+  6.17.7 → 6.19.5 → 7.0.2 → 7.0.9 → 7.1.3). The project also tags releases as
+  `v7.1.3-r0`, which points at the branch head — *not* at an upstream base.
 
-Verification one-liner (from a checkout of the fork with `origin` =
-msm8953-mainline):
+**Verification that works** (the local fork checkout is **shallow**, so
+`git merge-base`/`git log` on it will silently mislead — query the API instead):
 
 ```sh
-git fetch origin '7.1.3/main'
-git show FETCH_HEAD:Makefile | head -4 | grep -E 'VERSION|PATCHLEVEL|SUBLEVEL'
-# is a known-good mirror an ancestor? proves it is the same linear torvalds line:
-git merge-base --is-ancestor <torvalds-mirror-ref> FETCH_HEAD && echo "linear torvalds"
+# what base is the branch really on?
+gh api "repos/msm8953-mainline/linux/contents/Makefile?ref=7.1.3/main" \
+  --jq '.content' | base64 -d | head -5      # -> VERSION 7 / PATCHLEVEL 1 / SUBLEVEL 3
+
+# which integration branch is newest?
+gh api "repos/msm8953-mainline/linux/branches?per_page=100" \
+  --jq '.[].name' | grep -E '^[0-9]+\.[0-9]+' | sort -V | tail -5
 ```
 
 **Watch for a stale mirror.** A local `fork/master` (or any personal torvalds
-mirror) may be frozen at an old release (e.g. 6.19) while upstream has moved on to
-7.1.x. Re-sync it before using it as a base — never rebase onto a stale mirror.
+mirror) may be frozen at an old release (e.g. 6.19) while upstream has moved on.
+Re-sync before using it as a base — never rebase onto a stale mirror. And note the
+local `linux-fp3` clone is depth-1 shallow: `git log -- <path>` there returns a
+single commit for *every* path, which looks like an answer but is not one.
 
 ---
 
-## Two destinations, two rule-sets
+## Where the work can actually go
 
-Decide first *where* the work is going, because it changes the base and the AI
-handling. Do not guess — the msm8953-mainline maintainers will tell you on the
-Matrix channel which they want.
+Three possible destinations, and for AI-assisted work only one of them is open.
+Establish this **before** shaping any branch, because it sets the base, the
+mechanics, and whether the effort is worth spending at all.
 
-### A. Pull request to msm8953-mainline (the near-term, easier path)
+| destination | AI-assisted work | verdict |
+|---|---|---|
+| postmarketOS (pmaports, wiki) | banned outright, CoC-enforced | closed |
+| msm8953-mainline (GitHub PR) | "we don't merge AI assisted work" | closed |
+| mainline Linux (LKML) | permitted **with disclosure** | **the path** |
 
-- It is a **GitHub PR** against the project's current integration branch.
-- **Base = the target branch itself**, e.g. `origin/7.1.3/main`. (Not
-  `sound/for-next`, not a bare torvalds tag — a PR merges into that branch, so you
-  branch from it.)
-- **No AI ban.** This is *not* postmarketOS — AI-assisted code is fine here. Since
-  the project tracks mainline, still use the kernel-standard `Assisted-by:` tag
-  (not `Co-authored-by:`) and keep the AI off `Signed-off-by` — see "Authorship and
-  provenance". If the maintainer explicitly says plain `Co-authored-by` is fine for
-  the PR, follow them; otherwise the mainline form is the safe default.
-- This is the recommended first target: it gets the work into the community
-  integration tree that the `linux-fp3-709` package can then track, without the
-  months-long LKML review cycle.
+### Why msm8953-mainline is closed (do not re-litigate it)
 
-### B. Patch series to LKML / the subsystem maintainer (the eventual, harder path)
+Stated by the maintainer barni2000 in
+[issue #197](https://github.com/msm8953-mainline/linux/issues/197), 2026-07-25:
+
+> "FP3 is using different audio architecture and we don't merge AI assisted work,
+> it is only allowed at upstream."
+
+That is **two independent refusals**, and the first one applies even to
+non-AI-assisted FP3 audio work:
+
+- **The architecture point is correct and verifiable.** Every other msm8953/sdm632
+  device in the tree uses the SoC-internal `qcom,msm8916-wcd-digital-codec` plus
+  the PMIC-internal `qcom,pm8916-wcd-analog-codec` (in `pm8953.dtsi`) over
+  **MI2S**. The FP3 is the **only** one with an external **WCD9335 on SLIMbus**.
+  Their MBHC lives in `msm8916-wcd-analog.c`; ours lives in `wcd9335.c` — different
+  driver, register map and bus. The fork has no device that would even exercise
+  our code, so merging it would mean carrying untestable code.
+- **The AI point is a project rule**, not a kernel rule. Accept it and move on.
+
+Practical consequence: **do not open PRs against `7.1.3/main`.** Anything in this
+skill that reads like PR preparation (base `origin/7.1.3/main`, GitHub flow) is
+retained only for the day a *non*-AI-assisted, architecture-relevant change is
+ready — e.g. the charger or camera work, if it were rewritten without assistance.
+
+### The open path: patch series to LKML / the subsystem maintainer
 
 - Sent by **email** (`git send-email`), plain-text patches, to the subsystem lists.
 - **Base per subsystem:** driver/machine patches on the subsystem's `-next`
   (for ASoC that is Mark Brown's `sound/for-next`); DTS patches on fresh torvalds
   mainline (routed to `linux-arm-msm` + the qcom DT maintainers via
   `get_maintainer.pl`).
-- **AI provenance is a documented requirement, not an open question.** The kernel
-  has a standard (see the "Authorship and provenance" section below): replace the
-  `Co-authored-by: Claude …` trailer with an `Assisted-by:` tag, and the AI must
-  **not** carry a `Signed-off-by`. Only the human submitter signs off and certifies
-  the DCO. Failure to acknowledge the assistance "may impede the acceptance of your
-  work" (`submitting-patches.rst`).
+- **AI provenance is a documented requirement, not an open question** — see
+  "Authorship and provenance" below. Two in-tree documents govern it and both must
+  be satisfied: `coding-assistants.rst` (the `Assisted-by:` trailer, no AI
+  `Signed-off-by`) and `generated-content.rst` (disclose what the tool did, in the
+  cover letter).
 
-Both destinations share the three shaping rules below.
+**The audio series is a genuinely good upstream candidate**, and better than it
+looks from inside the FP3 project. `wcd9335.c` in mainline has **no jack
+registration at all** — no `snd_soc_jack`, no `set_jack`, nothing. That gap affects
+every WCD9335 board in the tree, not just the FP3:
+
+```
+apq8096-db820c.dts              <- DragonBoard 820c, a reference board
+msm8996-oneplus-common.dtsi     <- OnePlus 3 / 3T
+msm8996-xiaomi-common.dtsi, -gemini.dts
+msm8996pro-xiaomi-natrium.dts, -scorpio.dts
+sdm632-fairphone-fp3.dts
+```
+
+Lead with that framing, not with "this fixes my phone".
+
+All destinations share the three shaping rules below.
 
 ---
 
@@ -172,31 +220,95 @@ DTS commit. Keep the **audio DTS commit and the modem DTS commit separate**, eve
 when unsure whether they could be combined — the per-feature split is the safe
 default.
 
-**Verify the current convention** rather than trusting this note: read the commit
-history of comparable mainline device trees (other qcom boards under
-`arch/arm64/boot/dts/qcom/`) and match how they granularise `.dts` changes.
+### Measured against mainline, not asserted
 
-```sh
-# how do other qcom boards split their dts commits?
-git log --oneline -- arch/arm64/boot/dts/qcom/ | grep -iE 'dts.*(audio|charger|camera|modem|codec)'
-git log --oneline -- arch/arm64/boot/dts/qcom/<some-other-board>.dts   # one board's dts history
+The rules above were checked against the actual commit history of qcom device
+trees in `torvalds/linux`, not inferred from the FP3 alone. What the history
+shows:
+
+**The FP3's own upstream `.dts` history is the textbook case** — an initial commit
+landing the board, then one commit per feature, in the settled naming form
+`arm64: dts: qcom: sdm632-fairphone-fp3: <verb> <thing>`:
+
+```
+arm64: dts: qcom: sdm632: Add device tree for Fairphone 3   <- initial dts, one commit
+arm64: dts: qcom: sdm632: fairphone-fp3: add touchscreen
+arm64: dts: qcom: sdm632-fairphone-fp3: Add NFC
+arm64: dts: qcom: sdm632-fairphone-fp3: Add notification LED
+arm64: dts: qcom: sdm632-fairphone-fp3: Enable WiFi/Bluetooth
+arm64: dts: qcom: sdm632-fairphone-fp3: Enable LPASS
+arm64: dts: qcom: sdm632-fairphone-fp3: enable USB-C port handling
+arm64: dts: qcom: sdm632-fairphone-fp3: Enable vibrator
+arm64: dts: qcom: sdm632-fairphone-fp3: Enable modem
+arm64: dts: qcom: sdm632-fairphone-fp3: Enable display and GPU
+arm64: dts: qcom: sdm632-fairphone-fp3: Add camera fixed regulators
+arm64: dts: qcom: sdm632-fairphone-fp3: Enable CCI and add EEPROM
 ```
 
-Note this refines "reduce the number of commits" for DTS: it means *per feature*,
-not *everything in one*. The two rules meet at **one DTS commit per subsystem** —
-which is exactly what "one branch per subsystem" already implies. Within the audio
-branch, therefore, all the audio `.dts` wiring is a single commit; it simply must
-not absorb charger/camera/modem DTS.
+**The canonical "add audio to an existing board" commit** is
+`b7b734286856 ("arm64: dts: qcom: sdm845-oneplus-*: add audio devices")`: the
+entire audio wiring for the OnePlus 6 and 6T — sound card, DAI links, codec,
+speaker/headphone routing — as **one commit**, 266 added lines across three
+`.dts`/`.dtsi` files, **zero driver files**. That is exactly the shape the audio
+DTS commit should have.
+
+Three refinements the FP3 history forces on the rule as stated above:
+
+1. **A subsystem may legitimately span more than one DTS commit** when there are
+   distinct logical steps. Camera took two — *"Add camera fixed regulators"* then
+   *"Enable CCI and add EEPROM"*. So the rule is really **one logical step per
+   commit**; "one per subsystem" is the common case, not a ceiling. Do not
+   artificially weld two genuinely separate steps together to hit a count.
+2. **Closely-related blocks may share a commit** when they are enabled by the same
+   act — *"Enable display and GPU"*, *"Enable CCI and add EEPROM"*. The test is
+   whether they are one hardware-enablement story, not whether they are one
+   subsystem.
+3. **Style and cleanup never ride along with functional changes.** They get their
+   own commits: *"Move status properties last"*, *"Add newlines between regulator
+   nodes"*. If a reviewer asks for reformatting, that is a separate patch.
+
+**Verb convention** (visible throughout the history above): **"Enable X"** when the
+node already exists in the SoC `.dtsi` and the board turns it on / wires it up;
+**"Add X"** when the commit introduces a new node. The FP3 audio work is the former
+— `Enable LPASS` already landed, so the WCD9335 commit follows that lineage.
+
+Re-verify rather than trusting this snapshot; conventions drift. Note that the
+local fork checkout is **shallow** (`git log` on a path returns a single commit),
+so mine the history over the API instead:
+
+```sh
+# per-board dts history, straight from mainline
+gh api "repos/torvalds/linux/commits?path=arch/arm64/boot/dts/qcom/<board>.dts&per_page=100" \
+  --jq '.[] | .commit.message | split("\n")[0]'
+
+# what did a given dts commit actually touch?
+gh api repos/torvalds/linux/commits/<sha> \
+  --jq '"files: \(.files|length) +\(.stats.additions)/-\(.stats.deletions)", (.files[].filename)'
+```
+
+Note this refines "reduce the number of commits" for DTS: it means *per logical
+step*, not *everything in one*. Within the audio branch, all the audio `.dts`
+wiring is a single commit unless it contains two genuinely separate enablement
+steps; it must never absorb charger/camera/modem DTS.
 
 ---
 
 ## Worked example: the audio series (15 → 8 commits, one branch)
 
-The `fp3-7.0.9-audio` branch had 15 discovery-ordered commits, three of which
-**mixed** DTS and driver (`81d06a36` touched `qcom_q6v5_pas.c` *and* the FP3
-`.dts`; `eb2c18d7` touched `slimbus/ngd` *and* the `.dts`; `ffef69f4` touched
-`apq8016_sbc.c` *and* the `.dts`). Reshaped onto `origin/7.1.3/main` as one
-`submit/audio` branch, driver commits first, one consolidated DTS commit last:
+Verified against the branch, not recalled: `fp3-7.0.9-audio` has exactly **15**
+commits on top of `origin/7.0.9/main`, and three of them **mix** DTS with driver
+code — each touches `arch/arm64/boot/dts/qcom/sdm632-fairphone-fp3.dts` *plus* a
+driver file:
+
+| commit | driver file it also touches |
+|---|---|
+| `81d06a36` "SLIMbus WCD9335 framer bring-up via QDSP6SS quirk + codec graft" | `drivers/remoteproc/qcom_q6v5_pas.c` |
+| `eb2c18d7` "clear QDSP6SS framer quirk bit3 right before capability" | `drivers/slimbus/qcom-ngd-ctrl.c` |
+| `ffef69f4` "apq8016_sbc: add SLIMbus backend support + FP3 WCD9335 card" | `sound/soc/qcom/apq8016_sbc.c` |
+
+Reshaped as one `submit/audio` branch — **based on `sound/for-next`, not on
+`7.1.3/main`**, since LKML is the destination — driver commits first, one
+consolidated DTS commit last:
 
 1. `remoteproc: qcom_q6v5_pas: apply QDSP6SS framer quirk for WCD9335 SLIMbus`
    — driver half of the framer bring-up.
@@ -227,7 +339,7 @@ committing, drop the wrong-domain files from the index, commit the rest, and
 gather all the DTS hunks into the final DTS commit:
 
 ```sh
-git checkout -b submit/audio origin/7.1.3/main
+git checkout -b submit/audio <base>            # sound/for-next for ASoC drivers
 
 git cherry-pick -n <mixed-sha>                 # stage everything, don't commit
 git restore --staged arch/arm64/boot/dts/qcom/sdm632-fairphone-fp3.dts
@@ -242,33 +354,72 @@ needs splitting.
 
 ---
 
-## The rebase-and-retest gate (do not skip before a PR)
+## The rebase-and-retest gate (do not skip before submitting)
 
-The fork's work was built and verified on the **7.0.9** base. A PR targets
-**7.1.3/main**, so the branch must be rebased across that base bump — and a base
-bump **can break things silently** (compiles clean, does not work). Before opening
-the PR:
+The fork's work was built and verified on the **7.0.9** base. The submission
+targets a *different, newer* base — `sound/for-next` for the driver patches, fresh
+torvalds for the DTS — so the branch must be rebased across that bump, and a base
+bump **can break things silently** (compiles clean, does not work). Before sending:
 
-1. **Rebase** onto `origin/7.1.3/main`, resolving conflicts **commit by commit**.
+1. **Rebase** onto the real target base, resolving conflicts **commit by commit**.
 2. **Rebuild** — catches API churn (compile errors).
-3. **CONFIG check** — every symbol the build relies on must still exist in 7.1.3;
-   `olddefconfig` drops unknown symbols without a word (this is exactly the
+3. **CONFIG check** — every symbol the build relies on must still exist on the new
+   base; `olddefconfig` drops unknown symbols without a word (this is exactly the
    `DRM_PANEL_*_HX83112B` rename trap). A feature can vanish with zero build
    warnings.
-4. **Functional test on device** — run `fp3-selftest` (the regression suite in
-   `fp3-pmaports/tests`). This is the only thing that catches the silent class:
-   zeroed mic, dead DAPM route, missing MBHC IRQ, absent camera graph. Cross-ref
-   the `fp3-kernel-test` skill for the deploy/capture loop.
+4. **Functional test on device** — run `fp3-selftest`
+   (`fp3-pmaports/tests/fp3-selftest`, with its `checks/` and `baseline/`). This is
+   the only thing that catches the silent class: zeroed mic, dead DAPM route,
+   missing MBHC IRQ, absent camera graph. Cross-ref the `fp3-kernel-test` skill for
+   the deploy/capture loop.
 
-Only a green functional run gates the PR — "it compiled" is not enough.
+Only a green functional run gates the submission — "it compiled" is not enough.
+This matters more than usual here: `generated-content.rst` invites maintainers to
+demand extra testing of tool-assisted work, so arriving with a measured result is
+the difference between a review and a dismissal.
 
 ---
 
 ## Authorship and provenance
 
-The kernel documents exactly how to acknowledge AI assistance — this is verified
-against the 7.1.3 tree, not a guess: `Documentation/process/coding-assistants.rst`
-and the "Using Assisted-by:" section of `Documentation/process/submitting-patches.rst`.
+The kernel documents exactly how to acknowledge AI assistance. Verified in-tree,
+with line numbers, not quoted from memory — **two** documents apply, both listed
+in `Documentation/process/index.rst`:
+
+| document | what it governs |
+|---|---|
+| `process/coding-assistants.rst` | the `Assisted-by:` trailer; AI must not sign off |
+| `process/generated-content.rst` | what you must **disclose**, and maintainer discretion |
+| `process/submitting-patches.rst` | §"Using Assisted-by:" (line 637) — the requirement |
+
+`submitting-patches.rst:641` is the operative sentence: you "need to acknowledge
+that use by adding an Assisted-by tag. Failure to do so **may impede the
+acceptance of your work**."
+
+### What `generated-content.rst` additionally requires
+
+This is the half that is easy to miss, and it is the half that decides whether a
+maintainer engages. It applies "when a meaningful amount of content in a kernel
+contribution was not written by a person in the Signed-off-by chain". You are
+expected to be transparent in the **cover letter** about:
+
+- which tools were used;
+- the prompts — verbatim if the code came from a short set of them, otherwise a
+  summary of the prompts and the nature of the assistance;
+- **which portions** of the contribution the tool affected;
+- how the result was **tested**, and with what.
+
+It also states plainly what you are signing up for: *"You are expected to
+understand and to be able to defend everything you submit. If you are unable to do
+so, then do not submit the resulting changes."* And maintainers explicitly may
+**reject the series outright**, ask for extra testing, review it at lower
+priority, or ask you to explain the code to prove you understand it. Budget for
+that reaction rather than being surprised by it.
+
+For the FP3 series the strongest disclosure is the **on-device evidence**: the
+MBHC work was verified over 14 jack edges across 6 insert/remove cycles with no
+drift, via `evtest --query event5 SW_HEADPHONE_INSERT`. Lead the testing paragraph
+with that.
 
 **The `Assisted-by:` trailer (kernel-required form).** Any commit that used an AI
 coding assistant must carry, as a trailer:
@@ -278,16 +429,18 @@ Assisted-by: AGENT_NAME:MODEL_VERSION [TOOL1] [TOOL2]
 ```
 
 - `AGENT_NAME` — the AI tool/framework; `MODEL_VERSION` — the specific model.
+  The in-tree example is `Assisted-by: Claude:claude-3-opus coccinelle sparse`.
 - `[TOOL1] [TOOL2]` — optional *specialised analysis* tools actually used
   (coccinelle, sparse, smatch, clang-tidy). **Basic tools (git, gcc, make,
   editors) are NOT listed.**
-- For this project the tag is:
-
-  ```
-  Assisted-by: Claude:claude-opus-4-8
-  ```
-
-  (append e.g. `sparse smatch` only if such a tool was actually run on the patch).
+- **Name the model that actually did the work — do not hardcode one.** The FP3
+  history spans several: the audio/MBHC work was done with Opus 4.8
+  (`Assisted-by: Claude:claude-opus-4-8`), later sessions run Opus 5
+  (`Assisted-by: Claude:claude-opus-5`). A commit reshaped today by a different
+  model than the one that wrote it should name the model that produced the code
+  being submitted. Check which model is running before writing the trailer rather
+  than copying the string from this file.
+- Append e.g. `sparse smatch` only if such a tool was actually run on the patch.
 
 **The AI must NOT have a `Signed-off-by`.** Only a human can legally certify the
 DCO. The human submitter reviews the AI-generated code, ensures licensing
@@ -302,27 +455,40 @@ Assisted-by: Claude:claude-opus-4-8
 ```
 
 i.e. **replace** the fork's `Co-authored-by: Claude …` line with `Assisted-by:`.
+`Co-authored-by:` is a GitHub convention, not a kernel trailer — and its kernel
+counterpart `Co-developed-by:` is *worse*, not better: `submitting-patches.rst`
+requires every `Co-developed-by:` to be **immediately followed by a
+`Signed-off-by:` of that co-author**, which an AI cannot legally provide. So
+`Co-developed-by: Claude …` is structurally invalid upstream. `Assisted-by:`
+exists precisely to fill that gap: attribution without an authorship claim.
 
 - **Fork commits (llg179/linux):** keep the fork rule — author
   `Lajosházi, László Gergely <lajoshazilg@gmail.com>` + `Signed-off-by:` +
   `Co-authored-by: Claude Opus 4.8 <noreply@anthropic.com>`, kernel comments in
   **English only**. That is the local convention (CLAUDE.md), unaffected.
-- **Upstream submission (LKML, and any msm8953-mainline PR that follows kernel
-  norms):** swap `Co-authored-by:` → `Assisted-by: Claude:claude-opus-4-8`, and
-  never let the AI carry a `Signed-off-by`. When rewriting the commits for the
-  `submit/*` branch, do this swap as part of the same pass that splits the DTS out.
-- If a maintainer explicitly says the plain `Co-authored-by` is fine for their PR,
-  that is their call — but `Assisted-by:` is the mainline-correct form and is safe
-  to adopt everywhere upstream-bound.
+- **Upstream submission (LKML):** swap `Co-authored-by:` → `Assisted-by:` naming
+  the model actually used, and never let the AI carry a `Signed-off-by`. When
+  rewriting the commits for the `submit/*` branch, do this swap as part of the same
+  pass that splits the DTS out.
+
+**Audit the branches before submitting — some commits have no sign-off at all.**
+The seven IMX363 camera commits on `fp3-integration` (`b00ba1f5`, `526d569e`,
+`757b41e6`, `df906c4d`, `4beba115`, `1adc5540`, `0c5dd72e`) carry an **empty
+trailer block**: no `Signed-off-by`, no attribution. Those are unsubmittable as-is,
+independent of the AI question. Check every branch, not just the one being sent:
+
+```sh
+git log --format='%h|%s|%(trailers:key=Signed-off-by,valueonly,separator=;)|%(trailers:key=Assisted-by,valueonly,separator=;)' \
+    <branch> ^origin/7.0.9/main
+```
 
 ---
 
 ## Patch mechanics (the LKML email path)
 
-These are the standard kernel mechanics the sources below spell out; on the
-msm8953-mainline **PR** path most are handled by GitHub, but adopt them anyway —
-they are what makes a series reviewable, and they are mandatory the moment you go
-to LKML.
+These are the standard kernel mechanics the sources below spell out. Since LKML is
+now the only open destination, all of them are mandatory — none are optional
+GitHub-flow conveniences any more.
 
 - **Base off a well-known point.** A stable or `-rc` tag on Linus' tree (driver
   patches on the subsystem `-next`). Never a random mid-tree commit.
@@ -341,7 +507,7 @@ to LKML.
 - **`scripts/checkpatch.pl --strict`** clean; **`scripts/get_maintainer.pl`** on
   the generated patch file to build the recipient set:
   ```sh
-  git format-patch -o /tmp/pset origin/7.1.3/main..submit/audio
+  git format-patch -o /tmp/pset <base>..submit/audio
   scripts/get_maintainer.pl /tmp/pset/0001-*.patch
   ```
 - **Send with `git send-email`, inline — never as an attachment.** It applies the
@@ -358,22 +524,27 @@ to LKML.
 
 ## Pre-submit checklist
 
-- [ ] Destination chosen (msm8953-mainline PR vs LKML) — confirmed with the channel.
-- [ ] Base is correct and fresh (PR → `origin/7.1.3/main`; LKML driver →
-      `sound/for-next`, DTS → fresh torvalds). Never `7.0.9/main`, never a stale mirror.
+- [ ] Destination is **LKML** — msm8953-mainline will not merge AI-assisted work,
+      pmOS bans it. No PR against `7.1.3/main`.
+- [ ] Base is correct and fresh (driver → `sound/for-next`; DTS → fresh torvalds).
+      Never `7.0.9/main`, never a stale mirror, never a shallow clone's idea of history.
 - [ ] **One branch for the whole subsystem** (audio/camera/charger/modem), not sub-split.
 - [ ] Commit count reduced; discovery steps consolidated; standalone bugfix kept apart.
 - [ ] **No commit mixes `.dts`/`.dtsi` with `.c`/`.h`.**
+- [ ] DTS split **per logical step**; no style/cleanup riding along with function.
 - [ ] Rebased across the base bump; **rebuilt + CONFIG-checked + `fp3-selftest` green.**
 - [ ] `scripts/checkpatch.pl --strict` clean; `scripts/get_maintainer.pl` used for
-      the recipient set (LKML) or the PR targets the right branch (msm8953-mainline).
+      the recipient set.
 - [ ] DT work is **warning-free** (`make dtbs_check`, `make dt_binding_check` if a
       binding changed).
 - [ ] Commits are `-s` signed, imperative-mood, body wrapped ~75 cols; `Fixes:`/`Cc:
       stable` on bugfixes.
-- [ ] Human `Signed-off-by` on every commit; **no `Signed-off-by` from the AI**;
-      `Co-authored-by:` swapped to `Assisted-by: Claude:claude-opus-4-8` for upstream.
-- [ ] Cover note states the base ("based on 7.1.3/main" / "applies to sound/for-next").
+- [ ] Human `Signed-off-by` on **every** commit — audit for the empty-trailer
+      commits; **no `Signed-off-by` from the AI**; `Co-authored-by:` swapped to
+      `Assisted-by:` naming the model that actually did the work.
+- [ ] Cover letter carries the `generated-content.rst` disclosure: tools, prompts
+      (or a summary), which portions were tool-affected, and how it was tested.
+- [ ] Cover note states the base ("applies to sound/for-next").
 - [ ] For a series with a driver→DTS dependency, the DTS commit/patch notes it.
 
 ---
@@ -402,6 +573,14 @@ guides. When in doubt, these are the ground truth:
   <https://docs.kernel.org/process/maintainer-soc-clean-dts.html>
 - AI attribution (`Assisted-by:`):
   <https://docs.kernel.org/process/coding-assistants.html>
+- Tool-generated content — the disclosure rules and maintainer discretion:
+  <https://docs.kernel.org/process/generated-content.html>
+
+**The policies that closed the other two doors**
+- postmarketOS AI policy (total ban):
+  <https://docs.postmarketos.org/policies-and-processes/development/ai-policy.html>
+- msm8953-mainline maintainer statement, 2026-07-25:
+  <https://github.com/msm8953-mainline/linux/issues/197>
 
 **First-patch tutorials (informal but complete)**
 - <https://opensource.com/article/18/8/first-linux-kernel-patch>
