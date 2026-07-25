@@ -188,6 +188,11 @@ terms of what question each answers:
   edits**; the `_pYYYYMMDDHHMMSS` version suffix marks a correct `--src` build.
 - Flash order that boots: **dtbo → lk2nd → vbmeta → rootfs → reboot**.
 - For the kernel/firmware iteration loop use the **`fp3-kernel-test`** skill.
+- **Jack/headset-detection (MBHC) debug pattern** — the worked example of a
+  codec-owned jack, an edge-transient status register, and a one-direction
+  edge-detect that must be re-armed — lives in **`fp3-kernel-test`** (Step 1a,
+  the MBHC lessons). Reach for it when an evdev `SW_*` state won't track physical
+  plug/unplug.
 
 ### Sailfish OS — hybris on a LineageOS/e-OS base (the third port)
 - hybris target on an Android base; component provenance, porter patches, and the
