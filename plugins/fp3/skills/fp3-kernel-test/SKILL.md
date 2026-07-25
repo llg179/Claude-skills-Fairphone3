@@ -414,6 +414,79 @@ desynced us):
 
 ---
 
+## Building & deploying a base-bumped kernel (envkernel + parallel package)
+
+When the change is a whole new base (e.g. porting the FP3 tree from 7.0.9 to
+7.1.3), the deploy vehicle is heavier than a hot-swapped `.ko`. Two build paths:
+
+### Fast compile-check with `envkernel` (no device, catches your edits)
+
+`pmbootstrap`'s `helpers/envkernel.sh`, sourced from the kernel dir, wraps `make`
+so it cross-builds inside the chroot (out-of-tree in `.output/`). Setup gotchas
+that cost real time:
+
+- **pmbootstrap must find its config.** It reads
+  `${XDG_CONFIG_HOME:-~/.config}/pmbootstrap_v3.cfg`; if the real config lives
+  elsewhere (`/mnt/1TB/pmos/pmbootstrap_v3.cfg`), symlink it there or envkernel
+  triggers a fresh `pmbootstrap init` and dies.
+- **`.output/` is owned by the chroot user (`pmos`)** — you can't `cp` a config
+  into it from the host (permission denied → `olddefconfig` silently falls back to
+  `arch/.../defconfig`). Place it *through* the chroot:
+  `pmbootstrap -q chroot --user -- cp /mnt/linux/fp3.config /mnt/linux/.output/.config`.
+  (Put the file in the source tree first so it's visible at `/mnt/linux/...`.)
+- **The source tree must be clean of a stray `.config`** or the `outputmakefile`
+  target errors — with `O=.output` the config lives in `.output`, never the srcdir.
+- **The DTB target doubles its path** (`make …/qcom/foo.dtb` → "No rule … dts/arch/
+  arm64/…"). Use **`make dtbs`** instead — it builds the board DTB and validates
+  the DTS.
+- **Targeted objects = fast feedback.** `make drivers/x/y.o sound/.../z.o` compiles
+  just your changed files (after a one-time scripts/headers build); a clean `.o`
+  proves your conflict resolutions. A full `make Image modules` (≈30 min, envkernel
+  forces `CCACHE_DISABLE=1`) is only needed to catch link/modpost and to flash.
+- Enable a symbol the config lacks: `scripts/config --file .output/.config -m
+  CONFIG_FOO` (through the chroot), then `make olddefconfig`.
+
+### Config-migration gate (silent-feature-loss trap)
+
+`olddefconfig` migrates the old config to the new base and **drops unknown symbols
+without a word** (the `DRM_PANEL_*_HX83112B` rename is the canonical case → no
+display). After the bump, re-apply the package's `prepare()` enables and **verify
+the critical symbols survived**: panel, `SND_SOC_WCD9335`, `SND_SOC_AW8898`,
+`VIDEO_IMX363`, `CHARGER_QCOM_SMB2`, `SLIM_QCOM_NGD_CTRL`, `QCOM_Q6V5_PAS`,
+`SND_SOC_QDSP6_Q6VOICE_DAI`. A `grep` of `.output/.config` is the gate, not "it
+built".
+
+### Flashable build = a parallel package (don't disturb the daily driver)
+
+To get a bootable image with a **matching initramfs** (a bare `Image` copy won't
+mount the rootfs), build a package — but as a *second* one so the working kernel
+stays installed. Copy `linux-fp3-709` → `linux-fp3-713`, bump `_flavor`,
+`_commit` (the pushed integration SHA), `pkgver`; rename `config-$_flavor`; then
+`pmbootstrap checksum linux-fp3-713` (needs the commit pushed first — 404 trap)
+and `pmbootstrap build linux-fp3-713`.
+
+### Base-bump device deploy, brick-safe
+
+- **Free the rootfs first.** slot_b sits near 100%; `/var/cache/apk` is often
+  ~200 MB of reclaimable cache (`rm -rf /var/cache/apk/*`, `journalctl
+  --vacuum-size=4M`) — new modules (~40 MB) won't fit otherwise, and 100 % also
+  kills the graphical session.
+- **Back up the working boot set** before touching it: copy `/boot/{vmlinuz,
+  initramfs,<board>.dtb}` and `extlinux.conf` to `*-709recovery`. The rootfs and
+  these copies surviving = recoverable, not bricked.
+- **Deploy the new kernel as separate `-713` files** + a **second extlinux entry**,
+  leaving the 7.0.9 entry the default. Install the new modules, regenerate the
+  initramfs on-device (`mkinitfs` for the new release), then to test flip
+  `default` to the 713 entry and reboot.
+- **Revert-on-success.** The only way to test unattended is to make 713 the default
+  for that boot; there is **no auto-fallback** on this bootloader. So the moment SSH
+  returns, flip `default` back to 7.0.9 — a later power-cycle then recovers on its
+  own. If SSH never returns, 713 didn't boot; recovery needs the `*-709recovery`
+  set restored (physical/next session), so only spend a paid/unattended flash when
+  the compile + config-gate are green.
+
+---
+
 ## The instruments: what each measures, how to read it, how to read it
 
 Pick the instrument that answers your Step-0 signal question. For each: the

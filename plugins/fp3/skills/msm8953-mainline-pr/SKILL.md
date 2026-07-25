@@ -354,6 +354,85 @@ needs splitting.
 
 ---
 
+## Rebasing the fork's work onto a newer base (worked, 7.0.9 → 7.1.3)
+
+The concrete moves for porting a `fp3-7.0.9-*` topic branch onto the current
+integration base (e.g. `7.1.3/main`) and reshaping it into a `submit/*` branch:
+
+- **The base is a SHA, not a tracking ref.** `msm8953-mainline` branch names
+  contain a slash (`7.1.3/main`), so `git fetch origin '7.1.3/main'` leaves it in
+  `FETCH_HEAD` — there is usually **no `origin/7.1.3/main` ref**. Resolve the SHA
+  once (`git rev-parse FETCH_HEAD`) and branch from that. **Gotcha that bites:**
+  `git checkout -b submit/x origin/7.1.3/main` *fails* ("not a commit"), and if you
+  chained `cherry-pick`/`commit` after it in one script they run **on whatever
+  branch you were already on** — you silently commit onto the wrong branch. Check
+  `git branch --show-current` after a failed checkout.
+
+- **Triage conflict risk before you start.** For each file the topic branch
+  touches: `git diff --numstat <old-base> <new-base> -- <file>`. `0  0` means the
+  file is identical across the bump → cherry-picks apply clean. A file **absent**
+  in the new base (a new driver like `imx363.c`, `qcom_smbx.c`) is a clean *add*,
+  no collision. Only the files with real drift need hand-resolution — in the 7.1.3
+  bump that was just the two framer files (`qcom_q6v5_pas.c`, `qcom-ngd-ctrl.c`);
+  everything else (`wcd9335.c`, `apq8016_sbc.c`, `q6voice-dai.c`, the `.dts`) was
+  `0 0`.
+
+- **"Base DTS identical" shortcut.** When the board `.dts` is `0 0` across the
+  bump, you do **not** need to replay the DTS commits: take the final DTS wholesale
+  from the topic branch and commit it as the one DTS commit —
+  `git checkout <topic> -- arch/.../<board>.dts`. For an *integration* test build,
+  take the combined DTS the same way from `fp3-integration`.
+
+- **New-file driver, consolidated.** For a driver absent upstream, don't cherry-pick
+  its nine discovery commits — take the final file(s) and make one commit:
+  `git checkout <topic> -- drivers/media/i2c/imx363.c .../Kconfig .../Makefile`,
+  then one `media: i2c: add … driver` commit. (`Kconfig`/`Makefile` apply clean when
+  their base is `0 0`.)
+
+- **Swap the trailer while reshaping.** Do the `Co-authored-by:` →
+  `Assisted-by: Claude:claude-opus-4-8` swap in the same pass:
+  `git log -1 --format=%B <c> | sed '/^Co-authored-by: Claude/d;/^Signed-off-by:/a Assisted-by: Claude:claude-opus-4-8'` → `git commit -F -`.
+
+- **Fixing a non-tip commit** (e.g. a checkpatch/warning fix that belongs in commit
+  1 of 8): no interactive rebase here. `git tag _bk <branch>`, `git reset --hard
+  <base>`, cherry-pick commit 1 with `-n`, edit, commit; cherry-pick the rest;
+  confirm `git diff --stat _bk HEAD` shows only your intended lines, then drop the
+  tag. Reordering commits is the same move (cherry-pick in the target order; verify
+  the tree is byte-identical to the backup).
+
+### The two framer conflict resolutions (patterns to reuse)
+
+- **`of_device_id` table (`qcom_q6v5_pas.c`).** The new base already had a
+  `qcom,msm8953-adsp-pil` row (pointing at the generic resource) plus newer SoC
+  rows and different brace spacing. Resolution: **keep the whole HEAD block** (its
+  new rows + formatting), change only the one `.data =` to your quirk descriptor.
+  Don't take "yours" wholesale — you'd drop the base's new entries.
+
+- **Refactored `probe()` (`qcom-ngd-ctrl.c`).** The base had changed
+  `platform_get_irq` to store in a new `int irq;` local. Two conflict hunks:
+  (1) declarations — **keep both** (`int irq;` *and* your `u32 quirk_reg;`);
+  (2) the body — keep HEAD's `irq = platform_get_irq(...)` handling and **insert
+  your quirk block before it** (drop your base's `ret = platform_get_irq` variant,
+  since HEAD now uses `irq` downstream). General rule: when the base refactored the
+  surrounding code, adopt the base's version and re-insert your addition into it.
+
+### checkpatch false positives seen on this hardware
+
+Don't "fix" these — they are correct as-is:
+- **`ENOTSUPP` in a machine driver** — `snd_soc_dai_set_channel_map()` returns
+  `-ENOTSUPP`; the `if (ret && ret != -ENOTSUPP)` idiom must match it. `EOPNOTSUPP`
+  would be wrong.
+- **`slim217,...` "undocumented vendor"** — SLIMbus compatibles are `slimMFG,PID`
+  (manufacturer id), not a vendor-prefix; checkpatch's heuristic doesn't know that.
+- **"DT compatible … appears un-documented"** — real only in that a YAML binding is
+  still owed (a genuine follow-up for LKML), not a code defect.
+
+Trailing whitespace / space-before-tab in a reverse-engineered register table
+*are* real (checkpatch ERRORs) — strip them (`sed -i 's/[ \t]*$//' ; sed -i
+'s/ \+\t/\t/g'`), plus `MODULE_LICENSE("GPL v2")`→`"GPL"`.
+
+---
+
 ## The rebase-and-retest gate (do not skip before submitting)
 
 The fork's work was built and verified on the **7.0.9** base. The submission
