@@ -317,6 +317,45 @@ i.e. **replace** the fork's `Co-authored-by: Claude …` line with `Assisted-by:
 
 ---
 
+## Patch mechanics (the LKML email path)
+
+These are the standard kernel mechanics the sources below spell out; on the
+msm8953-mainline **PR** path most are handled by GitHub, but adopt them anyway —
+they are what makes a series reviewable, and they are mandatory the moment you go
+to LKML.
+
+- **Base off a well-known point.** A stable or `-rc` tag on Linus' tree (driver
+  patches on the subsystem `-next`). Never a random mid-tree commit.
+- **`git commit -s`.** The `-s` adds *your* `Signed-off-by` (the DCO). Message in
+  **imperative mood** ("add", not "added"), body wrapped at **~75 columns**. Add a
+  `Fixes: <12-char-sha> ("subject")` tag when fixing a known commit, and `Cc:
+  stable@vger.kernel.org` for a user-visible bugfix (e.g. the TX front-end hold).
+- **DT is checked, not just compiled.** For device-tree work run the DT checks —
+  `make dtbs_check` (and `make dt_binding_check` if you touch a binding). A commit
+  that introduces DT warnings can be **reverted** (`maintainer-soc-clean-dts.rst`),
+  so land it warning-free.
+- **Bindings vs. DTS route differently.** A YAML **binding** doc
+  (`Documentation/devicetree/bindings/…`) travels with the **driver** subsystem
+  tree; the board **`.dts`** goes via the **SoC/qcom** tree. Same "don't mix"
+  discipline, but know which of the two a given file is.
+- **`scripts/checkpatch.pl --strict`** clean; **`scripts/get_maintainer.pl`** on
+  the generated patch file to build the recipient set:
+  ```sh
+  git format-patch -o /tmp/pset origin/7.1.3/main..submit/audio
+  scripts/get_maintainer.pl /tmp/pset/0001-*.patch
+  ```
+- **Send with `git send-email`, inline — never as an attachment.** It applies the
+  `[PATCH n/m]` subject prefix, the `---` separator and the trailers for you. A
+  multi-patch series gets a `--cover-letter` (state the base and any
+  driver→DTS dependency there).
+- **`b4`** automates much of this (dependency tracking, checkpatch, formatting and
+  sending) — worth using once the series grows.
+- **Build in the pmOS chroot.** `pmbootstrap`'s `envkernel.sh` gives the
+  reproducible cross-build the postmarketOS mainlining guide uses; the FP3 loop
+  already builds via the `linux-fp3-709` package (cross-ref `fp3-kernel-test`).
+
+---
+
 ## Pre-submit checklist
 
 - [ ] Destination chosen (msm8953-mainline PR vs LKML) — confirmed with the channel.
@@ -328,7 +367,43 @@ i.e. **replace** the fork's `Co-authored-by: Claude …` line with `Assisted-by:
 - [ ] Rebased across the base bump; **rebuilt + CONFIG-checked + `fp3-selftest` green.**
 - [ ] `scripts/checkpatch.pl --strict` clean; `scripts/get_maintainer.pl` used for
       the recipient set (LKML) or the PR targets the right branch (msm8953-mainline).
+- [ ] DT work is **warning-free** (`make dtbs_check`, `make dt_binding_check` if a
+      binding changed).
+- [ ] Commits are `-s` signed, imperative-mood, body wrapped ~75 cols; `Fixes:`/`Cc:
+      stable` on bugfixes.
 - [ ] Human `Signed-off-by` on every commit; **no `Signed-off-by` from the AI**;
       `Co-authored-by:` swapped to `Assisted-by: Claude:claude-opus-4-8` for upstream.
 - [ ] Cover note states the base ("based on 7.1.3/main" / "applies to sound/for-next").
 - [ ] For a series with a driver→DTS dependency, the DTS commit/patch notes it.
+
+---
+
+## See also — the source material
+
+This skill consolidates FP3-specific decisions on top of existing, authoritative
+guides. When in doubt, these are the ground truth:
+
+**The process (worked examples closest to this task)**
+- postmarketOS Mainlining guide: <https://wiki.postmarketos.org/wiki/Mainlining>
+- Per-SoC bring-ups (same Qualcomm shape as the FP3):
+  <https://wiki.postmarketos.org/wiki/MSM8916_Mainlining>,
+  <https://wiki.postmarketos.org/wiki/MSM8996_Mainlining>,
+  <https://wiki.postmarketos.org/wiki/SDM845_Mainlining>
+- msm8953-mainline kernel (points to the kernel docs, no repo-specific flow):
+  <https://github.com/msm8953-mainline/linux>
+
+**The authoritative in-tree docs (mandatory reading before v1)**
+- Submitting patches — the essential guide:
+  <https://docs.kernel.org/process/submitting-patches.html>
+- Submit checklist: <https://docs.kernel.org/process/submit-checklist.html>
+- DT binding submission:
+  <https://docs.kernel.org/devicetree/bindings/submitting-patches.html>
+- SoC DTS conventions (the "don't mix / warning-free / route by tree" rules):
+  <https://docs.kernel.org/process/maintainer-soc-clean-dts.html>
+- AI attribution (`Assisted-by:`):
+  <https://docs.kernel.org/process/coding-assistants.html>
+
+**First-patch tutorials (informal but complete)**
+- <https://opensource.com/article/18/8/first-linux-kernel-patch>
+- <https://www.linaro.org/blog/becoming-a-kernel-developer-part1-posting-your-first-patch/>
+- <https://nickdesaulniers.github.io/blog/2017/05/16/submitting-your-first-patch-to-the-linux-kernel-and-responding-to-feedback/>
