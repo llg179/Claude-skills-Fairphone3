@@ -151,6 +151,44 @@ together.**
 
 ---
 
+## How finely to split the DTS commits
+
+Separating DTS from driver is only half of it — the DTS changes themselves have a
+granularity convention, and it depends on whether the board is new or existing:
+
+- **New device (the `.dts` does not exist yet):** put all the working nodes into
+  **one commit**, conventionally titled *"arm64: dts: qcom: <soc>-<board>: add …"*
+  (an "initial dts"). You are not enabling one feature at a time; you are landing
+  the board.
+- **Existing device (the `.dts` is already in mainline) enabling new features:**
+  add a **separate DTS commit per feature/subsystem** — one for audio, one for
+  charger, one for camera, one for modem, and so on. Do **not** fold different
+  subsystems' DTS wiring into a single commit.
+
+The FP3 is the **existing-device** case: `sdm632-fairphone-fp3.dts` is already
+upstream, so each subsystem enables its hardware through its **own** per-subsystem
+DTS commit. Keep the **audio DTS commit and the modem DTS commit separate**, even
+when unsure whether they could be combined — the per-feature split is the safe
+default.
+
+**Verify the current convention** rather than trusting this note: read the commit
+history of comparable mainline device trees (other qcom boards under
+`arch/arm64/boot/dts/qcom/`) and match how they granularise `.dts` changes.
+
+```sh
+# how do other qcom boards split their dts commits?
+git log --oneline -- arch/arm64/boot/dts/qcom/ | grep -iE 'dts.*(audio|charger|camera|modem|codec)'
+git log --oneline -- arch/arm64/boot/dts/qcom/<some-other-board>.dts   # one board's dts history
+```
+
+Note this refines "reduce the number of commits" for DTS: it means *per feature*,
+not *everything in one*. The two rules meet at **one DTS commit per subsystem** —
+which is exactly what "one branch per subsystem" already implies. Within the audio
+branch, therefore, all the audio `.dts` wiring is a single commit; it simply must
+not absorb charger/camera/modem DTS.
+
+---
+
 ## Worked example: the audio series (15 → 8 commits, one branch)
 
 The `fp3-7.0.9-audio` branch had 15 discovery-ordered commits, three of which
