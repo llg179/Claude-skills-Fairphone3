@@ -71,9 +71,11 @@ Matrix channel which they want.
 - **Base = the target branch itself**, e.g. `origin/7.1.3/main`. (Not
   `sound/for-next`, not a bare torvalds tag — a PR merges into that branch, so you
   branch from it.)
-- **No AI ban.** This is *not* postmarketOS. AI-assisted code is fine here, and the
-  `Co-authored-by: Claude …` trailer can stay exactly as-is. None of the LKML AI
-  disclosure machinery is needed.
+- **No AI ban.** This is *not* postmarketOS — AI-assisted code is fine here. Since
+  the project tracks mainline, still use the kernel-standard `Assisted-by:` tag
+  (not `Co-authored-by:`) and keep the AI off `Signed-off-by` — see "Authorship and
+  provenance". If the maintainer explicitly says plain `Co-authored-by` is fine for
+  the PR, follow them; otherwise the mainline form is the safe default.
 - This is the recommended first target: it gets the work into the community
   integration tree that the `linux-fp3-709` package can then track, without the
   months-long LKML review cycle.
@@ -85,13 +87,12 @@ Matrix channel which they want.
   (for ASoC that is Mark Brown's `sound/for-next`); DTS patches on fresh torvalds
   mainline (routed to `linux-arm-msm` + the qcom DT maintainers via
   `get_maintainer.pl`).
-- **AI provenance becomes a live question.** The kernel has no blanket ban, but
-  `Signed-off-by` is the DCO legal certification, and a machine `Co-authored-by`
-  trailer is contentious (an AI cannot certify the DCO). Do **not** carry the
-  trailer over blindly. Ask the subsystem/maintainer for the expected disclosure
-  form (a cover-letter paragraph vs. a trailer) and **verify the exact current
-  convention against the live kernel docs** before sending v1 — do not trust
-  second-hand notes about specific trailer names or doc filenames.
+- **AI provenance is a documented requirement, not an open question.** The kernel
+  has a standard (see the "Authorship and provenance" section below): replace the
+  `Co-authored-by: Claude …` trailer with an `Assisted-by:` tag, and the AI must
+  **not** carry a `Signed-off-by`. Only the human submitter signs off and certifies
+  the DCO. Failure to acknowledge the assistance "may impede the acceptance of your
+  work" (`submitting-patches.rst`).
 
 Both destinations share the three shaping rules below.
 
@@ -265,14 +266,54 @@ Only a green functional run gates the PR — "it compiled" is not enough.
 
 ## Authorship and provenance
 
-- Every commit keeps the fork's authorship rule: author
-  `Lajosházi, László Gergely <lajoshazilg@gmail.com>` + `Signed-off-by:`, kernel
-  comments in **English only**.
-- **msm8953-mainline PR:** keep the `Co-authored-by: Claude Opus 4.8
-  <noreply@anthropic.com>` trailer — no AI ban there.
-- **LKML path:** revisit the trailer and disclosure form with the maintainer
-  first (see destination B); verify the current convention against live kernel
-  docs before v1.
+The kernel documents exactly how to acknowledge AI assistance — this is verified
+against the 7.1.3 tree, not a guess: `Documentation/process/coding-assistants.rst`
+and the "Using Assisted-by:" section of `Documentation/process/submitting-patches.rst`.
+
+**The `Assisted-by:` trailer (kernel-required form).** Any commit that used an AI
+coding assistant must carry, as a trailer:
+
+```
+Assisted-by: AGENT_NAME:MODEL_VERSION [TOOL1] [TOOL2]
+```
+
+- `AGENT_NAME` — the AI tool/framework; `MODEL_VERSION` — the specific model.
+- `[TOOL1] [TOOL2]` — optional *specialised analysis* tools actually used
+  (coccinelle, sparse, smatch, clang-tidy). **Basic tools (git, gcc, make,
+  editors) are NOT listed.**
+- For this project the tag is:
+
+  ```
+  Assisted-by: Claude:claude-opus-4-8
+  ```
+
+  (append e.g. `sparse smatch` only if such a tool was actually run on the patch).
+
+**The AI must NOT have a `Signed-off-by`.** Only a human can legally certify the
+DCO. The human submitter reviews the AI-generated code, ensures licensing
+compliance, adds *their own* `Signed-off-by`, and takes full responsibility.
+Failure to acknowledge the assistance "may impede the acceptance of your work."
+
+**So the trailer block for an upstream-bound commit is:**
+
+```
+Signed-off-by: Lajosházi, László Gergely <lajoshazilg@gmail.com>
+Assisted-by: Claude:claude-opus-4-8
+```
+
+i.e. **replace** the fork's `Co-authored-by: Claude …` line with `Assisted-by:`.
+
+- **Fork commits (llg179/linux):** keep the fork rule — author
+  `Lajosházi, László Gergely <lajoshazilg@gmail.com>` + `Signed-off-by:` +
+  `Co-authored-by: Claude Opus 4.8 <noreply@anthropic.com>`, kernel comments in
+  **English only**. That is the local convention (CLAUDE.md), unaffected.
+- **Upstream submission (LKML, and any msm8953-mainline PR that follows kernel
+  norms):** swap `Co-authored-by:` → `Assisted-by: Claude:claude-opus-4-8`, and
+  never let the AI carry a `Signed-off-by`. When rewriting the commits for the
+  `submit/*` branch, do this swap as part of the same pass that splits the DTS out.
+- If a maintainer explicitly says the plain `Co-authored-by` is fine for their PR,
+  that is their call — but `Assisted-by:` is the mainline-correct form and is safe
+  to adopt everywhere upstream-bound.
 
 ---
 
@@ -287,6 +328,7 @@ Only a green functional run gates the PR — "it compiled" is not enough.
 - [ ] Rebased across the base bump; **rebuilt + CONFIG-checked + `fp3-selftest` green.**
 - [ ] `scripts/checkpatch.pl --strict` clean; `scripts/get_maintainer.pl` used for
       the recipient set (LKML) or the PR targets the right branch (msm8953-mainline).
-- [ ] Authorship + `Signed-off-by` on every commit; AI trailer handled per destination.
+- [ ] Human `Signed-off-by` on every commit; **no `Signed-off-by` from the AI**;
+      `Co-authored-by:` swapped to `Assisted-by: Claude:claude-opus-4-8` for upstream.
 - [ ] Cover note states the base ("based on 7.1.3/main" / "applies to sound/for-next").
 - [ ] For a series with a driver→DTS dependency, the DTS commit/patch notes it.
