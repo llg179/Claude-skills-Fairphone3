@@ -110,6 +110,8 @@ Two rule classes; read the full mechanisms + worked examples in
 12. **☠️☠️ Never `pmb flasher flash_kernel` on pmOS — it overwrites lk2nd → "stuck at Fairphone logo"** (kernel never starts). Update the kernel INTO the rootfs (`pmb sideload` / `apk add --allow-untrusted` / full `pmb install`); recover with `pmb flasher flash_lk2nd`. Diagnosis key: "Fairphone logo on screen" = bootloader/boot-image, not kernel content.
 13. **An environmental change (pinmux/GPIO/clock-vote) + a concurrent SSR can wedge the device** — "one change per experiment" applies to environment too; never combine a pad/GPIO poke with an SSR on the first try.
 14. **A boot-armed diag/capture systemd oneshot `Before=basic.target` hangs the boot** — never block `basic.target`; prefer `After=multi-user.target`, time-box + SIGKILL-able, or avoid boot-armed diag.
+15. **☠️ An MMIO sampler DIES when the block's clock goes away under it — never read co-processor MMIO across an SSR stop-window.** A sampler polling a QDSP6SS register *and* debugfs at 20 ms vanished without a trace during a controlled ADSP SSR (no output, no process, no log — easily misread as "the measurement found nothing"); `echo stop > .../remoteproc2/state` gates the block's clock, so the read is safety-rule-4. The *same* sampler with the MMIO removed (debugfs/genpd only) ran clean end-to-end. Recipe: to sample around an SSR, either drop the co-processor MMIO entirely or read it only in the window **after** `echo start`. debugfs/sysfs sampling is SSR-safe.
+16. **☠️ `postmarketos-mkinitfs` REGENERATES `/boot/extlinux/extlinux.conf` and DROPS hand-added fallback entries.** Every `apk add linux-fp3` leaves a single `label`, so a recovery path you set up beforehand is silently gone. If your recovery plan is a saved boot set (`vmlinuz-r0bak` + its dtb), rewrite `extlinux.conf` **after** the package install and immediately before the reboot — otherwise you believe you have a way back and you do not.
 
 **Measurement integrity (protect the measurement — confirmation-theater anti-patterns):**
 never substitute static/source analysis for a live measurement (if it isn't feasible now the task is **BLOCKED**, not "done"); label by evidence strength (register-level live differential = hard; source / single-log-line / one-slot = soft); never close an avenue on wrong-layer evidence; **one-sided is not a differential**; a differing register may be an OUTPUT (marker), not a lever — prove causality; **disprove a hypothesised lever offline before building on it** (a branch on a pointer/aligned-value bit is structurally constant — compute it); a **force/bypass cave can force the WRONG lever** (a force-negative is conclusive only if the forced state is content-faithful to real success, else WEAK); a mid-operation snapshot can read identical working-vs-broken (always run the oracle control); every measurement must have a real path to PASS; don't drop the inconvenient finding to keep a clean verdict.
@@ -203,6 +205,26 @@ method traps, all learned 07-21 on the FP3 rear camera:
   (keep SSH open; a <2-min run fits the Bash cap) or `loginctl enable-linger`. This
   is distinct from the "persist output to a synced file" lesson — there the *output*
   was lost; here the *process itself* is killed.
+  - **☠️ `setsid` does NOT save it** (confirmed 07-26): the process stays in the user's
+    systemd slice, so a `setsid nohup` runner dies on logout with the exact same
+    signature — empty log, no process, no result file. Only **foreground with the SSH
+    session held open** (a ~30 s SSR measurement fits comfortably) or
+    `loginctl enable-linger` actually works. Corollary: a long-running sampler that
+    writes its file **only at the end** loses everything when killed — write
+    incrementally, or keep the run short and foreground.
+  - **☠️ `echo pw | sudo -S <cmd> … </dev/null &` — the `</dev/null` OVERRIDES the stdin
+    carrying the password.** Sole symptom is one line in the log:
+    `sudo: Authentication required but not attempted`, and the runner never starts. Put
+    the redirect on the *inner* command (`sudo -S sh -c 'runner </dev/null &'`), never on
+    `sudo` itself. This is the most common silent failure of the detached-runner recipe.
+  - **☠️ `scp` can deliver a silently corrupted file.** A clean 25-line ASCII `.py`
+    arrived containing null bytes → `SyntaxError: source code cannot contain null bytes`.
+    Transfer small scripts with `base64 -w0` + `base64 -d` and verify with `md5sum` on
+    both ends — otherwise a transfer bug masquerades as "the measurement returned nothing".
+  - **☠️ A "wait for the result file" loop MATCHES THE PREVIOUS RUN'S FILE.**
+    `until test -f out.txt` / `grep -q DONE out.txt` succeeds instantly against a stale
+    file and you read the old measurement as new. Always `rm` the target file before
+    waiting, and have the runner delete it at start.
 - **`/tmp` is tmpfs → a script pushed before a reboot is gone after it.** Push
   on-device runners AFTER the reboot, or stage them on the rootfs (`/root`, `/home`).
 - **For a user-facing reliability A/B, a passive `dmesg` detector beats a synthetic
@@ -319,6 +341,16 @@ bug, not a config typo.)
   check catches every rename, every dropped dependency, and every `olddefconfig` surprise.
 - The generic lesson: **a green build is not evidence that your change is in the binary.**
   Whatever you rely on, confirm it exists in the output before you spend time on the device.
+- **★ The artifact gate works for a DT change too, and needs no `dtc`.** The host often
+  has no `dtc`, which tempts you to skip the check on exactly the edit most likely to go
+  missing. A ~25-line FDT walker (read `magic`/`off_struct`/`off_strings` from the header,
+  then loop `FDT_BEGIN_NODE`/`FDT_PROP`/`FDT_END_NODE` tokens) prints one node's properties
+  straight out of the DTB **extracted from the built package**, proving the property is
+  there *before* you flash — e.g. `required-opps = <0x5e>` under `remoteproc@c200000`.
+  The driver-side twin is `strings <module>.ko | grep '<your dev_info string>'` run on
+  **both** the old and the new package: the old one is the positive control that proves
+  the grep would fire at all. Close the loop after install with `md5sum` of the deployed
+  DTB against the package's copy.
 
 🐢 **The kernel build silently bypasses ccache → every build is a full ~30-min recompile, even for a
 one-line module change.** `cache_ccache_$ARCH/` exists and looks used, but the chroot's `/etc/abuild.conf`
@@ -594,6 +626,29 @@ question it answers, the how, and how to interpret — with example values.
   AP clock on — suggestive that the SLIMbus core clock is co-processor-internal — but
   the *decisive* version is the active-audio enable-count diff on the oracle, which
   needs no MMIO at all.)
+
+### genpd performance state (is a power domain actually being voted — and WHEN)
+- **Answers:** does the AP request a performance level (voltage corner) from a power
+  domain, and at what level, during the window that matters.
+- **How:** `/sys/kernel/debug/pm_genpd/pm_genpd_summary` — the `performance` column on
+  the domain row, plus the per-consumer child rows underneath it.
+- **☠️ A steady-state snapshot of a remoteproc PROXY power domain is actively
+  misleading.** `qcom_q6v5_pas` votes its proxy PDs at `INT_MAX`
+  (`qcom_pas_pds_enable()` → `dev_pm_genpd_set_performance_state(pds[i], INT_MAX)`) and
+  **releases the vote at handover**, so once the co-processor is up the summary reads
+  `performance 0` — which looks exactly like "nobody ever voted", even though the domain
+  was at maximum for the whole boot. Measure the vote by **sampling across a controlled
+  SSR**, never with a resting snapshot. (Worked example 07-26: this single distinction
+  killed an entire hypothesis — that mainline fails to vote a CX corner for the ADSP —
+  by showing `cx_perf = 2147483647` for ~160 ms right after `echo start`.)
+- **☠️ A single snapshot means nothing even for non-proxy domains** — a shared rail
+  oscillates with its other consumers (the CX rail here flips `0`↔`256` from display
+  activity alone). Sample, and report the max over the window, not a point reading.
+- **Interpret:** `INT_MAX` (2147483647) is "max out this domain", and it dominates any
+  `required-opps` you might add — so adding `required-opps` to a node whose PD is already
+  proxy-voted is a **no-op**, and shipping it would falsely imply the vote was missing.
+  Check `proxy_pd_names` in the driver's resource struct before theorising about a
+  missing corner vote.
 
 ### The golden oracle capture (when you can't probe the oracle live)
 - **Answers:** what does the *working* system emit during the exact handshake you're
