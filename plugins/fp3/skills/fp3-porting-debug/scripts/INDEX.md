@@ -29,9 +29,9 @@ directory.
 | `twrp.sh` | TWRP indítás. Mivel `fastboot boot twrp.img` az FP3 abooton FAILED ('unknown reason'), két megbízható út van: 1) flash a boot_b slotra + set_active b … |
 | `twrp-dd.sh` | TWRP-adb úton image partícióra írása (mert `fastboot boot` az FP3 abooton tiltott/megbízhatatlan). Sparse Android image-et simg2img-gal ír; nyers imag… |
 | `to-twrp.sh` | IDLE → TWRP TÖLTÉS.  A mainline pmOS kernelben NINCS FP3/PMI632 charger+fuelgauge driver (csak qcom,pmi632-typec látszik, CURRENT_NOW=0) → pmOS-ben az… |
-| `to-pmos.sh` | TWRP → vissza pmOS-re.  set_active a → lk2nd(boot_a) → pmOS bootol. (pmOS qbootctl-openrc mark_boot_successful → slot a retry-count visszaáll.) |
-| `swap-to-pmos.sh` | Installer-free, hands-free swap BACK to postmarketOS from the UT backup state. Flashes the z3ntu dtbo (the proven native-boot blocker fix) to both slo… |
-| `swap-to-ut.sh` | Installer-free, hands-free restore of the developer-enabled Ubuntu Touch backup (slot a, captured 2026-06-30) so pmOS<->UT can be swapped without the … |
+| `to-pmos.sh` | TWRP/recovery → back to pmOS: `set_active b` → lk2nd (`boot_b`) → pmOS. Only adds the "get out of TWRP first" step around the ordinary slot switch. (Fixed 2026-07-28: it used to `set_active a`, correct only in the pre-dual-slot layout.) |
+| `swap-to-pmos.sh` | **NOT the way to switch OS** (that is `slot.sh set b` + reboot, no flashing). Reinstalls pmOS from scratch — use only when the pmOS side is broken, e.g. lk2nd was overwritten. |
+| `swap-to-ut.sh` | **NOT the way to switch OS** (that is `slot.sh set a` + reboot, no flashing). Repair path only: restores the dev-enabled UT backup when slot a has been damaged. ☠️ Flashes TWRP onto `boot_b` (today lk2nd) and rewinds `userdata`. |
 | `setup-dualslot.sh` | ONE-TIME dual-slot install: pmOS -> slot _b (rootfs on system_b), UT stays on _a. After this, OS-swap is a single `fastboot set_active a\|b` + reboot … |
 | `boot-watch.sh` | Reboot + kimenet-detektálás: USB-net (=bootolt pmOS) VAGY vissza-fastboot (=bukott). A LOGFÁJL markerét figyeli (nincs pgrep self-match). Háttérben fu… |
 | `flash-wait-capture.sh` | Wait for the device to appear in fastboot (user puts it there with Power+VolDown), then flash the already-built rootfs (pmb install already ran) to sy… |
@@ -113,6 +113,10 @@ directory.
 | `diag-adsp.sh` | Collect ADSP state on-device: remoteproc status, uptime, kernel version and related logs. |
 | `diagtap.py` | Minimal DIAG-over-rpmsg tap for mainline pmOS (msm8953). The ADSP/modem DIAG SMD channels are exposed as /dev/rpmsgN char devices. |
 | `diagcap.py` | Capture ADSP F3 debug messages across an SSR (fresh SLIMbus framer bring-up). Re-arms DIAG F3 masks continuously so the fresh ADSP starts streaming AS… |
+| `sensdiag.py` | pmOS/mainline ADSP F3 capture focused on the SENSORS subsystem (ss_id 53). Finds the ADSP remoteproc BY NAME (the index moves between boots) and re-binds the DIAG rpmsg channels itself, because an SSR destroys and recreates them unbound. |
+| `ut-sensdiag.py` | The Ubuntu Touch (downstream `/dev/diag`) twin of `sensdiag.py`: writes the same RAW 0x7E-framed binary so one parser runs byte-for-byte on both sides — the precondition for a real oracle differential. Uses `time.monotonic()`; the wall clock jumps mid-boot. |
+| `ut-bootdiag.service` | Boot-armed capture unit for UT, for events that happen before userspace is up (the ADSP leaves reset at ~t=21.9 s). `Type=simple` so it cannot stall the boot; the script waits for `/dev/diag` itself. Install into `/etc/systemd/system`, `enable`, reboot. |
+| `parsef3.py` | Host-side F3 frame parser shared by both captures: de-stuffs the HDLC framing and yields `(timestamp, ss_id, line, file, format, args)` for extended (0x79) and terse/QSR (0x92) messages alike. |
 | `ut-trace.sh` | DOWNSTREAM (Ubuntu Touch / Halium 10, downstream 4.9.218 kernel) SLIMbus trace. Run from HOST while phone is booted into UT with adb (Halium adb runs … |
 | `ut-ssr-trace.sh` | UT ADSP SSR-recovery differenciál-trace (plan: lovely-dazzling-rain). A BIZONYÍTOTTAN működő UT-n (slot_a, halium-10.0 4.9.218) az ADSP-t SSR-rel |
 | `ut-capture-framer.sh` | Enhanced WORKING-framer capture on Ubuntu Touch (downstream 4.9 kernel) for the on-device A/B vs mainline pmOS. The KEY additions over ut-trace.sh: |

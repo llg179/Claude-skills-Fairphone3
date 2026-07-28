@@ -1,0 +1,18 @@
+[Unit]
+Description=One-shot boot-armed ADSP F3 capture (SENSORS init window)
+# Start as early as possible: the ADSP is brought out of reset at ~t=22.5s, so the
+# diag mask has to be armed before that.  Type=simple means systemd does NOT wait
+# for it to finish, so this cannot stall the boot (see safety rule 14).
+DefaultDependencies=no
+After=local-fs.target
+Conflicts=shutdown.target
+
+[Service]
+Type=simple
+# The script waits (bounded) for /dev/diag itself, then captures for 45s and exits.
+ExecStart=/usr/bin/python3 /home/phablet/ut-sensdiag.py 45 /home/phablet/ut_f3_boot.bin
+TimeoutStartSec=90
+Restart=no
+
+[Install]
+WantedBy=sysinit.target
