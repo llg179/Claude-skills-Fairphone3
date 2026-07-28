@@ -108,6 +108,11 @@ from this skill verbatim; if it already exists, just append (never overwrite a l
   blocker.)
 - Partition labels drift — re-derive from `lsblk`/`by-partlabel` on a booted OS
   each session rather than trusting a remembered map.
+- **Neither OS needs a human at the phone.** `fp3-ssh 'cmd'` (pmOS) and `ut-ssh 'cmd'`
+  (Ubuntu Touch — USB, then WiFi, then UT's rescue sshd) log in by key and heal the link
+  themselves; each OS comes back from a reboot untouched (39 s / 76 s, measured). The
+  recipe, and the measured proof that a USB replug **cannot** be emulated from the host,
+  is under "Unattended access" in the repository README.
 
 ## The three OS tracks — and the *role* each plays in debugging
 
@@ -118,6 +123,18 @@ terms of what question each answers:
 - Downstream kernel 4.9.x, everything works (call, earpiece, mic, headset,
   charging). Root via `sudo` + the device PIN (this device `$FP3_PW`, *not*
   "phablet").
+- **★ You can prepare access to an OS that is NOT running, from the other slot — no UI, no
+  working link needed.** The oracle keeps `/home` in `user-data/` and the writable half of
+  `/` in `system-data/`, both on `userdata`; mount that from the *other* slot and stage
+  whatever you need. (Worked example 07-28: an SSH key into `user-data/phablet/.ssh/`
+  (uid/gid 32011) plus a wants-symlink
+  `system-data/etc/systemd/system/multi-user.target.wants/ssh.service` gave the oracle a
+  working sshd at the next boot — bypassing its own gate, a one-shot
+  `ssh-property-migration.service` that **masks itself after its first run** and so cannot be
+  relied on. The read-only rootfs is not an obstacle: on UT `/etc/systemd/system` is a
+  read-write bind mount from `userdata`, while `/usr/local/bin` and `/var/lib` are not.)
+  This generalises: the bootstrap problem "I need the link to fix the link" is solved from
+  the neighbouring slot, not from the running system.
 - **You can drive the oracle right after boot — no unlock, no USB replug needed
   (so it does NOT require the user to be present).** Verified: `adb` connects while the
   device sits at the locked greeter (`lomiri --mode=full-greeter` running), because this
@@ -317,10 +334,23 @@ your remaining hypotheses in half.
    not the firmware — a single result that reframes the search. (The QDSP6 `adsp.mbn`
    is an unencrypted ELF32; disassembly/patching details are in `fp3-kernel-test`.)
 
-5. **Census the messaging layer.** `scripts/qrtr_lookup.py` enumerates which
-   remote services are present and on which node (example: ADSP = node 5, SLIMbus
-   service 0x301) — answers "is the remote endpoint even there / responding" before
-   you debug message *content*. **When you census device dependencies, read the link
+5. **Census the messaging layer — and do the TWO-SIDED inventory first.** Downstream/UT:
+   `cat /sys/kernel/debug/msm_ipc_router/dump_servers`; mainline: `qrtr-lookup` (or
+   `scripts/qrtr_lookup.py`). Two commands, and the diff of the two lists localises a missing
+   co-processor service by itself, before you debug message *content*.
+   ☠️ **The instance field is PACKED (`version | instance << 8`)** and the two tools print raw
+   vs decoded columns differently, so an undecoded comparison is meaningless: raw `0x3201`
+   means *version 1, instance 50*.
+   ☠️☠️ **Confirm on the oracle that an endpoint is the RIGHT one before reverse-engineering
+   its protocol.** (Worked example 07-28, and it cost a night: a QRTR port that echoed every
+   byte sequence back verbatim looked like a broken/stub service worth reverse-engineering —
+   until the oracle's inventory showed the *functional* Sensor Manager lives on a different
+   node with a different instance, and that the echoing port behaves identically on the
+   working system. The measurement was sound; the target was not. Two corollaries: a
+   **content-independent echo** — 16 zero bytes returned verbatim — means no parser is
+   involved, so it is a wrong/stub endpoint rather than a framing problem; and the control
+   that proves it is sending the same message to the **neighbouring ports on the same node**,
+   which answer with proper QMI errors.) **When you census device dependencies, read the link
    *status/value*, not the mere presence of a node — the presence of a
    `waiting_for_supplier` attribute is not an active block.** (Worked example, folyt.148: the
    codec slim device showed a `waiting_for_supplier` node that looked like a stuck supplier, but
@@ -381,6 +411,29 @@ your remaining hypotheses in half.
    8-word-per-cycle cave could barely start, and the 16.98 MB coredump made a one-shot offline traversal.)
    **Still prefer the cave for a live value at a specific code point** or a two-sided both-sides-anchor
    capture; the coredump is one side's snapshot at the crash instant. Breadth → coredump; targeted instant → cave.
+
+8. **The board's truth is the stock DTB — a vendor `*.conf` is a template.** Files under
+   `/vendor/etc/**` routinely carry the parameter tables of *many* board variants one after
+   another, with nothing marking which one is yours. (Worked example 07-28: a sensor I2C
+   pin pair read out of `sensor_def_qcomdev.conf` sent a whole night's work at the wrong
+   pins — the board's own DTS said those pads are the fingerprint reader's SPI.) Extract the
+   real thing instead, entirely read-only and in a few minutes: the **dtbo** partition is an
+   Android DTBO table (magic `d7b7ab1e`; header gives entry count/size/offset), and a
+   header-v0 boot image carries its DTBs **appended to the kernel** — scan that region for
+   `d00dfeed` and pull each blob out. Decompile with the kernel tree's own `scripts/dtc`
+   (`make dtbs` builds it) when the host has no `dtc`. **A subsystem with no node at all in
+   the stock DT is itself a strong finding:** it means the AP kernel does not drive that
+   subsystem — on this device the sensors turned out to be handled entirely by the ADSP,
+   which is why no amount of DT archaeology on the AP side was ever going to find a bus.
+
+9. **Indirect exclusions saturate — change instrument, not hypothesis.** A run of cheap
+   indirect tests (is it a boot race? is the config different? is the firmware different? is
+   the rail powered?) is the right way to start, but each one only *removes* a candidate. If
+   two or three in a row still leave "it never started" and "it started and failed"
+   indistinguishable, stop generating hypotheses and go get a **direct observation** of the
+   thing itself (co-processor diag/QDSS, a cave, a coredump). (Worked example 07-28: five
+   indirect exclusions in one session — SSR/boot-race, devcfg identity, a separate PD image,
+   the PD registry, the sensor supply rails — none of which could split those two branches.)
 
 **How these chain:** a typical localisation walks *down* the stack — enumeration
 (is the device seen?) → messaging (are requests answered?) → registers (did the HW

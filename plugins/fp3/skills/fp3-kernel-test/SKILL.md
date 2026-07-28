@@ -74,6 +74,14 @@ reset: it clears the "unbootable"/retry state on a slot you just broke.
 - Build system is pmbootstrap via a wrapper (`cd $FP3_PMOS && ./pmb …`).
   A `--src` build stamps an apk version `_pYYYYMMDDHHMMSS`; a plain upstream
   version string means your DT/source edits are **not** in the image.
+- **★ Neither OS needs a human at the phone any more, and the wrappers do the healing.**
+  `fp3-ssh 'cmd'` (pmOS) and `ut-ssh 'cmd'` (Ubuntu Touch: USB, then WiFi, then UT's
+  usb-moded rescue sshd) authenticate by key — no password, no `sshpass` — and retry with
+  a neighbour flush when the link is mid-reconnect. Verified by rebooting each OS with
+  nothing touched on the phone: pmOS back in 39 s, UT in 76 s over WiFi. The full recipe,
+  and the measured proof that a replug **cannot** be emulated from the host, is under
+  "Unattended access" in the repository README; the files to deploy are in
+  `fp3-porting-debug/scripts/unattended/`.
 - Helper scripts live in `fp3-porting-debug/scripts/`. The skill maintains **two logs** in the project
   root — bootstrap each **create-if-absent** (if missing, create it by copying the template
   verbatim; else append, never overwrite):
@@ -111,10 +119,11 @@ Two rule classes; read the full mechanisms + worked examples in
 13. **An environmental change (pinmux/GPIO/clock-vote) + a concurrent SSR can wedge the device** — "one change per experiment" applies to environment too; never combine a pad/GPIO poke with an SSR on the first try.
 14. **A boot-armed diag/capture systemd oneshot `Before=basic.target` hangs the boot** — never block `basic.target`; prefer `After=multi-user.target`, time-box + SIGKILL-able, or avoid boot-armed diag.
 15. **☠️ An MMIO sampler DIES when the block's clock goes away under it — never read co-processor MMIO across an SSR stop-window.** A sampler polling a QDSP6SS register *and* debugfs at 20 ms vanished without a trace during a controlled ADSP SSR (no output, no process, no log — easily misread as "the measurement found nothing"); `echo stop > .../remoteproc2/state` gates the block's clock, so the read is safety-rule-4. The *same* sampler with the MMIO removed (debugfs/genpd only) ran clean end-to-end. Recipe: to sample around an SSR, either drop the co-processor MMIO entirely or read it only in the window **after** `echo start`. debugfs/sysfs sampling is SSR-safe.
-16. **☠️ `postmarketos-mkinitfs` REGENERATES `/boot/extlinux/extlinux.conf` and DROPS hand-added fallback entries.** Every `apk add linux-fp3` leaves a single `label`, so a recovery path you set up beforehand is silently gone. If your recovery plan is a saved boot set (`vmlinuz-r0bak` + its dtb), rewrite `extlinux.conf` **after** the package install and immediately before the reboot — otherwise you believe you have a way back and you do not.
+16. **☠️ A zero-length DT boolean can hang the kernel UNINTERRUPTIBLY — put the timeout in the INSTRUMENT, not just around the shell.** `allow-set-time` on `rtc-pm8xxx` looks free ("if the hardware refuses, the write errors"); on this board the set-time path never returns, and **neither an outer `timeout 20` nor a Python `signal.alarm()` breaks it** — `dmesg` stays silent (no SPMI timeout) and `ps -eo stat` shows no D-state task, so the usual "is anything stuck?" checks all read negative while every call hangs. Recipes: (a) call the writing ioctl in a **separate, disposable process** and accept that it may linger; (b) on a write-type experiment **revert the DTB FIRST**, before the reboot, so the next boot is clean even if shutdown wedges on the stuck task; (c) an **"reads fine, writes hang" asymmetry is a strong hint the register is owned by TZ or a co-processor**.
+17. **☠️ `postmarketos-mkinitfs` REGENERATES `/boot/extlinux/extlinux.conf` and DROPS hand-added fallback entries.** Every `apk add linux-fp3` leaves a single `label`, so a recovery path you set up beforehand is silently gone. If your recovery plan is a saved boot set (`vmlinuz-r0bak` + its dtb), rewrite `extlinux.conf` **after** the package install and immediately before the reboot — otherwise you believe you have a way back and you do not.
 
 **Measurement integrity (protect the measurement — confirmation-theater anti-patterns):**
-never substitute static/source analysis for a live measurement (if it isn't feasible now the task is **BLOCKED**, not "done"); label by evidence strength (register-level live differential = hard; source / single-log-line / one-slot = soft); never close an avenue on wrong-layer evidence; **one-sided is not a differential**; a differing register may be an OUTPUT (marker), not a lever — prove causality; **disprove a hypothesised lever offline before building on it** (a branch on a pointer/aligned-value bit is structurally constant — compute it); a **force/bypass cave can force the WRONG lever** (a force-negative is conclusive only if the forced state is content-faithful to real success, else WEAK); a mid-operation snapshot can read identical working-vs-broken (always run the oracle control); every measurement must have a real path to PASS; don't drop the inconvenient finding to keep a clean verdict.
+never substitute static/source analysis for a live measurement (if it isn't feasible now the task is **BLOCKED**, not "done"); label by evidence strength (register-level live differential = hard; source / single-log-line / one-slot = soft); never close an avenue on wrong-layer evidence; **one-sided is not a differential**; a differing register may be an OUTPUT (marker), not a lever — prove causality; **disprove a hypothesised lever offline before building on it** (a branch on a pointer/aligned-value bit is structurally constant — compute it); a **force/bypass cave can force the WRONG lever** (a force-negative is conclusive only if the forced state is content-faithful to real success, else WEAK); a mid-operation snapshot can read identical working-vs-broken (always run the oracle control); every measurement must have a real path to PASS; don't drop the inconvenient finding to keep a clean verdict; **confirm on the oracle that an endpoint is the RIGHT one before reverse-engineering its protocol** (a night went into the framing of a QRTR port that the oracle later showed behaves identically on the *working* system — the service being hunted lived on another node with another instance: the measurement was sound, the target was not); **a content-independent echo means a wrong or stub endpoint, not a wrong framing** (if 16 zero bytes come back verbatim, no parser is involved — control it by sending the same message to the neighbouring ports on the same node, which answer with proper QMI errors); **verify the PROCESS, not the service label** (an Android `ctl.stop` sat at `stopping` while the daemon happily ignored SIGTERM and kept running, which silently invalidated the A/B built on it); and **after two or three indirect exclusions that still do not separate "never started" from "started and failed", change instrument rather than generating another hypothesis** — indirect tests are cheap but they saturate.
 
 ## The loop: hypothesis → single change → deploy → measure → interpret
 
@@ -189,6 +198,12 @@ radius of your edit:
   slow, must run backgrounded).
 - **ADSP firmware changed → SSR-reload** (see the firmware section; ~2 s, no
   reboot).
+- **A systemd unit is a deploy vehicle too — and ☠️ `ExecStart` EATS your shell variables.**
+  systemd expands `$i` itself and hands the shell an empty string, so a retry loop's guard
+  (`while [ $i -lt 30 ]`) silently breaks while the unit still reports success — the failure
+  only shows up on the day the retry is actually needed. Write `$$i`, and **make the unit
+  print the counter** so the log distinguishes the two (`rndis up after 0 tries` is right,
+  `rndis up after  tries` means systemd ate it).
 - **An in-tree DRIVER built as a module (`CONFIG_*=m`) → hot-swap the `.ko`, same as
   the SLIMbus case** — confirm `=m` first (`zcat /proc/config.gz | grep CONFIG_…`),
   build the kernel pkg, extract the `.ko` from the apk, vermagic-match the *running*
@@ -594,7 +609,24 @@ question it answers, the how, and how to interpret — with example values.
 ### QMI/QRTR census (who is talking to the co-processor)
 - **Answers:** is the remote service present, on which node, and are requests
   getting responses?
-- **How:** `fp3-porting-debug/scripts/qrtr_lookup.py` (example: ADSP = node 5, SLIMbus service
+- **★ Start with the two-sided SERVICE INVENTORY, before touching any endpoint.**
+  Downstream/UT: `cat /sys/kernel/debug/msm_ipc_router/dump_servers`. Mainline:
+  `qrtr-lookup`. Two commands, and the diff localises the gap by itself.
+  ☠️ **The instance field is PACKED: `version | (instance << 8)`** — a raw `0x3201`
+  means *version 1, instance 50*, and the two tools print raw vs decoded columns
+  differently, so an undecoded comparison is meaningless. (Worked example 07-28: the
+  oracle advertises the Sensor Manager **twice** — service 256 on node 5 at raw
+  `0x3201` (v1/inst50, the functional one, and exactly what the upstream `qcom_smgr`
+  driver matches) and on node 7 at raw `0x0100` (v0/inst1). Mainline has only the
+  node-7 one. One diff, and the missing piece was named.)
+- **★ A userspace QMI client needs no kernel build at all** — worth doing *before*
+  writing a driver, to find out whether the service answers. Python:
+  `socket.socket(42, SOCK_DGRAM)` (AF_QIPCRTR); the address is a **`(node, port)`
+  tuple**, not packed `sockaddr` bytes (`TypeError: must be tuple` otherwise); and
+  **`bind((<local_node>, 0))` is mandatory** — without it the socket's port stays 0
+  and replies never arrive. Message: `struct.pack('<BHHH', 0x00, txn, msg_id, len)`
+  + TLVs; the response TLVs parse in a few lines.
+- **How (traffic):** `fp3-porting-debug/scripts/qrtr_lookup.py` (example: ADSP = node 5, SLIMbus service
   0x301). Note that these logs typically show message *headers* (service, msg-id,
   length), not payload — enough to see *whether* and *what type* of message flowed,
   not its field values.
@@ -826,6 +858,8 @@ Disposable + dual-slot, so nothing here is fatal; recognise the state fast. Full
 - **"ping works, ssh refused" is usually a missing host route,** not a brick — stabilise the link host-side once (pin iface name + static host IP).
 - **CDC-NCM jam** (`NETDEV WATCHDOG`): the device self-recovers in minutes — wait passively or reboot the DEVICE. ☠️☠️ **NEVER** host-side USB/link restart (pushes it to non-enumerating, and can disconnect the USB-mounted `/mnt`).
 - **A/B retry fallback** flips slots; `set_active` resets the count.
+- **☠️ Keep the rescue wrappers OFF the thing you are testing.** `fp3-ssh`/`fp3-link` were symlinks into a **USB-attached** work disk, so they would have vanished at exactly the moment that disk was unmounted for a repower — the worst possible time to lose the way back in. Real copies (or symlinks into a repo) on the *system* disk.
+- **A gadget parked in the wrong mode by the DEVICE cannot be fixed from the host** — measured: a leaf-port `authorized` toggle and a `usb` driver unbind/bind both left the device number and the gadget mode untouched, because neither drops VBUS, and the root hubs report `No power switching`. The lever is device-side (re-bind the UDC) or a hub with per-port power switching. See "Unattended access" in the repository README.
 - **Truly wedged** (raw gadget / hung fastboot pipe) → physical Power ~10 s + Power+VolDown (needs the user).
 - **A dead slot dropping to fastboot is almost never the `adsp.mbn`** (fw loads post-kernel) — fsck the dirty loop-rootfs from the other slot instead of re-flashing the ADSP.
 - **Repair / pre-stage a broken slot's rootfs from the healthy slot** (`losetup -fP` → `e2fsck -y` → mount) — a ~2-minute offline edit, no reflash.
