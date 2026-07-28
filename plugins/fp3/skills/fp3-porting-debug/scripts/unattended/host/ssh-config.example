@@ -1,0 +1,48 @@
+# Append to ~/.ssh/config. Host-key checking is off on purpose: the rootfs is
+# reflashed often and the link is a private cable, so key churn would only ever
+# be a false alarm. Replace the WiFi address with your phone's LAN lease.
+
+Host fp3
+	HostName 172.16.42.1
+	User fp3
+	IdentityFile ~/.ssh/id_ed25519
+	IdentitiesOnly yes
+	StrictHostKeyChecking no
+	UserKnownHostsFile /dev/null
+	LogLevel ERROR
+	ConnectTimeout 8
+	ServerAliveInterval 15
+	ServerAliveCountMax 4
+	TCPKeepAlive yes
+
+Host fp3ut
+	HostName 10.42.0.1
+	User phablet
+	IdentityFile ~/.ssh/id_ed25519
+	IdentitiesOnly yes
+	StrictHostKeyChecking no
+	UserKnownHostsFile /dev/null
+	LogLevel ERROR
+	ConnectTimeout 8
+	ServerAliveInterval 15
+	ServerAliveCountMax 4
+
+Host fp3ut-wifi
+	HostName 192.168.100.15
+	User phablet
+	IdentityFile ~/.ssh/id_ed25519
+	IdentitiesOnly yes
+	StrictHostKeyChecking no
+	UserKnownHostsFile /dev/null
+	LogLevel ERROR
+	ConnectTimeout 8
+	ServerAliveInterval 15
+
+Host fp3ut-rescue
+	HostName 10.42.0.1
+	Port 8022
+	User phablet
+	StrictHostKeyChecking no
+	UserKnownHostsFile /dev/null
+	LogLevel ERROR
+	ConnectTimeout 8

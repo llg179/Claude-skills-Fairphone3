@@ -1,0 +1,16 @@
+#!/bin/sh
+# Remove leftover "Developer Mode" NetworkManager profiles from earlier boots.
+# usb-moded-developer-mode adds a fresh one on every start, so anything still
+# present at this point is a leak from a boot that never ran its down().
+set -eu
+
+for uuid in $(nmcli -t -f UUID,NAME connection show 2>/dev/null \
+		| awk -F: '$2 == "Developer Mode" { print $1 }'); do
+	nmcli connection delete uuid "$uuid" >/dev/null 2>&1 || true
+done
+
+# and the on-disk remnants NetworkManager may not know about
+find /etc/NetworkManager/system-connections \
+	-name 'Developer Mode*.nmconnection' -delete 2>/dev/null || true
+
+exit 0

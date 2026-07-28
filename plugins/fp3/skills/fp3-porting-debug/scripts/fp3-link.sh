@@ -9,17 +9,31 @@
 #     live iface may still be enx<mac>; this script handles both.
 #   * On a cold-boot JAM (transmit-queue-timeout: ICMP may be OK but TCP dead)
 #     the device SELF-RECOVERS in minutes. Only PASSIVELY poll.
-#   ☠️ NEVER restart/reset USB on the HOST: no `echo 1 > .../usb/.../remove`,
-#     no `authorized` toggle, no USBDEVFS_RESET ioctl, no cdc_ncm/port unbind-rebind,
-#     and no `ip link down/up` / nmcli link cycling. It does NOT clear a device-side
-#     gadget jam, AND the host's /mnt work disk is itself USB-attached — a host USB
-#     reset can disconnect /mnt. Recovery is patience or a DEVICE reboot, never a
-#     host-side USB/link restart.
+#   ☠️ NEVER restart/reset USB at the HOST-CONTROLLER level: no xhci_hcd unbind,
+#     no usbcore reload, no root-hub `authorized` toggle, no `ip link down/up` /
+#     nmcli link cycling of a live capture. The host's work disk may itself be
+#     USB-attached, and a controller-level reset takes it down with everything else.
+#   ☠️ And know what a host-side reset CANNOT do, which was measured rather than
+#     assumed (2026-07-28): a *leaf-port* `authorized` 0->1 and a `usb` driver
+#     unbind/bind on the phone's own port are harmless if you have checked the
+#     topology first (`findmnt -no SOURCE <workmount>` -> `readlink -f /sys/block/<dev>`
+#     gives the disk's bus; compare with the phone's) — but they are also USELESS:
+#     the device number never changed and the gadget mode never moved, because
+#     none of them drops VBUS, so the phone never sees a disconnect and never
+#     re-evaluates its USB mode. Cutting VBUS is not available either unless an
+#     external hub with per-port power switching is in the path (root hubs report
+#     "No power switching"). The only real lever is DEVICE-side: re-bind the UDC
+#     (`echo "" > /sys/kernel/config/usb_gadget/g1/UDC`, then write it back), which
+#     is what fp3-usbnet-watchdog does on pmOS. See "Unattended access" in the
+#     repository README.
 #
-# Usage: fp3-link {status|up|wait [secs]|ip}
+# Usage: fp3-link {status|up|wait [secs]|ip|heal|install-key}
 
 # Config lives in fp3-env.sh; every value there has a documented default.
-for _d in "$(dirname "$0")" "$(dirname "$0")/.." "$(dirname "$0")/../.." ; do
+# Resolve symlinks first: these scripts are commonly installed as symlinks in
+# /usr/local/bin, where a bare $0 would look for fp3-env.sh next to the symlink.
+_self="$(readlink -f "$0")"
+for _d in "$(dirname "$_self")" "$(dirname "$_self")/.." "$(dirname "$_self")/../.." ; do
     [ -r "$_d/fp3-env.sh" ] && . "$_d/fp3-env.sh" && break
 done
 
@@ -65,9 +79,40 @@ cmd_wait() {  # passively poll until TCP:22 answers; NO usb-layer poking
     done
     echo "TIMEOUT after ${max}s"; return 1
 }
+cmd_heal() {  # host-side repair only; never touches the USB layer
+    local IF; IF=$(_iface)
+    [ -z "$IF" ] && { echo "no iface to heal"; return 1; }
+    # The gadget picks a fresh random MAC every boot, so the host can be left
+    # with a neighbour entry for the previous one; until it ages out, every
+    # connection fails with "No route to host" and looks like a dead cable.
+    echo "flushing neighbours on $IF"
+    sudo ip neigh flush dev "$IF" 2>/dev/null || true
+    if nmcli -t -f NAME connection show 2>/dev/null | grep -qx "$IF"; then
+        echo "bouncing the NetworkManager profile $IF"
+        sudo nmcli connection down "$IF" >/dev/null 2>&1 || true
+        sudo nmcli connection up   "$IF" >/dev/null 2>&1 || true
+        sleep 2
+    fi
+    cmd_status
+}
+
+cmd_install_key() {  # one-off: password login -> key login
+    [ -r "$FP3_SSH_KEY.pub" ] || { echo "no public key at $FP3_SSH_KEY.pub"; return 1; }
+    [ -n "$FP3_PW" ] || { echo "set FP3_PW (fp3-env.local.sh) for this one call"; return 1; }
+    local pub; pub=$(cat "$FP3_SSH_KEY.pub")
+    sshpass -p "$FP3_PW" ssh -o StrictHostKeyChecking=no -o PreferredAuthentications=password \
+        -o PubkeyAuthentication=no "$FP3_USER@$DEV_IP" \
+        "mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch ~/.ssh/authorized_keys && \
+         grep -qF '$pub' ~/.ssh/authorized_keys || echo '$pub' >> ~/.ssh/authorized_keys; \
+         chmod 600 ~/.ssh/authorized_keys" &&
+        echo "key installed; fp3-ssh will use it from now on"
+}
+
 case "${1:-status}" in
     status) cmd_status ;;
     ip|up)  cmd_ip ;;
     wait)   cmd_wait "${2:-600}" ;;
-    *) echo "usage: fp3-link {status|up|wait [secs]|ip}"; exit 1 ;;
+    heal)   cmd_heal ;;
+    install-key) cmd_install_key ;;
+    *) echo "usage: fp3-link {status|up|wait [secs]|ip|heal|install-key}"; exit 1 ;;
 esac

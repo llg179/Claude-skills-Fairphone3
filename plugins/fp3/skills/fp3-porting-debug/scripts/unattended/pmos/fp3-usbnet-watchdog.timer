@@ -1,0 +1,10 @@
+[Unit]
+Description=Periodically check the USB-NCM developer link
+
+[Timer]
+OnBootSec=90s
+OnUnitActiveSec=30s
+AccuracySec=5s
+
+[Install]
+WantedBy=timers.target

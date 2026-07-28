@@ -10,7 +10,10 @@
 # Run from HOST with the phone booted into UT and adb up. usage: ut-capture-framer.sh [outdir]
 
 # Config lives in fp3-env.sh; every value there has a documented default.
-for _d in "$(dirname "$0")" "$(dirname "$0")/.." "$(dirname "$0")/../.." ; do
+# Resolve symlinks first: these scripts are commonly installed as symlinks in
+# /usr/local/bin, where a bare $0 would look for fp3-env.sh next to the symlink.
+_self="$(readlink -f "$0")"
+for _d in "$(dirname "$_self")" "$(dirname "$_self")/.." "$(dirname "$_self")/../.." ; do
     [ -r "$_d/fp3-env.sh" ] && . "$_d/fp3-env.sh" && break
 done
 

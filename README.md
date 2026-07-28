@@ -181,9 +181,14 @@ via TWRP when you need a recovery shell in between.
   there).
 * **Cycling fastboot** fails on the larger `boot_a`; you need a stable fastboot
   connection, not one that re-enumerates.
-* **Never restart USB from the host** while a flash or capture is running.
+* **Never restart USB from the host** while a flash or capture is running — and note
+  that a host-side reset cannot fix a device-side gadget jam anyway, which was measured
+  rather than assumed: see [Unattended access](#unattended-access-no-on-device-login-no-usb-replug).
 * Once pmOS is up: `ssh $FP3_USER@$FP3_DEV_IP` over the USB NCM link
   (`scripts/fp3-ssh.sh` wraps it, `scripts/fp3-link.sh` brings up the host address).
+* **Neither OS needs a human at the phone.** Unlocking the screen and unplugging the
+  cable used to be part of every cycle; both are gone. The full recipe, host and device
+  side, is in [Unattended access](#unattended-access-no-on-device-login-no-usb-replug).
 
 #### Slot `_b` runs out of space, and that turns into a boot loop
 
@@ -258,6 +263,277 @@ cap the journal (`journalctl --vacuum-size=`, or `SystemMaxUse=` in
 `journald.conf`), and clear the apk cache. Gate the campaign on free space
 *and* on a clean rootfs — and never force an unclean reboot on a healthy
 system, because that is what dirties the loop-rootfs for the next boot.
+
+## Unattended access: no on-device login, no USB replug
+
+For a long time both OSes needed a human at the phone: unlock the screen, and
+pull the cable out and back in. That is fatal for an overnight run and it
+poisons measurements, because half of a "the driver is dead" result turns out to
+be "the link was dead". This section is the complete recipe that removes both,
+for postmarketOS and for Ubuntu Touch.
+
+Every file referenced below lives in
+[`scripts/unattended/`](plugins/fp3/skills/fp3-porting-debug/scripts/unattended/) —
+deploy them from there rather than copying out of this page.
+
+Verified end to end on 2026-07-28 by rebooting each OS with **nothing touched on
+the phone**:
+
+| OS | back over USB | back over WiFi | evidence it was the fix |
+|---|---|---|---|
+| postmarketOS | 39 s | — | the gadget MAC changed across the reboot (`f2:f1:1c:12:52:3e` → `96:a3:fd:e8:4e:a7`) and the interface name, host IP and neighbour entry all followed automatically |
+| Ubuntu Touch | 79 s | 76 s | `ut-force-usbnet` logged `rndis up after 2 tries`, i.e. the gadget really was in `charging_only` at boot and the D-Bus requests are what brought it up |
+
+### First, the thing that does not work
+
+Before the recipe, the dead end, because it looks obvious and costs an hour.
+
+**You cannot emulate a replug from the host.** Measured, not assumed:
+
+```sh
+echo 0 | sudo tee /sys/bus/usb/devices/1-5/authorized   # deauthorize
+echo 1 | sudo tee /sys/bus/usb/devices/1-5/authorized
+echo 1-5 | sudo tee /sys/bus/usb/drivers/usb/unbind     # driver unbind/bind
+echo 1-5 | sudo tee /sys/bus/usb/drivers/usb/bind
+```
+
+Both ran cleanly and changed nothing: the device number stayed at `037` and the
+gadget stayed in `0000:0afe` (charging only). Neither drops VBUS, so the *phone*
+never sees a disconnect and never re-evaluates its USB mode. Cutting VBUS is not
+available either unless an external hub with per-port power switching sits in the
+path:
+
+```sh
+sudo lsusb -v -d 1d6b:0002 2>/dev/null | grep -i "power switching"
+#   No power switching (usb 1.0)
+```
+
+So every fix below is either host-side *addressing* (which is where the "No route
+to host" class of failure lives) or device-side *state* (which is where the mode
+lives). There is nothing in between.
+
+If the work disk is itself USB-attached, check the topology before touching any
+port — on this machine the disk and the phone were on different buses, so a
+targeted cycle of the phone's port could not affect the disk:
+
+```sh
+findmnt -no SOURCE /mnt/1TB          # /dev/sdb2
+readlink -f /sys/block/sdb           # .../usb2/2-1/...   -> bus 2
+readlink -f /sys/bus/usb/devices/1-5 # the phone          -> bus 1
+```
+
+[`usb-repower-safely.sh`](plugins/fp3/skills/fp3-porting-debug/scripts/usb-repower-safely.sh)
+automates the safe sequence for the case where they do share a bus: quiesce
+(`fuser -Mvm`), `sync`, `umount`, a clean SCSI `delete`, the power cycle, then
+remount **by UUID** — the letter can change from `sdb` to `sdc` across a repower.
+
+### Part 1 — postmarketOS
+
+Four host-side files and three device-side changes.
+
+#### 1.1 Pin the interface name, and give it a fixed address (host)
+
+The gadget picks a fresh random MAC on every boot, so anything that keys off the
+MAC — the interface name, a NetworkManager profile bound to a MAC — churns. Pin
+by *driver* instead, with
+[`host/10-fp3.link`](plugins/fp3/skills/fp3-porting-debug/scripts/unattended/host/10-fp3.link):
+
+```sh
+sudo install -m644 …/unattended/host/10-fp3.link /etc/systemd/network/
+sudo nmcli connection add con-name fp3 type ethernet ifname fp3 \
+    ipv4.method manual ipv4.addresses 172.16.42.2/16 \
+    ipv4.never-default yes ipv6.method ignore connection.autoconnect yes
+```
+
+Bind the profile to the *interface name*, never to a MAC, for the same reason.
+
+#### 1.2 Flush the neighbour entry on every link change (host)
+
+This is the single highest-value item: it is what made the cable seem dead.
+After the phone re-enumerates with a new MAC, the host still holds an ARP entry
+for `172.16.42.1` pointing at the previous one, and every connection fails with
+`No route to host` until it ages out.
+[`host/50-fp3-link`](plugins/fp3/skills/fp3-porting-debug/scripts/unattended/host/50-fp3-link)
+is a NetworkManager dispatcher script that flushes it; it covers the UT interface
+too.
+
+```sh
+sudo install -m755 -o root -g root …/unattended/host/50-fp3-link \
+    /etc/NetworkManager/dispatcher.d/
+sudo systemctl enable --now NetworkManager-dispatcher.service
+```
+
+#### 1.3 Key login and an ssh alias (host)
+
+```sh
+FP3_PW=<your pmOS password> scripts/fp3-link.sh install-key
+cat …/unattended/host/ssh-config.example >> ~/.ssh/config   # then fix the WiFi address
+```
+
+After this, [`fp3-ssh.sh`](plugins/fp3/skills/fp3-porting-debug/scripts/fp3-ssh.sh)
+uses the key automatically and retries with a neighbour flush between attempts.
+
+#### 1.4 Let user services run without a login (device)
+
+```sh
+sudo loginctl enable-linger fp3
+```
+
+Without lingering, `user@<uid>.service` only runs while someone is logged in, so
+pulseaudio and anything else in the user session is absent until you unlock the
+phone — and a long measurement started over SSH is killed the moment the session
+ends. Check the uid: it is **not** necessarily 1000 (it was 10000 here).
+
+#### 1.5 Heal a jammed gadget from the device side (device)
+
+The only real lever, as established above:
+[`pmos/fp3-usbnet-watchdog`](plugins/fp3/skills/fp3-porting-debug/scripts/unattended/pmos/fp3-usbnet-watchdog)
+re-binds the UDC when the host has stopped enumerating it. It is conservative on
+purpose: it never acts while the state is `configured` (healthy) or
+`not attached` (no cable), and only after a *sustained* bad state, so a normal
+transient during enumeration is ignored.
+
+```sh
+sudo install -m755 …/unattended/pmos/fp3-usbnet-watchdog /usr/local/bin/
+sudo install -m644 …/unattended/pmos/fp3-usbnet-watchdog.service /etc/systemd/system/
+sudo install -m644 …/unattended/pmos/fp3-usbnet-watchdog.timer   /etc/systemd/system/
+sudo systemctl enable --now fp3-usbnet-watchdog.timer
+```
+
+#### 1.6 Stop the NetworkManager profile leak (device)
+
+`usb-moded-developer-mode` runs an unconditional `nmcli connection add` on start
+and only deletes the profile in its `down()`, so every unclean shutdown leaks
+one. There were **96** of them here, all but one zero-length, which leaves NM
+picking between identically named connections.
+[`pmos/fp3-devmode-cleanup`](plugins/fp3/skills/fp3-porting-debug/scripts/unattended/pmos/fp3-devmode-cleanup)
+prunes them, run from a drop-in before the service adds this boot's profile.
+
+```sh
+sudo install -m755 …/unattended/pmos/fp3-devmode-cleanup /usr/local/bin/
+sudo mkdir -p /etc/systemd/system/usb-moded-developer-mode.service.d
+sudo install -m644 …/unattended/pmos/10-cleanup-stale-profiles.conf \
+    /etc/systemd/system/usb-moded-developer-mode.service.d/
+sudo systemctl daemon-reload
+```
+
+### Part 2 — Ubuntu Touch
+
+UT was the harder half, and the mechanism is completely different: `usb-moded`
+parks the gadget in `charging_only` until the session says otherwise, so at the
+lock screen the host sees **no network interface and no adb at all** — the phone
+enumerates as `0000:0afe` with no functions. Since the host cannot force a
+re-evaluation (see above), the fix has to come from inside.
+
+The bootstrap problem is that getting inside needs the link. It is solved by
+staging the access **offline from the other slot**, which needs no UI and no
+working link.
+
+#### 2.1 Stage SSH access from pmOS, with UT not running
+
+Boot pmOS, then mount UT's writable overlay. UT keeps `/home` in `user-data/`
+and the writable parts of `/` in `system-data/`, both on `userdata`:
+
+```sh
+sudo mkdir -p /mnt/ud
+sudo mount /dev/disk/by-partlabel/userdata /mnt/ud
+```
+
+Install the host's public key for `phablet` (uid/gid **32011**):
+
+```sh
+sudo mkdir -p /mnt/ud/user-data/phablet/.ssh
+sudo sh -c "echo '<your ~/.ssh/id_ed25519.pub>' > /mnt/ud/user-data/phablet/.ssh/authorized_keys"
+sudo chown -R 32011:32011 /mnt/ud/user-data/phablet/.ssh
+sudo chmod 700 /mnt/ud/user-data/phablet/.ssh
+sudo chmod 600 /mnt/ud/user-data/phablet/.ssh/authorized_keys
+```
+
+Enable sshd at boot. UT normally only enables it from an Android property, via
+`ssh-property-migration.service` — a one-shot that **masks itself after its first
+run**, so relying on the property alone is fragile. Creating the wants-symlink
+directly is robust:
+
+```sh
+sudo ln -sf /lib/systemd/system/ssh.service \
+	/mnt/ud/system-data/etc/systemd/system/multi-user.target.wants/ssh.service
+sudo sh -c 'echo -n true > /mnt/ud/android-data/property/persist.service.ssh'   # belt and braces
+sudo sync && sudo umount /mnt/ud
+```
+
+Host keys need no attention: `ssh.service.d/lxc-android-config.conf` already
+pulls in `ssh-generate-hostkeys.service`.
+
+#### 2.2 Prepare the host for UT's gadget
+
+UT binds `rndis_host` on the host side, pmOS binds `cdc_ncm`, so the two pins
+never collide —
+[`host/11-fp3ut.link`](plugins/fp3/skills/fp3-porting-debug/scripts/unattended/host/11-fp3ut.link):
+
+```sh
+sudo install -m644 …/unattended/host/11-fp3ut.link /etc/systemd/network/
+sudo nmcli connection add con-name fp3ut type ethernet ifname fp3ut \
+    ipv4.method auto ipv4.never-default yes ipv6.method ignore connection.autoconnect yes
+```
+
+**Use DHCP here, not a static address.** UT's `rndis_adb` mode sets
+`network = 0`, leaving addressing to NetworkManager, which uses its shared-mode
+subnet: the device comes up on **`10.42.0.1`**. The `10.15.19.82` in usb-moded's
+own defaults file is *not* used in this mode — configuring the host for it gives
+a link that is up and completely unreachable.
+
+#### 2.3 Bring the gadget up at boot, from inside UT
+
+With SSH working, install
+[`ut/ut-force-usbnet.service`](plugins/fp3/skills/fp3-porting-debug/scripts/unattended/ut/ut-force-usbnet.service),
+which asks usb-moded over D-Bus for `rndis_adb` until the gadget actually carries
+the rndis function. Note `/` is read-only on UT, but `/etc/systemd/system` is a
+read-write bind mount from `userdata`, so a unit can be installed without
+remounting the rootfs. `/usr/local/bin` and `/var/lib` are read-only, which is
+why the retry loop lives inline in the unit.
+
+```sh
+sudo install -m644 …/unattended/ut/ut-force-usbnet.service /etc/systemd/system/
+sudo systemctl enable --now ut-force-usbnet.service
+```
+
+Two details that cost a cycle each:
+
+* **`$$` is required** in that unit. systemd expands `$i` itself and hands the
+  shell an empty variable, which silently breaks the loop guard: the unit still
+  reports success, and the retry only fails to work when it is actually needed.
+  Verify by making the unit print the counter — `rndis up after 0 tries` is
+  right, `rndis up after  tries` means systemd ate it.
+* **Check the D-Bus method exists** before scripting it, and prefer introspection
+  over guessing:
+  `dbus-send --system --print-reply --dest=com.meego.usb_moded /com/meego/usb_moded org.freedesktop.DBus.Introspectable.Introspect`
+  (it offers `set_mode`, `mode_request`, `set_config`, and more).
+
+#### 2.4 Keep WiFi as an independent path
+
+UT's WiFi profile is a system connection that autoconnects at boot without an
+unlock, and it is on the LAN rather than the cable — so it survives any USB jam
+whatsoever. Put the lease in `FP3_UT_WIFI_IP` and
+[`ut-ssh.sh`](plugins/fp3/skills/fp3-porting-debug/scripts/ut-ssh.sh) will try it
+automatically. This is the most robust of the three paths; the USB one is worth
+having anyway because it works with no LAN at all.
+
+`ut-ssh.sh` tries, in order: USB (`10.42.0.1`), WiFi, then UT's own usb-moded
+rescue sshd on `10.42.0.1:8022` — the last one permits a login even for a
+passwordless account, so it is the way back in if the normal sshd is off.
+
+### Part 3 — daily use
+
+```sh
+scripts/fp3-ssh.sh 'uname -r'     # postmarketOS
+scripts/ut-ssh.sh  'uname -a'     # Ubuntu Touch (USB, then WiFi, then rescue)
+scripts/fp3-link.sh              # link status
+scripts/fp3-link.sh heal         # host-side repair: neighbour flush + NM bounce
+```
+
+Keep the wrappers on the *system* disk, not on a USB-attached work disk. They
+started life as symlinks into one here, which meant they would have vanished
+exactly while that disk was unmounted for a repower.
 
 ## What is deliberately not here
 

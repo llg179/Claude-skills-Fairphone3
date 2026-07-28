@@ -1,0 +1,10 @@
+# FP3 dev device booted into Ubuntu Touch. UT's usb-moded runs the gadget in
+# "rndis_adb" mode, which binds the host's rndis_host driver (pmOS uses cdc_ncm
+# and is pinned to "fp3" by 10-fp3.link, so the two never collide).
+# Pin by driver, not by MAC: the gadget MAC is regenerated on every boot.
+[Match]
+Driver=rndis_host cdc_ether
+
+[Link]
+Name=fp3ut
+MACAddressPolicy=none

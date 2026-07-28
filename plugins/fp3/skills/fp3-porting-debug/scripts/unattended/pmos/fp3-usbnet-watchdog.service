@@ -1,0 +1,7 @@
+[Unit]
+Description=Heal a jammed USB-NCM developer link (no physical replug needed)
+ConditionPathExists=/sys/kernel/config/usb_gadget/g1/UDC
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/fp3-usbnet-watchdog

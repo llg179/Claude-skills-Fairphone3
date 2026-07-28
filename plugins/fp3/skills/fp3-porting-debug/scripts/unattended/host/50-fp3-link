@@ -1,0 +1,25 @@
+#!/bin/sh
+# FP3 dev device, both OSes:
+#   fp3   = postmarketOS  (cdc_ncm gadget, device at 172.16.42.1)
+#   fp3ut = Ubuntu Touch  (rndis gadget,   device at 10.15.19.82)
+#
+# Either gadget picks a fresh random MAC on every boot, so after the phone
+# re-enumerates the host still holds a neighbour entry pointing at the previous
+# MAC. Until that entry ages out every connection fails with "No route to host"
+# -- which is what used to force a physical replug. Flushing the neighbour table
+# whenever the link changes state makes the reconnect immediate and unattended.
+IFACE="$1"
+ACTION="$2"
+
+case "$IFACE" in
+	fp3|fp3ut) ;;
+	*) exit 0 ;;
+esac
+
+case "$ACTION" in
+	up|down|pre-up|connectivity-change)
+		ip neigh flush dev "$IFACE" 2>/dev/null
+		;;
+esac
+
+exit 0

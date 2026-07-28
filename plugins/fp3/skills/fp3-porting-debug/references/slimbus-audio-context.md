@@ -295,7 +295,8 @@ yield of the (A) live two-sided loadable module is CONFIRMATION, not a lever.
   (it returns EINVAL on /dev/mem). For a transient return/wait value → splice INSIDE the fn (the FST1 pattern).
 - **★ Write the readout DIRECTLY to a synced file (`py > f; sync`), NOT through a `{ } | tee` pipe** (a mid-run reboot loses the late output).
 - **★ Ensure disk headroom BEFORE a dead-side fw experiment** (journal vacuum → 270M+; at 210M the measurement campaign itself causes a disk-full loop).
-  A persistent USB link wedge → physical replug (host-side reset FORBIDDEN). **Cross-slot fix for a reboot loop:** from UT,
+  A persistent USB link wedge → ~~physical replug~~ device-side UDC re-bind (host-side reset still
+  FORBIDDEN, and measured to be useless: it never drops VBUS — [Unattended access](../../../../../README.md#unattended-access-no-on-device-login-no-usb-replug)). **Cross-slot fix for a reboot loop:** from UT,
   `losetup -fP /dev/mmcblk0p31` (=pmOS system_b, DOS PT) → `e2fsck -fy loopXp2` → mount → repair.
 - Offline: the full disasm cache `scratchpad/tier1/seg2_full.dis` (llvm-objdump hexagon, seg2.elf @0xf015f000); two-sided dumps
   `framer-clock-dumps/{utdm_framer,pmosdm_framer}.bin` (176 KB, real); coredump `adsp-coredump.elf` + `coredump_resolve.py`.

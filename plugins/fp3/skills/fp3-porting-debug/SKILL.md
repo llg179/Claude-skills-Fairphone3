@@ -136,15 +136,19 @@ terms of what question each answers:
   every ~5 s* (`usb 1-5: reset high-speed USB device` on repeat), which prevents adbd from
   settling. Method: `adb kill-server`, leave it **untouched** ~30–60 s (no server → no USB
   resets → adbd settles), then one fresh `start-server` + single probe. If still `offline`,
-  it is a wedged adbd, and the reliable fix is a **device reboot or a physical USB replug**
-  (which makes adbd re-offer the connection) — not more host-side reconnects. This one *does*
-  benefit from the user if present (a replug is instant); otherwise a `adb reboot` once it's
-  briefly reachable, or a fastboot cycle, clears it.
+  it is a wedged adbd, and the reliable fix is a **device reboot or ~~a physical USB replug~~**
+  (which makes adbd re-offer the connection) — not more host-side reconnects. ~~This one *does*
+  benefit from the user if present (a replug is instant)~~; otherwise a `adb reboot` once it's
+  briefly reachable, or a fastboot cycle, clears it. **A wedged adbd no longer costs you the
+  device:** with the unattended setup in place, `scripts/ut-ssh.sh` reaches UT over SSH (USB,
+  WiFi, or UT's rescue sshd) completely independently of adbd — and a host-side replug was
+  measured to be impossible in any case. See [Unattended access](../../../../README.md#unattended-access-no-on-device-login-no-usb-replug).
 - **On UT, drive it over `adb`, not `ssh` to `$FP3_DEV_IP`.** The UT USB-RNDIS comes up on a
   DIFFERENT subnet than pmOS (host saw `10.42.0.100/24`, device ~`10.42.0.1`), so `ssh
   phablet@$FP3_DEV_IP` (the pmOS IP) times out. `adb` works (`ro.adb.secure=0`); `adb shell`
   lands as **phablet**, root via `echo $FP3_PW | sudo -S …`. The ~90 s hands-off reconnect above
-  held on UT reboots (only the first slot-swap entry needed the on-device login + one replug;
+  held on UT reboots (~~only the first slot-swap entry needed the on-device login + one replug~~ —
+  no entry needs either any more, see [Unattended access](../../../../README.md#unattended-access-no-on-device-login-no-usb-replug);
   every later UT reboot reconnected `adb` by itself in ~60–90 s — just poll `adb devices`).
   UT's ADSP firmware is a **split PIL image** — `/vendor/firmware_mnt/image/adsp.mdt + adsp.b00..b14`
   on `/dev/mmcblk0p1` (VFAT, RO); the .text/framer segment is `adsp.b04`. ☠️ A qtestsign re-signed

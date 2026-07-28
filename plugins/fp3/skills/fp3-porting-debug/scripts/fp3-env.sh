@@ -22,6 +22,21 @@ export FP3_SERIAL="${FP3_SERIAL:-}"         # NO DEFAULT: your device's fastboot
 # Kept for older scripts that still use the previous name.
 export FP3_SSH_IP="$FP3_DEV_IP"
 
+# Key-based login removes the password (and sshpass) from every call, and makes
+# reconnects instant after a reboot. Install it once with fp3-link install-key.
+export FP3_SSH_KEY="${FP3_SSH_KEY:-$HOME/.ssh/id_ed25519}"  # default: the usual user key
+
+# --- Ubuntu Touch (the oracle slot) -----------------------------------------
+# UT's usb-moded runs the gadget in rndis_adb mode and lets NetworkManager do
+# the addressing, so the device ends up on NM's shared-mode subnet. Note this is
+# NOT the 10.15.19.82 that usb-moded's own defaults file advertises -- that
+# value is unused here. See "Unattended access" in the top-level README.
+export FP3_UT_USER="${FP3_UT_USER:-phablet}"          # default: the UT username
+export FP3_UT_USB_IP="${FP3_UT_USB_IP:-10.42.0.1}"    # default: UT over the USB rndis link
+export FP3_UT_WIFI_IP="${FP3_UT_WIFI_IP:-}"           # NO DEFAULT: your LAN lease for the phone
+export FP3_UT_RESCUE_PORT="${FP3_UT_RESCUE_PORT:-8022}" # default: UT's usb-moded rescue sshd
+export FP3_UT_IFACE="${FP3_UT_IFACE:-fp3ut}"          # default: host NIC name for UT's rndis link
+
 # --- host paths -------------------------------------------------------------
 export FP3_ROOT="${FP3_ROOT:-$HOME/fp3}"            # default: project data root (images, dumps, journal)
 export FP3_PMOS="${FP3_PMOS:-$HOME/pmos}"           # default: parent of the pmbootstrap + kernel trees

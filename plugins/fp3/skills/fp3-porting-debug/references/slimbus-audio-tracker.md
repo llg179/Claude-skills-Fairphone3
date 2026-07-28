@@ -36,7 +36,8 @@ moment = isolated signal; (3) UT-clock-dead == pmOS-state → direct diff of the
 - ☠️ NEVER host-side USB restart (authorized/USBDEVFS/unbind/remove/ip-link-cycle) — disconnects the USB-mounted /mnt disk.
   NCM flap self-recovers; use per-MAC `ip neigh flush dev fp3 && ip addr replace $FP3_HOST_IP/16 dev fp3` + spaced ssh.
 - ☠️ NEVER `sudo adb`. NEVER cave-issued MMIO read (posted-write≠safe-read → ADSP hang). SMEM stash ≤ ~0x50B.
-- UT reboots flaky: Halium container race → File-Stor/"Charging Only", needs user login+replug (device-side).
+- UT reboots flaky: Halium container race → File-Stor/"Charging Only", ~~needs user login+replug (device-side)~~
+  — handled automatically since 2026-07-28 ([Unattended access](../../../../../README.md#unattended-access-no-on-device-login-no-usb-replug)).
 - Flash gates self-decidable (overnight autonomy) w/ brick-safety; kernel commits LOCAL never push; daily-driver = separate FP3.
 
 ## DEVICE STATE (keep current!)
@@ -155,7 +156,8 @@ re-run its clock-enable leaf (f019aaf8) on the re-issued POWER_REQ? Read v3 cave
 
 ## OPEN DECISION (for when user returns / power stable) — A DONE + F1-UT DONE (see log above)
 Two viable continuations, both need care:
-- **A. v4 on UT (positive control)** — decisive but needs a UT reboot (may degrade → user login+replug). If abb0
+- **A. v4 on UT (positive control)** — decisive but needs a UT reboot (~~may degrade → user login+replug~~;
+  a UT reboot is hands-off now, [Unattended access](../../../../../README.md#unattended-access-no-on-device-login-no-usb-replug)). If abb0
   reached on UT only → pmOS skips the CGC enable = root-cause-adjacent.
 - **B. More static RE** — find the TRUE framer/SLIMbus core-clock enable site in adsp.mbn (f019aaf8 unconfirmed);
   check the abb8 exit path + trace which fn the config-group actually calls for realization. Offline, no device risk.

@@ -1,0 +1,51 @@
+#!/bin/sh
+# Self-heal the USB-NCM developer link so a jam never needs a physical replug.
+#
+# Failure mode this addresses: the gadget stays bound but the host stops
+# enumerating it, so the UDC sits in "addressed"/"powered"/"default" instead of
+# "configured" and the network device never appears on the host. Re-binding the
+# UDC re-runs enumeration and brings the link back.
+#
+# Deliberately conservative:
+#   - "not attached" means the cable is simply out -> never act.
+#   - "configured" is healthy -> never act.
+#   - only a *sustained* bad state (STRIKES consecutive checks) triggers a
+#     single re-bind, so a transient state during normal enumeration is ignored.
+set -eu
+
+UDC_NAME=$(ls /sys/class/udc/ 2>/dev/null | head -1)
+[ -n "$UDC_NAME" ] || exit 0
+STATE_FILE="/sys/class/udc/$UDC_NAME/state"
+GADGET_UDC="/sys/kernel/config/usb_gadget/g1/UDC"
+COUNTER="/run/fp3-usbnet-watchdog.strikes"
+STRIKES=3
+
+[ -r "$STATE_FILE" ] || exit 0
+[ -w "$GADGET_UDC" ] || exit 0
+
+state=$(cat "$STATE_FILE")
+
+case "$state" in
+	configured|"not attached")
+		# healthy, or no cable: forget any accumulated strikes
+		rm -f "$COUNTER"
+		exit 0
+		;;
+esac
+
+n=0
+[ -f "$COUNTER" ] && n=$(cat "$COUNTER")
+n=$((n + 1))
+echo "$n" > "$COUNTER"
+
+if [ "$n" -lt "$STRIKES" ]; then
+	echo "usbnet: state '$state' ($n/$STRIKES), waiting"
+	exit 0
+fi
+
+echo "usbnet: state stuck at '$state' for $n checks, re-binding UDC $UDC_NAME"
+echo "" > "$GADGET_UDC" || true
+sleep 1
+echo "$UDC_NAME" > "$GADGET_UDC" || true
+rm -f "$COUNTER"
+echo "usbnet: UDC re-bound, state is now $(cat "$STATE_FILE")"

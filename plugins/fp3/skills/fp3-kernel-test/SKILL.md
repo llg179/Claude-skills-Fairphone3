@@ -688,7 +688,9 @@ question it answers, the how, and how to interpret — with example values.
 - **★ When the out-of-band link is flaky, the on-device runner must persist its result to a
   disk file, not just stdout — otherwise a link drop mid-measurement loses the whole run.**
   This device's host↔device USB-NCM link drops unpredictably (re-enumerates with a new MAC →
-  stale-ARP "No route to host"; sometimes vanishes entirely until a physical replug). If you
+  stale-ARP "No route to host"; ~~sometimes vanishes entirely until a physical replug~~ — both of
+  those are fixed now: the host flushes the stale neighbour entry on every link change and the
+  device re-binds its own UDC when the link jams, see [Unattended access](../../../../README.md#unattended-access-no-on-device-login-no-usb-replug)). If you
   drive the SSR-swap→reload→read→heal chain as one *interactive* SSH command and the link
   dies at second 3, the co-processor still ran and wrote SMEM, but you never see the readout
   and the next reboot clears SMEM — the measurement is gone. Fix: stage a small **on-device

@@ -1,0 +1,9 @@
+# FP3 dev device (pmOS) USB-NCM link: pin a stable name regardless of the
+# random per-boot gadget MAC. Matches the cdc_ncm ethernet gadget (18d1:d001).
+[Match]
+Driver=cdc_ncm
+
+[Link]
+Name=fp3
+# keep the device's (random) MAC; we only fix the *name*
+MACAddressPolicy=none

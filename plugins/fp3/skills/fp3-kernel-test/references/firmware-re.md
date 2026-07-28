@@ -359,7 +359,8 @@ This is the workhorse firmware measurement — a non-destructive way to answer
   ADSP/audio so the UT Halium container failed to start → USB fell to File-Stor/charging-only,
   no adb; a 0x24 B single-record version was benign, framer stayed alive.) Also note UT
   reboots are independently flaky — the container race drops to File-Stor/charging-only even
-  on **stock** fw; recovery is a device-side login+replug, not a cave issue.
+  on **stock** fw; recovery is ~~a device-side login+replug~~ no longer manual — `ut-force-usbnet`
+  brings the gadget back at boot without an unlock ([Unattended access](../../../../../README.md#unattended-access-no-on-device-login-no-usb-replug)) — not a cave issue.
 - **Filtered ctx-scan cave — hunt pointer fields through the tiny SMEM window when you can't dump
   everything (the stepping-stone to a coredump).** If the coredump is unavailable (no `DEV_COREDUMP`,
   or a selective-minidump skipped the heap) or you only want a struct's *pointer* fields, splice a cave
