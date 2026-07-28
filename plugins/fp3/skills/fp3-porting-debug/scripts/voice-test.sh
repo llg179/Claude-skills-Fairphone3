@@ -23,9 +23,9 @@ pkill -9 pulseaudio 2>/dev/null
 sleep 1
 
 if [ "$DEV" = "speaker" ]; then
-	alsaucm -c Fairphone_3 set _verb "Voice Call" set _enadev Speaker set _enadev Mic1 >/dev/null 2>&1
+	alsaucm -c Fairphone_3 set _verb "Voice Call" set _enadev Speaker set _enadev Mic >/dev/null 2>&1
 else
-	alsaucm -c Fairphone_3 set _verb "Voice Call" set _enadev Earpiece set _enadev Mic1 >/dev/null 2>&1
+	alsaucm -c Fairphone_3 set _verb "Voice Call" set _enadev Earpiece set _enadev Mic >/dev/null 2>&1
 fi
 
 EAR=$(amixer -c0 cget name=EAR_S | grep -m1 ': values' | sed 's/.*=//')
