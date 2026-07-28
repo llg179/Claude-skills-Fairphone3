@@ -550,6 +550,72 @@ exists precisely to fill that gap: attribution without an authorship claim.
   rewriting the commits for the `submit/*` branch, do this swap as part of the same
   pass that splits the DTS out.
 
+### Credit the work you build on, especially when it is not upstream yet
+
+`Assisted-by:` covers the AI. It says nothing about the **humans** whose work a
+patch reuses, and that is the omission a maintainer notices first — the person
+reading your patch may be the person you took it from.
+
+**The rule: if any meaningful part of a patch came from somewhere other than your
+own head, the commit message names what it was, whose it is, and links to it.**
+This applies hardest when the source is *not in Linus' tree*, because then the
+reviewer cannot find it by `git log` and will assume the work is yours.
+
+Four situations, each with the form the kernel expects:
+
+| the source | how to cite it |
+|---|---|
+| an **in-tree** commit or driver you used as the skeleton | `commit e4802cb00bfe ("media: imx258: Add imx258 camera sensor driver")` — the standard 12-hex-plus-subject form. Keep the original copyright and `MODULE_AUTHOR` lines in the file, and say in the message that you did |
+| a **posted but never merged** series you are reviving | name the author and the series in prose, plus `Link: https://lore.kernel.org/all/<message-id>/` to the cover letter. Verify the message-id resolves — patchwork's *"Series Link"* gives you the cover-letter id |
+| a **downstream / vendor** tree (Qualcomm BSP, an OEM release) | name the exact file(s) — `msm8953-audio.dtsi`, `qpnp-smb5` — and `Link:` the published release the numbers were read out of |
+| an **out-of-tree fork** driver you extend (msm8953-mainline, a Halium tree) | say plainly that the driver is not in mainline, name its authors, and link the commit in the tree that carries it |
+
+Do **not** reach for `Co-developed-by:` to solve this: it requires a
+`Signed-off-by:` from that person in the same patch, which you cannot produce for
+someone who is not part of your submission. Prose plus `Link:` is the correct
+tool. If the code is *substantially* still theirs, the honest move is to keep
+**them** as the patch author (`git commit --author`) and describe your changes in
+the message.
+
+Worked examples from this series, all four of them real omissions found by
+auditing the branch before submission:
+
+* `ASoC: wcd9335: add MBHC headset jack detection` said only "reviving the 2018
+  series that was dropped before merge" — no name, no link. The series is
+  **Srinivas Kandagatla's**, v3 of 2018-09-04, and `wcd9335.c` is
+  *maintained by him*. Now: "based on the MBHC support in Srinivas Kandagatla's
+  2018 WCD9335 series, which was posted together with the codec driver but
+  dropped before that series was merged" +
+  `Link: https://lore.kernel.org/all/20180904102500.30318-1-srinivas.kandagatla@linaro.org/`.
+* `media: i2c: add Sony IMX363 image sensor driver` carries Intel's copyright
+  because it is derived from `imx258.c`; the message now cites
+  `commit e4802cb00bfe ("media: imx258: Add imx258 camera sensor driver")` and
+  says which parts are new.
+* `ASoC: qcom: apq8016_sbc: add SLIMbus backend …` follows the SLIMbus flow in
+  `sound/soc/qcom/sdm845.c` — the code said so in a comment, the message did not.
+* `arm64: dts: qcom: …: wire up WCD9335 audio` takes every address and value from
+  Fairphone's published 4.9 sources; its camera and charger siblings said so and
+  it did not. Now it does, with the GPL-release link.
+
+An audit pass that surfaces the candidates cheaply, before the series goes out.
+Read it as a **prompt list, not a verdict**: most hits will be legitimately your
+own work, and the question to ask of each is only *"did any of this come from
+somewhere else?"*
+
+```sh
+git log --format='%h %s' <base>..<branch> | while read h s; do
+    git log -1 --format=%B "$h" \
+      | grep -qiE 'Link:|Based on|Derived from|follows the|taken from|read out of|commit [0-9a-f]{12} \("' \
+      || echo "no source cited: $h $s"
+done
+```
+
+On the FP3 audio branch this prints 7 of 11 commits — and 6 of those 7 really are
+original (a debounce found by measuring, a missing volume control, an init fix).
+The one that was not is exactly the kind this catches: *"take the mic bias voltage
+and DMIC clock rate from the DT"* reads its values out of Fairphone's downstream
+`msm8953-audio.dtsi` and never said so.
+
 **Audit the branches before submitting — some commits have no sign-off at all.**
 The seven IMX363 camera commits on `fp3-integration` (`b00ba1f5`, `526d569e`,
 `757b41e6`, `df906c4d`, `4beba115`, `1adc5540`, `0c5dd72e`) carry an **empty
@@ -621,6 +687,9 @@ GitHub-flow conveniences any more.
 - [ ] Human `Signed-off-by` on **every** commit — audit for the empty-trailer
       commits; **no `Signed-off-by` from the AI**; `Co-authored-by:` swapped to
       `Assisted-by:` naming the model that actually did the work.
+- [ ] **Every borrowed piece is credited**: work taken from an unmerged series,
+      a downstream tree, an out-of-tree fork or an in-tree driver used as a
+      skeleton names its authors and carries a `Link:`/`commit …` reference.
 - [ ] Cover letter carries the `generated-content.rst` disclosure: tools, prompts
       (or a summary), which portions were tool-affected, and how it was tested.
 - [ ] Cover note states the base ("applies to sound/for-next").
