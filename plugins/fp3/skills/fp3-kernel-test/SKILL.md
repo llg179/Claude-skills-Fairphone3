@@ -65,7 +65,9 @@ reset: it clears the "unbootable"/retry state on a slot you just broke.
   work goes ONLY to the user's personal fork remote (`github.com/llg179/linux`,
   branch `fp3-7.0.9-audio`); commit as the user (author `Lajosházi, László Gergely`,
   `Signed-off-by:` + `Co-authored-by: Claude …`), English comments only, no
-  Hungarian in code. ☠️ On the live-USB network a `git push` over SSH port 22
+  Hungarian in code. Every commit body states **where the change came from** —
+  taken from whom (name the file/node), reused from the tree, or new here; see
+  `/msm8953-mainline-pr` §2b. ☠️ On the live-USB network a `git push` over SSH port 22
   hangs/`unexpected disconnect while reading sideband packet` even though
   `ssh -T git@github.com` and `git ls-remote` are instant and the pack is tiny —
   it's a port-22 upload stall, not auth/size. Fix: push via

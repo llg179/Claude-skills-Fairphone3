@@ -167,6 +167,36 @@ well-formed commits. Fifteen incremental commits become a handful of logical one
 Keep a genuinely standalone bugfix as its own commit (so it can carry `Fixes:`),
 but squash the "and then I also had to…" follow-ups into their final form.
 
+### 2b. Every commit says where the change came from
+
+**Not the AI trailer — the code.** A reviewer's first question about an unfamiliar
+register value, channel number or magic constant is *"how do you know that?"*, and
+a commit that cannot answer it reads as guesswork even when it is not. So each
+commit body carries an explicit provenance paragraph splitting the change three
+ways:
+
+| kind | how to say it |
+|---|---|
+| **taken from someone** | name the source concretely enough to check: whose tree/driver/DT, which file, which node or function. "Qualcomm's downstream `pmi632.dtsi`, where the same channel appears as `chan@4a`" — not "from downstream" |
+| **reused from the tree** | say the mechanism was already there and you only pointed at it. "reuses `SCALE_HW_CALIB_THERM_100K_PULLUP`, already used by the AMUX_THM channels" |
+| **new here** | say so plainly, and say what it was modelled on if anything. "new here, modelled on this driver's existing `vbat_chan` handling — same optional `devm_iio_channel_get()`, same `-EPROBE_DEFER` passthrough" |
+
+Two things this buys beyond politeness:
+
+- **it separates the trustworthy from the guessed.** A vendor-sourced number and
+  a number read off an oscilloscope carry different risk, and only the commit can
+  record which this is;
+- **it front-runs the objection.** Where you knowingly took an approximation —
+  the generic thermistor curve instead of the vendor's per-pack table — say so in
+  the commit, with the measured size of the error and what it is therefore not
+  good enough for. A reviewer who finds that themselves reads it as a bug; a
+  reviewer who is told reads it as a judgement call.
+
+The same three-way split is what the repo's `docs/kernel/README.md` and
+`docs/sensors/README.md` are organised by (*imported unchanged / imported and
+extended / new here*, plus *values taken from the vendor*). Keep the commit and
+the doc saying the same thing.
+
 ### 3. Never mix DTS with driver code in one commit
 
 `.c`/`.h` (driver/logic) and `.dts`/`.dtsi` (board wiring) go in **separate
