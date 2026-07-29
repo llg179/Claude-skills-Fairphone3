@@ -456,3 +456,40 @@ successful cross-check.
   is in the shell command running the loop — and it presents to the user as "something is
   still running" when nothing is. Wait on the artifact instead
   (`until [ -f <output> ]; do …`), or `pgrep -x <name>`.
+
+## Provenance integrity — the values you WRITE are claims too
+
+Everything above governs the values you *read*. Nothing governed the values a patch
+*introduces*, and that is where this method failed hardest: a battery profile was
+chosen out of a vendor tree that shipped two of them, the wrong one, and it survived
+review because it was impeccably cited. These rules close that hole.
+
+- **☠️☠️ Provenance is not applicability.** *"Read out of `<vendor file>`"* answers
+  **where a number came from**. It does not answer **whether it applies to this
+  board**, and the citation discipline makes a wrong value look *more* trustworthy,
+  not less. Every provenance line for a vendor-sourced constant needs a second half:
+  *and here is how we know this is the variant this hardware uses.* Without that
+  second half the value is a guess wearing a citation.
+- **☠️ When the vendor ships more than one candidate, choosing between them is a
+  MEASUREMENT, not a lookup.** Name the discriminator the vendor itself uses, read
+  it, and put the reading in the commit message next to the value. (Worked example:
+  Fairphone ships two 3000 mAh packs — different Arima part numbers, 2.0 A vs 2.7 A,
+  JEITA cool band at 15 vs 20 °C — told apart by a battery-ID resistor, 10 kΩ vs
+  50 kΩ. Picking one without reading that resistor produced a device tree that was
+  wrong by 5 °C in the unsafe direction, cited flawlessly to the wrong file.)
+- **Before copying a value out of a vendor tree, `ls` its directory for siblings.**
+  One `ls` answers "is there a choice here at all". If there is more than one
+  candidate for the same subsystem, there is a selection mechanism in the vendor
+  code — find it before you copy anything. Grep the board's include chain too: a
+  vendor board file that pulls in *several* profiles is telling you outright that
+  the hardware varies.
+- **If the discriminator cannot be read, say so and take the conservative branch.**
+  A value you could not verify is a guess; mark it as one in the commit and in the
+  docs, and where the alternatives differ in a direction that matters (current,
+  temperature limit, voltage), pick the one that is safe under *either* answer
+  rather than the one that is right under your favourite.
+- **Step 0 applies to a constant, not only to an experiment.** Before writing a
+  number into a driver or a device tree, answer the same four questions: what do I
+  believe, what single value expresses it, **what signal on this device confirms the
+  value belongs here**, and what reading would tell me it does not. If there is no
+  such signal, that is the finding — write it down instead of the number.

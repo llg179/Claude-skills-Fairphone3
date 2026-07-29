@@ -176,6 +176,14 @@ cost a device, a boot, or a wrong conclusion at least once.
 - A register field's width can be the design limit; work out what the hardware can encode.
 - When the question is "which unit in the interface", compute the difference, don't argue it.
 
+**Provenance integrity — the values you *write* are claims too:**
+
+- Provenance is not applicability: "read out of <vendor file>" never says it fits *this* board.
+- Vendor ships several candidates? Choosing between them is a measurement — read the discriminator.
+- `ls` the vendor directory for siblings before copying a value out of it.
+- Discriminator unreadable ⇒ the value is a guess: label it, and take the branch that is safe either way.
+- Step 0 applies to a constant too — name the signal that confirms it belongs here.
+
 ## The loop: hypothesis → single change → deploy → measure → interpret
 
 ### Step 0 — Write the hypothesis as a measurement
