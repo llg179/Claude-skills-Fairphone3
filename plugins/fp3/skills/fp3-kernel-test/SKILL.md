@@ -125,6 +125,38 @@ Two rule classes; read the full mechanisms + worked examples in
 **Measurement integrity (protect the measurement — confirmation-theater anti-patterns):**
 never substitute static/source analysis for a live measurement (if it isn't feasible now the task is **BLOCKED**, not "done"); label by evidence strength (register-level live differential = hard; source / single-log-line / one-slot = soft); never close an avenue on wrong-layer evidence; **one-sided is not a differential**; a differing register may be an OUTPUT (marker), not a lever — prove causality; **disprove a hypothesised lever offline before building on it** (a branch on a pointer/aligned-value bit is structurally constant — compute it); a **force/bypass cave can force the WRONG lever** (a force-negative is conclusive only if the forced state is content-faithful to real success, else WEAK); a mid-operation snapshot can read identical working-vs-broken (always run the oracle control); every measurement must have a real path to PASS; don't drop the inconvenient finding to keep a clean verdict; **confirm on the oracle that an endpoint is the RIGHT one before reverse-engineering its protocol** (a night went into the framing of a QRTR port that the oracle later showed behaves identically on the *working* system — the service being hunted lived on another node with another instance: the measurement was sound, the target was not); **a content-independent echo means a wrong or stub endpoint, not a wrong framing** (if 16 zero bytes come back verbatim, no parser is involved — control it by sending the same message to the neighbouring ports on the same node, which answer with proper QMI errors); **verify the PROCESS, not the service label** (an Android `ctl.stop` sat at `stopping` while the daemon happily ignored SIGTERM and kept running, which silently invalidated the A/B built on it); and **after two or three indirect exclusions that still do not separate "never started" from "started and failed", change instrument rather than generating another hypothesis** — indirect tests are cheap but they saturate.
 
+**Measurement integrity — additions from the sensor bring-up:**
+
+- **☠️ A hand-built co-processor probe leaves state behind, and not only in the
+  subsystem you are probing.** After a session of hand-built QMI requests the
+  sensor stopped answering *and* the SLIMbus codec became unreachable, i.e. all
+  audio died — a reboot restored both. Never interleave probing and measurement:
+  reboot between them, and never measure an unrelated subsystem in a boot where
+  you have been probing.
+- **☠️ One positive among many negatives is the signal, not the noise.** Sampling
+  a short-lived event (a ringtone stream) once, two seconds after triggering it,
+  produced `0` again and again — and a whole diagnosis plus a workaround unit got
+  built on those zeros. A single earlier run had shown `1`. For events, subscribe
+  (`pactl subscribe`, `udevadm monitor`, an IRQ counter), never snapshot.
+- **☠️ A buffer-only IIO device cannot be `cat`-ed, and a wrong record size looks
+  *partly* right.** The record here is **24 bytes** (3 × s32 + 4 pad + s64
+  timestamp); reading 32 makes every third line plausible, which is far more
+  dangerous than reading nothing.
+- **☠️ The IIO device index moves between boots** when devices are registered as a
+  co-processor enumeration completes. Match on `name`, never on `iio:deviceN`.
+- **☠️ Measuring a user-session service over ssh is a trap.** Hand-set
+  `DBUS_SESSION_BUS_ADDRESS`/`XDG_RUNTIME_DIR` can point at a session that has
+  since been replaced; take them from the running session (`loginctl`,
+  `systemctl --user show-environment`) or you will diagnose a dead session as a
+  broken daemon.
+- **☠️ Your own cleanup can destroy the evidence.** `journalctl --vacuum-size` run
+  to free space left one line per older boot; a later cross-boot comparison then
+  showed a *perfect* correlation that was purely missing data. Before comparing
+  boots, check each still has a plausible line count (`journalctl -b -N -k | wc -l`).
+- **☠️ `pkill -f <pattern>` matches your own command line** and killed the ssh
+  session running it. Use `pkill -x <name>`.
+
+
 ## The loop: hypothesis → single change → deploy → measure → interpret
 
 ### Step 0 — Write the hypothesis as a measurement
@@ -405,6 +437,28 @@ for m in $(mount | grep chroot_native | awk '{print $3}' | sort -r); do echo <pw
 `pmb flasher` — `pmb shutdown` + `rm` the fifo. Whenever pmb fails *instantly*,
 suspect leftover state from the last run, not your change.)
 
+**Build- and deploy-time traps that point at the wrong culprit:**
+
+- **☠️ Never pad an abbreviated commit hash.** `_commit` needs all 40 characters;
+  extending the 12 from `git log --oneline` by guessing gives a GitHub 404 during
+  `checksum` that reads like a failed push. Take it from `git rev-parse`, or
+  better `git ls-remote fork <branch>`, which also proves the push landed.
+- **☠️ Never run a second pmbootstrap command while a build is running.** They
+  share `/home/pmos/build` in the chroot, so a `checksum` issued mid-build deletes
+  the running build's source tree and it dies with
+  `fatal error: ./include/linux/compiler-version.h: No such file or directory` —
+  an error that points squarely at the kernel source and not at you.
+- **☠️ `apk add` ending in `1 error` is usually the phone having no route to the
+  repositories**, not a bad package (`DNS: transient error`); the local apk still
+  installs, `apk list -I` proves it. It matters because a deploy script with
+  `set -e` stops right there and silently skips everything after — in one case the
+  whole extlinux fix-up, leaving no fallback entry, no `panic=10` and no menu
+  timeout on the next boot. Verify the file, do not assume the script finished.
+- **☠️ The device fills up at ~30 MB per kernel apk.** On a 2.4 GB rootfs a day of
+  iteration reaches 99% and the phone raises a low-disk notification long before
+  anything visibly breaks. Clean `/home/*/*.apk` and `/var/cache/apk` between
+  rounds — and see the journal-vacuum warning above before reaching for it.
+
 ### Step 3 — Deploy the heavy vehicle (flash) without tripping the Bash cap
 **The #1 operational gotcha:** the Bash tool hard-kills at 10 min. `pmb install`
 (rootfs regen) alone exceeds that, and a foreground kill mid-flash can strand the
@@ -443,6 +497,13 @@ desynced us):
   multitasks; the window and your reads will not line up, and you will draw a
   confident wrong conclusion. Say exactly one action, stop, and read *only after*
   they confirm it is complete.
+- **☠️ Wait for their "go" as well, not only their "done" — and never start the
+  capture in the same message that explains it.** Twice in one session a timed
+  read was launched together with the instructions, so the window opened while
+  the human was still reading; one run produced 14 of 15 empty samples and an
+  hour went into explaining a "wedged sensor" that was an empty room. The human
+  said it plainly: *"if I have to test, wait until I type something."* Post the
+  instruction, stop, and start only on their reply.
 - **Baseline first.** Capture the instrument in the known starting state (jack
   out) before any action, so the A/B delta is unambiguous.
 - **Re-confirm the physical state before interpreting** — a late or edited

@@ -600,6 +600,59 @@ measurement on the rung that eliminates the most remaining hypotheses.
   and handshake to find or rule out a divergent step. (Result here: functionally
   equivalent → no discrete AP-side lever, which pushed the search into firmware.)
 
+- **★★★ Search before you reverse-engineer — the most expensive lesson in this
+  project.** A full day went into reverse-engineering a QMI protocol that already
+  had a complete open implementation; the query that found it took thirty seconds
+  (`SSC sensors mainline linux Qualcomm SMGR QMI postmarketOS proximity ADSP`).
+  Before starting on any subsystem, spend ten minutes searching for the subsystem
+  name plus the SoC family plus the distro — someone on a sibling SoC has usually
+  done it. When you *do* find prior art, the **difference** between your
+  measurements and theirs is the finding: here the measured service id, version
+  and instance matched byte-for-byte, and the one thing measurement could not have
+  produced — a message id — was exactly what had been missing.
+
+- **☠️ Never reconstruct a protocol constant from memory — read the header.**
+  Two independent "corrections" of a QRTR control code landed on two different
+  wrong values (the enum starts at 1, so `NEW_SERVER = 4`, and we sent 3 = `BYE`),
+  and each wrong value produced *reproducible, interesting* device behaviour that
+  a week of theory got built on. A reproducible effect proves your action does
+  something, never that it does what you named it. Transcribe constants into one
+  file from the kernel uapi header and import it everywhere.
+
+- **☠️ When one case works and one fails, ask which one is the accident.** An
+  entire investigation asked "what is special about the proximity sensor that
+  makes it fail", and the answer was: nothing. The *accelerometer* was the
+  exception — it worked only because its sensor id happens to be 0, which masked
+  a core bug that read a length field four bytes wide regardless of its declared
+  width. The right question is often not "why does X fail" but "what keeps Y
+  alive".
+
+- **☠️ Check the consumer before fixing the producer.** Weeks of suspicion fell on
+  the kernel while the actual blocker was that `iio-sensor-proxy` has no buffered
+  proximity driver at all — it polls `in_proximity_raw`, so a buffer-only device
+  was skipped in silence. `strings` on the consumer binary named both the sysfs
+  attribute it wants and the udev property it needs, in one command, before any
+  driver work.
+
+- **☠️ Check the unit before you conclude from a number.** "The sensor sends one
+  sample and stops" was produced by my own sweep sending a report rate in the
+  wrong unit (the field is `sample_rate * 0xf000`, not Hz — three orders of
+  magnitude, i.e. one report every two minutes), so the single indication was the
+  *initial* one and the sweep measured nothing. In a parameter sweep, the first
+  run must always be the **working code's exact parameters** as a control, and only
+  then vary one dimension.
+
+- **Ask the device what it supports before asking it for data.** One
+  `SINGLE_SENSOR_INFO` call listed the part name, the vendor, the supported rates
+  and — the thing that mattered — that this sensor has *two* data types where the
+  working one has a single one. Free, instant, and it reframed the question.
+
+- **☠️ Not every error line is a fault signal — check it in a known-good run.**
+  `capability exchange timed-out` and `Failed to get logical address` appear in
+  **every** boot of this device, including the ones where audio works perfectly;
+  the retry right after them succeeds. Hours went into a message that was noise.
+  Before building on a log line, grep for it in a run you know is healthy.
+
 ## Observing a co-processor that has no obvious debug port
 
 Recurring sub-problem: you need a value from inside the ADSP, which has no bound
