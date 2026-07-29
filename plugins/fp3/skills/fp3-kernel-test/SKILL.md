@@ -62,8 +62,11 @@ reset: it clears the "unbootable"/retry state on a slot you just broke.
   (`fp3-ssh`, `fp3-link`) are just shorthand for those steps.
 - Kernel source tree is a detached checkout whose `origin` is upstream
   (msm8953-mainline / torvalds) — **never push to `origin`.** Publishing the FP3
-  work goes ONLY to the user's personal fork remote (`github.com/llg179/linux`,
-  branch `fp3-7.0.9-audio`); commit as the user (author `Lajosházi, László Gergely`,
+  work goes ONLY to the user's personal fork remote (`github.com/llg179/linux`);
+  which branch, and the rule that a change must land on both its
+  `wip/<base>/<category>` branch and `integration/<base>`, is defined in
+  [`fp3-pmaports/README.md`](https://github.com/llg179/fp3-pmaports#the-branch-model).
+  Commit as the user (author `Lajosházi, László Gergely`,
   `Signed-off-by:` + `Co-authored-by: Claude …`), English comments only, no
   Hungarian in code. Every commit body states **where the change came from** —
   taken from whom (name the file/node), reused from the tree, or new here; see
@@ -76,6 +79,11 @@ reset: it clears the "unbootable"/retry state on a slot you just broke.
 - Build system is pmbootstrap via a wrapper (`cd $FP3_PMOS && ./pmb …`).
   A `--src` build stamps an apk version `_pYYYYMMDDHHMMSS`; a plain upstream
   version string means your DT/source edits are **not** in the image.
+- ☠️ **The ssh wrapper retries the WHOLE command, so a multi-step script can run
+  several times.** `fp3-ssh 'long; multi; step; script'` re-invokes the entire string
+  when the link is mid-reconnect — a thermal ramp measured this way silently ran three
+  times, each starting from where the last left off. Keep remote commands short and
+  idempotent, or capture to a file on the device and fetch it.
 - **★ Neither OS needs a human at the phone any more, and the wrappers do the healing.**
   `fp3-ssh 'cmd'` (pmOS) and `ut-ssh 'cmd'` (Ubuntu Touch: USB, then WiFi, then UT's
   usb-moded rescue sshd) authenticate by key — no password, no `sshpass` — and retry with
@@ -100,64 +108,57 @@ reset: it clears the "unbootable"/retry state on a slot you just broke.
 
 ---
 
-## Safety & measurement integrity (headlines — full text in `references/safety.md`)
+## Safety & measurement integrity (index — mechanisms and worked examples in `references/safety.md`)
 
-Two rule classes; read the full mechanisms + worked examples in
-[`references/safety.md`](references/safety.md) **before** an experiment.
+One line each. Read [`references/safety.md`](references/safety.md) for the *why*
+and the case that produced each rule **before** an experiment; every one of these
+cost a device, a boot, or a wrong conclusion at least once.
 
-**Brick-safety (protect the device):**
-1. **One change per experiment;** confirm `slot-retry-count` ≥ 1 before any fastboot flash/boot (count 0 → invalid run, can erase p28).
-2. **A kernel experiment must never block boot** — bounded wait + read-only dump, never a blocking/retry loop.
-3. **Never `sudo adb`** (writes a root adbkey that locks you out); `sudo fastboot` is fine.
-4. **Reading a clock-gated register hangs the bus** (→ `900e`) *or* returns a uniform junk constant — read only while the block's clock is forced on.
-5. **Never read an unverified PA from the AP** (XPU/NoC wedge); never scan candidate PAs; exfil via SMEM, not the carveout.
-6. **Know your `/dev/mem` reader** — `dd`/`devmem` lie on hardened kernels (use Python `mmap`); a same-constant-every-word read = suspended block.
-7. **Never force an unclean reboot on a healthy system** (dirties the loop-rootfs → next boot's fsck hangs).
-8. **The flash vehicle can silently invalidate a run** — verify `uname -v` shows the new build first; chunked `-S 256M` sparse flash; avoid `getvar max-download-size`.
-9. **A cold-boot deploy campaign fills the ~2.4 GB loop-rootfs → reboot-loop** — gate on journal-cap + `df` free space **and** a clean rootfs (fsck from the other slot after any unclean cycle).
-10. **A single cold-boot "no-boot → fastboot" is usually a transient retry-fallback** — `set_active` + retry once; `remoteproc*/state=running` with the cave on disk = cave harmless.
-11. **A cave hooking a FREQUENTLY-called function stalls the co-processor SSR** (per-call overhead → `echo start` blocks → warm-reboot to fastboot) — estimate call frequency before hooking; ultra-cheap first-instruction filter on a hot path; recover with a graceful `systemctl reboot` (lk2nd auto-continues).
-12. **☠️☠️ Never `pmb flasher flash_kernel` on pmOS — it overwrites lk2nd → "stuck at Fairphone logo"** (kernel never starts). Update the kernel INTO the rootfs (`pmb sideload` / `apk add --allow-untrusted` / full `pmb install`); recover with `pmb flasher flash_lk2nd`. Diagnosis key: "Fairphone logo on screen" = bootloader/boot-image, not kernel content.
-13. **An environmental change (pinmux/GPIO/clock-vote) + a concurrent SSR can wedge the device** — "one change per experiment" applies to environment too; never combine a pad/GPIO poke with an SSR on the first try.
-14. **A boot-armed diag/capture systemd oneshot `Before=basic.target` hangs the boot** — never block `basic.target`; prefer `After=multi-user.target`, time-box + SIGKILL-able, or avoid boot-armed diag.
-15. **☠️ An MMIO sampler DIES when the block's clock goes away under it — never read co-processor MMIO across an SSR stop-window.** A sampler polling a QDSP6SS register *and* debugfs at 20 ms vanished without a trace during a controlled ADSP SSR (no output, no process, no log — easily misread as "the measurement found nothing"); `echo stop > .../remoteproc2/state` gates the block's clock, so the read is safety-rule-4. The *same* sampler with the MMIO removed (debugfs/genpd only) ran clean end-to-end. Recipe: to sample around an SSR, either drop the co-processor MMIO entirely or read it only in the window **after** `echo start`. debugfs/sysfs sampling is SSR-safe.
-16. **☠️ A zero-length DT boolean can hang the kernel UNINTERRUPTIBLY — put the timeout in the INSTRUMENT, not just around the shell.** `allow-set-time` on `rtc-pm8xxx` looks free ("if the hardware refuses, the write errors"); on this board the set-time path never returns, and **neither an outer `timeout 20` nor a Python `signal.alarm()` breaks it** — `dmesg` stays silent (no SPMI timeout) and `ps -eo stat` shows no D-state task, so the usual "is anything stuck?" checks all read negative while every call hangs. Recipes: (a) call the writing ioctl in a **separate, disposable process** and accept that it may linger; (b) on a write-type experiment **revert the DTB FIRST**, before the reboot, so the next boot is clean even if shutdown wedges on the stuck task; (c) an **"reads fine, writes hang" asymmetry is a strong hint the register is owned by TZ or a co-processor**.
-17. **☠️ `postmarketos-mkinitfs` REGENERATES `/boot/extlinux/extlinux.conf` and DROPS hand-added fallback entries.** Every `apk add linux-fp3` leaves a single `label`, so a recovery path you set up beforehand is silently gone. If your recovery plan is a saved boot set (`vmlinuz-r0bak` + its dtb), rewrite `extlinux.conf` **after** the package install and immediately before the reboot — otherwise you believe you have a way back and you do not.
+**Brick-safety — protect the device:**
 
-**Measurement integrity (protect the measurement — confirmation-theater anti-patterns):**
-never substitute static/source analysis for a live measurement (if it isn't feasible now the task is **BLOCKED**, not "done"); label by evidence strength (register-level live differential = hard; source / single-log-line / one-slot = soft); never close an avenue on wrong-layer evidence; **one-sided is not a differential**; a differing register may be an OUTPUT (marker), not a lever — prove causality; **disprove a hypothesised lever offline before building on it** (a branch on a pointer/aligned-value bit is structurally constant — compute it); a **force/bypass cave can force the WRONG lever** (a force-negative is conclusive only if the forced state is content-faithful to real success, else WEAK); a mid-operation snapshot can read identical working-vs-broken (always run the oracle control); every measurement must have a real path to PASS; don't drop the inconvenient finding to keep a clean verdict; **confirm on the oracle that an endpoint is the RIGHT one before reverse-engineering its protocol** (a night went into the framing of a QRTR port that the oracle later showed behaves identically on the *working* system — the service being hunted lived on another node with another instance: the measurement was sound, the target was not); **a content-independent echo means a wrong or stub endpoint, not a wrong framing** (if 16 zero bytes come back verbatim, no parser is involved — control it by sending the same message to the neighbouring ports on the same node, which answer with proper QMI errors); **verify the PROCESS, not the service label** (an Android `ctl.stop` sat at `stopping` while the daemon happily ignored SIGTERM and kept running, which silently invalidated the A/B built on it); and **after two or three indirect exclusions that still do not separate "never started" from "started and failed", change instrument rather than generating another hypothesis** — indirect tests are cheap but they saturate.
+1. One change per experiment; confirm `slot-retry-count` ≥ 1 before any fastboot flash/boot.
+2. A kernel experiment must never block boot — bounded wait, read-only dump, never a retry loop.
+3. Never `sudo adb` (writes a root adbkey that locks you out); `sudo fastboot` is fine.
+4. Never read a clock-gated register — it hangs the bus or returns a uniform junk constant.
+5. Never read an unverified physical address from the AP; exfil via SMEM, not the carveout.
+6. `dd`/`devmem` lie on hardened kernels — use Python `mmap`; same constant every word = suspended block.
+7. Never force an unclean reboot on a healthy system — the next boot's fsck hangs.
+8. Verify `uname -v` shows the new build before believing a flash; chunked `-S 256M` sparse flash.
+9. A cold-boot deploy campaign fills the ~2.4 GB rootfs → reboot loop; gate on `df` **and** a clean fs.
+10. A single "no-boot → fastboot" is usually a transient retry-fallback; `set_active` + retry once.
+11. A firmware cave on a frequently-called function stalls the co-processor SSR — estimate call frequency first.
+12. ☠️☠️ Never `pmb flasher flash_kernel` on pmOS — it overwrites lk2nd → stuck at the Fairphone logo.
+13. An environmental change (pinmux/GPIO/clock-vote) **plus** a concurrent SSR wedges the device.
+14. A boot-armed diag oneshot `Before=basic.target` hangs the boot — use `After=multi-user.target`.
+15. ☠️ Never read co-processor MMIO across an SSR stop-window — the sampler dies leaving no trace.
+16. ☠️ A zero-length DT boolean can hang uninterruptibly; an outer `timeout` does **not** break it.
+17. ☠️ `apk add linux-fp3` regenerates `extlinux.conf` and drops a hand-added fallback — rewrite it *after* the install.
 
-**Measurement integrity — additions from the sensor bring-up:**
+**Measurement integrity — protect the measurement:**
 
-- **☠️ A hand-built co-processor probe leaves state behind, and not only in the
-  subsystem you are probing.** After a session of hand-built QMI requests the
-  sensor stopped answering *and* the SLIMbus codec became unreachable, i.e. all
-  audio died — a reboot restored both. Never interleave probing and measurement:
-  reboot between them, and never measure an unrelated subsystem in a boot where
-  you have been probing.
-- **☠️ One positive among many negatives is the signal, not the noise.** Sampling
-  a short-lived event (a ringtone stream) once, two seconds after triggering it,
-  produced `0` again and again — and a whole diagnosis plus a workaround unit got
-  built on those zeros. A single earlier run had shown `1`. For events, subscribe
-  (`pactl subscribe`, `udevadm monitor`, an IRQ counter), never snapshot.
-- **☠️ A buffer-only IIO device cannot be `cat`-ed, and a wrong record size looks
-  *partly* right.** The record here is **24 bytes** (3 × s32 + 4 pad + s64
-  timestamp); reading 32 makes every third line plausible, which is far more
-  dangerous than reading nothing.
-- **☠️ The IIO device index moves between boots** when devices are registered as a
-  co-processor enumeration completes. Match on `name`, never on `iio:deviceN`.
-- **☠️ Measuring a user-session service over ssh is a trap.** Hand-set
-  `DBUS_SESSION_BUS_ADDRESS`/`XDG_RUNTIME_DIR` can point at a session that has
-  since been replaced; take them from the running session (`loginctl`,
-  `systemctl --user show-environment`) or you will diagnose a dead session as a
-  broken daemon.
-- **☠️ Your own cleanup can destroy the evidence.** `journalctl --vacuum-size` run
-  to free space left one line per older boot; a later cross-boot comparison then
-  showed a *perfect* correlation that was purely missing data. Before comparing
-  boots, check each still has a plausible line count (`journalctl -b -N -k | wc -l`).
-- **☠️ `pkill -f <pattern>` matches your own command line** and killed the ssh
-  session running it. Use `pkill -x <name>`.
-
+- Never substitute source analysis for a live measurement; not feasible now = **BLOCKED**, not done.
+- Label by evidence strength: live two-sided register diff = hard; source, one log line, one slot = soft.
+- Never close an avenue on wrong-layer evidence — confirm the signal measures *that* thing.
+- One-sided is not a differential. Always run the oracle control.
+- A register that differs may be an **output/marker**, not a lever — prove causality before building on it.
+- Disprove a hypothesised lever **offline** first (a branch on a pointer bit is structurally constant).
+- A force/bypass cave can force the *wrong* lever; a force-negative counts only if content-faithful.
+- A mid-operation snapshot can read identical working-vs-broken.
+- Every measurement needs a real path to PASS, stated in advance.
+- A null `grep` is not proof of absence until the pattern is validated against a known positive.
+- Confirm on the oracle that an endpoint is the **right** one before reverse-engineering its protocol.
+- A content-independent echo means a wrong or stub endpoint, not a wrong framing.
+- Verify the **process**, not the service label — a daemon can ignore SIGTERM while the label says `stopping`.
+- After two or three indirect exclusions that still do not separate the cases, **change instrument**.
+- Don't drop the inconvenient finding to keep a clean verdict; check the inner tool's exit code, not the wrapper's.
+- A check placed in a file gated by a precondition is invisible exactly when that precondition is absent.
+- Hand-built co-processor probes leave state behind **in other subsystems** — reboot between probing and measuring.
+- One positive among many negatives is the signal: for short-lived events subscribe, never snapshot.
+- A buffer-only IIO device cannot be `cat`-ed, and a wrong record size looks *partly* right (here 24 bytes).
+- The IIO device index moves between boots — match on `name`.
+- Taking `DBUS_SESSION_BUS_ADDRESS`/`XDG_RUNTIME_DIR` by hand diagnoses a dead session as a broken daemon.
+- Your own cleanup destroys evidence — `journalctl --vacuum-size` faked a perfect cross-boot correlation.
+- `pkill -f <pattern>` matches your own command line. Use `pkill -x <name>`.
 
 ## The loop: hypothesis → single change → deploy → measure → interpret
 
@@ -401,6 +402,17 @@ bug, not a config typo.)
   the grep would fire at all. Close the loop after install with `md5sum` of the deployed
   DTB against the package's copy.
 
+☠️ **The APKBUILD you edit is not the one that gets built — mirror it first.** The
+package sources live in `fp3-pmaports/linux-fp3/`, but `pmbootstrap` builds from
+`pmaports/device/testing/linux-fp3/`. Editing `_commit`/`pkgrel` in the former and
+building produces the **previous** kernel, cheerfully, with no warning — the build
+is green, the apk is new, and the change is absent. `cp` both `APKBUILD` and
+`config-$_flavor` across before `checksum`, and treat a build that did not start
+by fetching a new tarball as a red flag. (Cost two full build cycles in one
+session.) Related: `--force` and `--lax` are **`build` subcommand flags**;
+`./pmb --lax build` is rejected outright, and without `--force` a changed
+`_commit` at the same `pkgver` is skipped as "up to date".
+
 🐢 **The kernel build silently bypasses ccache → every build is a full ~30-min recompile, even for a
 one-line module change.** `cache_ccache_$ARCH/` exists and looks used, but the chroot's `/etc/abuild.conf`
 ships `#USE_CCACHE=1` **commented out** (Alpine default), so abuild never prepends `/usr/lib/ccache/bin` to
@@ -524,7 +536,7 @@ desynced us):
 
 ---
 
-## Building & deploying a base-bumped kernel (envkernel + parallel package)
+## Building & deploying a base-bumped kernel
 
 When the change is a whole new base (e.g. porting the FP3 tree from 7.0.9 to
 7.1.3), the deploy vehicle is heavier than a hot-swapped `.ko`. Two build paths:
@@ -566,34 +578,28 @@ the critical symbols survived**: panel, `SND_SOC_WCD9335`, `SND_SOC_AW8898`,
 `SND_SOC_QDSP6_Q6VOICE_DAI`. A `grep` of `.output/.config` is the gate, not "it
 built".
 
-### Flashable build = a parallel package (don't disturb the daily driver)
+### Deploying it — the procedure lives in the repo, not here
 
-To get a bootable image with a **matching initramfs** (a bare `Image` copy won't
-mount the rootfs), build a package — but as a *second* one so the working kernel
-stays installed. Copy `linux-fp3-709` → `linux-fp3-713`, bump `_flavor`,
-`_commit` (the pushed integration SHA), `pkgver`; rename `config-$_flavor`; then
-`pmbootstrap checksum linux-fp3-713` (needs the commit pushed first — 404 trap)
-and `pmbootstrap build linux-fp3-713`.
+A bootable image needs a **matching initramfs** (a bare `Image` copy will not
+mount the rootfs), so the vehicle is the `linux-fp3` package. The whole
+build→install→boot procedure, and the traps that cost a cycle each (boot-deploy
+regenerating `extlinux.conf`, taking the DTB from the *built package* rather than
+the source tree, the 404 from an unpushed `_commit`, `--force`/`--lax` being
+`build` subcommand flags), is maintained in
+[`fp3-pmaports/docs/deploy/README.md`](https://github.com/llg179/fp3-pmaports/blob/main/docs/deploy/README.md).
+Follow it there; it is kept current, this skill is not.
 
-### Base-bump device deploy, brick-safe
+Two things that belong to the *method* rather than the procedure:
 
-- **Free the rootfs first.** slot_b sits near 100%; `/var/cache/apk` is often
-  ~200 MB of reclaimable cache (`rm -rf /var/cache/apk/*`, `journalctl
-  --vacuum-size=4M`) — new modules (~40 MB) won't fit otherwise, and 100 % also
-  kills the graphical session.
-- **Back up the working boot set** before touching it: copy `/boot/{vmlinuz,
-  initramfs,<board>.dtb}` and `extlinux.conf` to `*-709recovery`. The rootfs and
-  these copies surviving = recoverable, not bricked.
-- **Deploy the new kernel as separate `-713` files** + a **second extlinux entry**,
-  leaving the 7.0.9 entry the default. Install the new modules, regenerate the
-  initramfs on-device (`mkinitfs` for the new release), then to test flip
-  `default` to the 713 entry and reboot.
-- **Revert-on-success.** The only way to test unattended is to make 713 the default
-  for that boot; there is **no auto-fallback** on this bootloader. So the moment SSH
-  returns, flip `default` back to 7.0.9 — a later power-cycle then recovers on its
-  own. If SSH never returns, 713 didn't boot; recovery needs the `*-709recovery`
-  set restored (physical/next session), so only spend a paid/unattended flash when
-  the compile + config-gate are green.
+- **There is no auto-fallback on this bootloader.** Testing unattended means
+  making the new kernel the default for that boot, so the moment SSH returns,
+  flip `default` back — then a later power-cycle recovers on its own. If SSH
+  never returns, the new kernel did not boot, and recovery needs the preserved
+  `*-fallback` set restored by hand. Spend an unattended flash only once the
+  compile and the config gate are green.
+- **Free the rootfs first.** slot_b sits near 100 %; new modules (~40 MB) will not
+  fit, and 100 % also kills the graphical session, which reads as a kernel
+  regression and is not one.
 
 ---
 

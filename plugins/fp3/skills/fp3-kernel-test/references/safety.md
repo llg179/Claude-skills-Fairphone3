@@ -223,6 +223,34 @@ device, with the mechanism, so you can recognise *new* instances of the same cla
 
 ---
 
+15. **☠️ An MMIO sampler DIES when the block's clock goes away under it — never read
+    co-processor MMIO across an SSR stop-window.** A sampler polling a QDSP6SS register
+    *and* debugfs at 20 ms intervals vanished without a trace during a controlled ADSP SSR:
+    no output, no process, no log entry. That is easily misread as "the measurement found
+    nothing" — it found nothing because it was dead. `echo stop > .../remoteproc2/state`
+    gates the block's clock, so the read is rule 4 in disguise. The *same* sampler with the
+    MMIO removed (debugfs/genpd only) ran clean end to end. Recipe: to sample around an SSR,
+    either drop the co-processor MMIO entirely, or read it only in the window **after**
+    `echo start`. debugfs/sysfs sampling is SSR-safe.
+
+16. **☠️ A zero-length DT boolean can hang the kernel UNINTERRUPTIBLY — put the timeout in
+    the INSTRUMENT, not just around the shell.** `allow-set-time` on `rtc-pm8xxx` looks free
+    ("if the hardware refuses, the write errors"); on this board the set-time path never
+    returns, and **neither an outer `timeout 20` nor a Python `signal.alarm()` breaks it**.
+    `dmesg` stays silent (no SPMI timeout) and `ps -eo stat` shows no D-state task, so every
+    "is anything stuck?" check reads negative while every call hangs. Recipes: (a) call the
+    writing ioctl in a **separate, disposable process** and accept that it may linger;
+    (b) on a write-type experiment **revert the DTB first**, before the reboot, so the next
+    boot is clean even if shutdown wedges on the stuck task; (c) a **"reads fine, writes
+    hang" asymmetry is a strong hint the register is owned by TZ or a co-processor**.
+
+17. **☠️ `postmarketos-mkinitfs` REGENERATES `/boot/extlinux/extlinux.conf` and DROPS
+    hand-added fallback entries.** Every `apk add linux-fp3` leaves a single `label`, so a
+    recovery path set up beforehand is silently gone. If the recovery plan is a saved boot
+    set (`vmlinuz-fallback` + its dtb), rewrite `extlinux.conf` **after** the package
+    install and immediately before the reboot — otherwise you believe you have a way back
+    and you do not.
+
 ## Measurement integrity (don't report soft evidence as hard — the anti-patterns that fake progress)
 
 Distinct from the brick-safety constraints above: those protect the *device*, these
@@ -321,3 +349,43 @@ a red-team caught it. Run the checklist before and after each experiment.)
 
 ---
 
+## Measurement integrity — from the QMI / sensor bring-up
+
+- **Confirm on the oracle that an endpoint is the RIGHT one before reverse-engineering its
+  protocol.** A night went into the framing of a QRTR port that the oracle later showed
+  behaves identically on the *working* system — the service being hunted lived on another
+  node with another instance. The measurement was sound; the target was not.
+- **A content-independent echo means a wrong or stub endpoint, not a wrong framing.** If
+  16 zero bytes come back verbatim, no parser is involved. Control it by sending the same
+  message to the neighbouring ports on the same node, which answer with proper QMI errors.
+- **Verify the PROCESS, not the service label.** An Android `ctl.stop` sat at `stopping`
+  while the daemon ignored SIGTERM and kept running, which silently invalidated the A/B
+  built on top of it.
+- **After two or three indirect exclusions that still do not separate "never started" from
+  "started and failed", change instrument rather than generating another hypothesis.**
+  Indirect tests are cheap, but they saturate.
+- **☠️ A hand-built co-processor probe leaves state behind, and not only in the subsystem
+  you are probing.** After a session of hand-built QMI requests the sensor stopped answering
+  *and* the SLIMbus codec became unreachable — all audio died; a reboot restored both. Never
+  interleave probing and measurement: reboot between them, and never measure an unrelated
+  subsystem in a boot where you have been probing.
+- **☠️ One positive among many negatives is the signal, not the noise.** Sampling a
+  short-lived event (a ringtone stream) two seconds after triggering it produced `0` again
+  and again, and a whole diagnosis plus a workaround unit got built on those zeros. A single
+  earlier run had shown `1`. For events, subscribe (`pactl subscribe`, `udevadm monitor`, an
+  IRQ counter) — never snapshot.
+- **☠️ A buffer-only IIO device cannot be `cat`-ed, and a wrong record size looks *partly*
+  right.** The record here is **24 bytes** (3 × s32 + 4 pad + s64 timestamp); reading 32
+  makes every third line plausible, which is far more dangerous than reading nothing.
+- **☠️ The IIO device index moves between boots** when devices register as a co-processor
+  enumeration completes. Match on `name`, never on `iio:deviceN`.
+- **☠️ Measuring a user-session service over ssh is a trap.** Hand-set
+  `DBUS_SESSION_BUS_ADDRESS`/`XDG_RUNTIME_DIR` can point at a session that has since been
+  replaced; take them from the running session (`loginctl`, `systemctl --user
+  show-environment`) or you will diagnose a dead session as a broken daemon.
+- **☠️ Your own cleanup can destroy the evidence.** `journalctl --vacuum-size`, run to free
+  space, left one line per older boot; a later cross-boot comparison then showed a *perfect*
+  correlation that was purely missing data. Before comparing boots, check each still has a
+  plausible line count (`journalctl -b -N -k | wc -l`).
+- **☠️ `pkill -f <pattern>` matches your own command line** and killed the ssh session
+  running it. Use `pkill -x <name>`.

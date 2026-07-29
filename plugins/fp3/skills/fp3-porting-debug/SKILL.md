@@ -33,10 +33,8 @@ MCLK = the codec `func1` pinmux never applied because the `gpio-gate-clock` used
 `pinctrl-names="active","sleep"` instead of `"default"` (folyt.208); (3) capture = a TX front-end
 hold that was asserted and never released, plus the DMIC clock rate and the board routes the codec
 expects from the DT (folyt.211). Volume control = `RX1/RX2 Mix Digital Volume` (numid 13/14), not
-the main-path `RX Digital Volume`. Fix commits on fork `github.com/llg179/linux`: branch `fp3-7.0.9-audio`
-(audio only, the submittable series) and `fp3-integration` (everything that runs on the device,
-currently the audio series plus the IMX363 camera). Deployed states are tagged, e.g.
-`fp3-7.0.9-2026-07-24-camera+audio`. The build that produces it: `github.com/llg179/fp3-pmaports`.
+the main-path `RX Digital Volume`. Fix commits on fork `github.com/llg179/linux`, under the branch model defined in
+[`fp3-pmaports/README.md`](https://github.com/llg179/fp3-pmaports#the-branch-model).
 The FP3's built-in mics are **digital** (DMIC0-3 all capture); the analog AMICs carry nothing except
 the headset mic on AMIC2, so a downstream label saying otherwise is not evidence.
 - [`references/slimbus-audio-context.md`](references/slimbus-audio-context.md) — entry doc: top banner

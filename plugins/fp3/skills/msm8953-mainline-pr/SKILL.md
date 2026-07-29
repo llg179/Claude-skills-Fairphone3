@@ -1,7 +1,7 @@
 ---
 name: msm8953-mainline-pr
 description: >-
-  How to turn the FP3 (MSM8953/SDM632) local kernel work — the fp3-integration
+  How to turn the FP3 (MSM8953/SDM632) local kernel work — the wip/<base>/*
   topic branches: audio/wcd9335, camera/imx363, charger/smb2, voice — into a
   clean upstream submission. Because this work is AI-assisted, LKML is the only
   open destination: msm8953-mainline does not merge AI-assisted work and
@@ -14,9 +14,17 @@ description: >-
 # FP3 kernel work → upstream submission
 
 This is a **process** skill: how to take device-support work that currently lives
-on the personal fork (`github.com/llg179/linux`, the `fp3-7.0.9-*` topic branches
-and `fp3-integration`) and shape it into something a maintainer will accept. The
-audio/WCD9335 series is the running worked example.
+on the personal fork (`github.com/llg179/linux`) and shape it into something a
+maintainer will accept. The audio/WCD9335 series is the running worked example.
+
+The fork's layout — `wip/<base>/<category>` → `integration/<base>` →
+`submit/<base>/<category>`, and the rule that a change must land on both its wip
+branch and integration — is **not repeated here**. It is defined in
+[`fp3-pmaports/README.md`](https://github.com/llg179/fp3-pmaports#the-branch-model),
+with the full base-bump procedure in
+[`docs/rolling-a-new-base.md`](https://github.com/llg179/fp3-pmaports/blob/main/docs/rolling-a-new-base.md).
+Read those for *what the branches are*; read this for *how to turn them into a
+series*.
 
 The whole point: the fork's topic branches are ordered by *discovery* (one commit
 per thing you learned, DTS and driver interleaved). Upstream wants them ordered by
@@ -37,43 +45,28 @@ commit). This skill is the translation.
 
 ## Know the versioning before you pick a base
 
-A recurring trap: the `msm8953-mainline` branch names look like a private version
-scheme, but they are **real torvalds versions**.
+The `msm8953-mainline` branch names look like a private scheme; they are **real
+torvalds versions** (Linus bumped the major after 6.19). Three traps:
 
-- Linus bumped the major after 6.19 → `7.0` → `7.1`. So `Linux 7.1.3` is a **real
-  release**, not a relabel.
-- **But 7.1.3 is a *stable point release*, not a mainline tag.** `torvalds/linux`
-  carries `v7.1` and then moves straight on to `v7.2-rc*`; the `.3` comes from the
-  stable tree. Consequence, verified the hard way: **`v7.1.3` does not exist as a
-  ref in `torvalds/linux`**, so any recipe that compares the fork branch against a
-  torvalds tag of that number returns 404 / "unknown revision". Do not write one.
-- `msm8953-mainline` names each integration branch after the **real base it sits
-  on**: `7.0.9/main` on 7.0.9, `7.1.3/main` on 7.1.3. The Makefile
-  `VERSION/PATCHLEVEL/SUBLEVEL` in those branches is the genuine upstream one —
-  and that is the check that actually works.
-- As of 2026-07-25, `7.1.3/main` is the newest integration branch (confirmed by
-  listing the repo's branches; the `.../main` series runs 6.14 → 6.15 → 6.16.3 →
-  6.17.7 → 6.19.5 → 7.0.2 → 7.0.9 → 7.1.3). The project also tags releases as
-  `v7.1.3-r0`, which points at the branch head — *not* at an upstream base.
+- **A stable point release is not a mainline tag.** `torvalds/linux` carries
+  `v7.1` and moves on to `v7.2-rc*`; the `.3` comes from the stable tree, so
+  **`v7.1.3` does not exist as a ref in `torvalds/linux`**. Any recipe comparing
+  the fork against a torvalds tag of that number returns 404.
+- **The local fork clone is depth-1 shallow.** `git merge-base` and
+  `git log -- <path>` silently mislead — the latter returns a single commit for
+  *every* path, which looks like an answer. Query the API instead:
 
-**Verification that works** (the local fork checkout is **shallow**, so
-`git merge-base`/`git log` on it will silently mislead — query the API instead):
+  ```sh
+  # what base is the branch really on?
+  gh api "repos/msm8953-mainline/linux/contents/Makefile?ref=7.1.3/main" \
+    --jq '.content' | base64 -d | head -5
 
-```sh
-# what base is the branch really on?
-gh api "repos/msm8953-mainline/linux/contents/Makefile?ref=7.1.3/main" \
-  --jq '.content' | base64 -d | head -5      # -> VERSION 7 / PATCHLEVEL 1 / SUBLEVEL 3
-
-# which integration branch is newest?
-gh api "repos/msm8953-mainline/linux/branches?per_page=100" \
-  --jq '.[].name' | grep -E '^[0-9]+\.[0-9]+' | sort -V | tail -5
-```
-
-**Watch for a stale mirror.** A local `fork/master` (or any personal torvalds
-mirror) may be frozen at an old release (e.g. 6.19) while upstream has moved on.
-Re-sync before using it as a base — never rebase onto a stale mirror. And note the
-local `linux-fp3` clone is depth-1 shallow: `git log -- <path>` there returns a
-single commit for *every* path, which looks like an answer but is not one.
+  # which integration branch is newest?
+  gh api "repos/msm8953-mainline/linux/branches?per_page=100" \
+    --jq '.[].name' | grep -E '^[0-9]+\.[0-9]+' | sort -V | tail -5
+  ```
+- **A personal `fork/master` mirror goes stale** while upstream moves on. Re-sync
+  before using it as a base; never rebase onto a stale mirror.
 
 ---
 
@@ -167,35 +160,59 @@ well-formed commits. Fifteen incremental commits become a handful of logical one
 Keep a genuinely standalone bugfix as its own commit (so it can carry `Fixes:`),
 but squash the "and then I also had to…" follow-ups into their final form.
 
-### 2b. Every commit says where the change came from
+### 2b. Split the import from the invention, and make the import traceable
 
-**Not the AI trailer — the code.** A reviewer's first question about an unfamiliar
-register value, channel number or magic constant is *"how do you know that?"*, and
-a commit that cannot answer it reads as guesswork even when it is not. So each
-commit body carries an explicit provenance paragraph splitting the change three
+Two rules, and the first one is structural:
+
+**Never mix imported code and new work in one commit.** If a patch carries
+somebody else's code *and* your addition to it, the reviewer cannot see which is
+which, `git blame` credits you for their lines, and a revert takes out both. So:
+one commit that brings the foreign code in, unchanged and attributed; a second
+commit that changes it. The pair also documents itself — the diff of the second
+commit *is* the answer to "what did you actually do?".
+
+**Cite an import so it can be found without you.** A cherry-pick across repos
+loses the original SHA, the author and the date; git records only that *you*
+committed it. Reconstruct all of it in the message:
+
+```
+The driver comes from <repo URL>, branch <branch>, commit <sha> ("<subject>"),
+authored by <name(s)> on <YYYY-MM-DD>; it is not in Linus' tree.
+```
+
+Take the fields from the source, never from memory:
+`git log -1 --format='%H %an <%ae> %ad %s' --date=short <ref>`. Where the source
+is a mailing-list series rather than a repo, `Link:` the cover letter instead of
+the SHA. Keep the original copyright and `MODULE_AUTHOR` lines in the file, and
+say in the message that you did — and where the code is *substantially* still
+theirs, the honest move is to keep **them** as the patch author
+(`git commit --author`) and describe your changes in the follow-up commit.
+
+Then, for your own commits, a provenance paragraph splitting the change three
 ways:
 
 | kind | how to say it |
 |---|---|
 | **taken from someone** | name the source concretely enough to check: whose tree/driver/DT, which file, which node or function. "Qualcomm's downstream `pmi632.dtsi`, where the same channel appears as `chan@4a`" — not "from downstream" |
 | **reused from the tree** | say the mechanism was already there and you only pointed at it. "reuses `SCALE_HW_CALIB_THERM_100K_PULLUP`, already used by the AMUX_THM channels" |
-| **new here** | say so plainly, and say what it was modelled on if anything. "new here, modelled on this driver's existing `vbat_chan` handling — same optional `devm_iio_channel_get()`, same `-EPROBE_DEFER` passthrough" |
+| **new here** | say so plainly, and what it was modelled on if anything. "new here, modelled on this driver's existing `vbat_chan` handling — same optional `devm_iio_channel_get()`, same `-EPROBE_DEFER` passthrough" |
 
-Two things this buys beyond politeness:
+Why this is worth the lines:
 
 - **it separates the trustworthy from the guessed.** A vendor-sourced number and
   a number read off an oscilloscope carry different risk, and only the commit can
   record which this is;
 - **it front-runs the objection.** Where you knowingly took an approximation —
-  the generic thermistor curve instead of the vendor's per-pack table — say so in
-  the commit, with the measured size of the error and what it is therefore not
-  good enough for. A reviewer who finds that themselves reads it as a bug; a
-  reviewer who is told reads it as a judgement call.
+  the generic thermistor curve instead of the vendor's per-pack table — say so,
+  with the measured size of the error and what it is therefore *not* good enough
+  for. A reviewer who finds that themselves reads it as a bug; a reviewer who is
+  told reads it as a judgement call;
+- **the person reading your patch may be the person you took it from.**
 
-The same three-way split is what the repo's `docs/kernel/README.md` and
-`docs/sensors/README.md` are organised by (*imported unchanged / imported and
-extended / new here*, plus *values taken from the vendor*). Keep the commit and
-the doc saying the same thing.
+Trailer forms, the DCO rules and the four citation situations are in
+[Authorship and provenance](#authorship-and-provenance); the repo's
+`docs/kernel/README.md` and `docs/sensors/README.md` are organised by the same
+three-way split, so keep the commit and the doc saying the same thing.
 
 ### 3. Never mix DTS with driver code in one commit
 
@@ -325,8 +342,8 @@ steps; it must never absorb charger/camera/modem DTS.
 
 ## Worked example: the audio series (15 → 8 commits, one branch)
 
-Verified against the branch, not recalled: `fp3-7.0.9-audio` has exactly **15**
-commits on top of `origin/7.0.9/main`, and three of them **mix** DTS with driver
+Verified against the branch, not recalled: the audio wip branch had exactly **15**
+commits on top of its base, and three of them **mix** DTS with driver
 code — each touches `arch/arm64/boot/dts/qcom/sdm632-fairphone-fp3.dts` *plus* a
 driver file:
 
@@ -386,8 +403,12 @@ needs splitting.
 
 ## Rebasing the fork's work onto a newer base (worked, 7.0.9 → 7.1.3)
 
-The concrete moves for porting a `fp3-7.0.9-*` topic branch onto the current
-integration base (e.g. `7.1.3/main`) and reshaping it into a `submit/*` branch:
+The concrete moves for porting a `wip/<old>/<category>` branch onto the current
+integration base (e.g. `7.1.3/main`) and reshaping it into `submit/<new>/<category>`.
+The surrounding bookkeeping — which branches to create, delete and push, in what
+order — is in
+[`docs/rolling-a-new-base.md`](https://github.com/llg179/fp3-pmaports/blob/main/docs/rolling-a-new-base.md);
+what follows is only the git surgery:
 
 - **The base is a SHA, not a tracking ref.** `msm8953-mainline` branch names
   contain a slash (`7.1.3/main`), so `git fetch origin '7.1.3/main'` leaves it in
@@ -411,7 +432,7 @@ integration base (e.g. `7.1.3/main`) and reshaping it into a `submit/*` branch:
   bump, you do **not** need to replay the DTS commits: take the final DTS wholesale
   from the topic branch and commit it as the one DTS commit —
   `git checkout <topic> -- arch/.../<board>.dts`. For an *integration* test build,
-  take the combined DTS the same way from `fp3-integration`.
+  take the combined DTS the same way from `integration/<base>`.
 
 - **New-file driver, consolidated.** For a driver absent upstream, don't cherry-pick
   its nine discovery commits — take the final file(s) and make one commit:
@@ -583,15 +604,9 @@ exists precisely to fill that gap: attribution without an authorship claim.
 ### Credit the work you build on, especially when it is not upstream yet
 
 `Assisted-by:` covers the AI. It says nothing about the **humans** whose work a
-patch reuses, and that is the omission a maintainer notices first — the person
-reading your patch may be the person you took it from.
-
-**The rule: if any meaningful part of a patch came from somewhere other than your
-own head, the commit message names what it was, whose it is, and links to it.**
-This applies hardest when the source is *not in Linus' tree*, because then the
-reviewer cannot find it by `git log` and will assume the work is yours.
-
-Four situations, each with the form the kernel expects:
+patch reuses. The rule and the import/invention split are in
+[§2b](#2b-split-the-import-from-the-invention-and-make-the-import-traceable);
+this is the citation *form* for each of four situations:
 
 | the source | how to cite it |
 |---|---|
@@ -603,9 +618,7 @@ Four situations, each with the form the kernel expects:
 Do **not** reach for `Co-developed-by:` to solve this: it requires a
 `Signed-off-by:` from that person in the same patch, which you cannot produce for
 someone who is not part of your submission. Prose plus `Link:` is the correct
-tool. If the code is *substantially* still theirs, the honest move is to keep
-**them** as the patch author (`git commit --author`) and describe your changes in
-the message.
+tool.
 
 Worked examples from this series, all four of them real omissions found by
 auditing the branch before submission:
@@ -647,7 +660,7 @@ and DMIC clock rate from the DT"* reads its values out of Fairphone's downstream
 `msm8953-audio.dtsi` and never said so.
 
 **Audit the branches before submitting — some commits have no sign-off at all.**
-The seven IMX363 camera commits on `fp3-integration` (`b00ba1f5`, `526d569e`,
+The seven IMX363 camera commits on `integration/<base>` (`b00ba1f5`, `526d569e`,
 `757b41e6`, `df906c4d`, `4beba115`, `1adc5540`, `0c5dd72e`) carry an **empty
 trailer block**: no `Signed-off-by`, no attribution. Those are unsubmittable as-is,
 independent of the AI question. Check every branch, not just the one being sent:
@@ -693,7 +706,7 @@ GitHub-flow conveniences any more.
   sending) — worth using once the series grows.
 - **Build in the pmOS chroot.** `pmbootstrap`'s `envkernel.sh` gives the
   reproducible cross-build the postmarketOS mainlining guide uses; the FP3 loop
-  already builds via the `linux-fp3-709` package (cross-ref `fp3-kernel-test`).
+  already builds via the `linux-fp3` package (cross-ref `fp3-kernel-test`).
 
 ---
 
