@@ -493,3 +493,38 @@ review because it was impeccably cited. These rules close that hole.
   believe, what single value expresses it, **what signal on this device confirms the
   value belongs here**, and what reading would tell me it does not. If there is no
   such signal, that is the finding — write it down instead of the number.
+
+## Layer integrity — whose fact is this?
+
+The provenance rules above catch a value **copied** from the wrong place. They do not
+catch a value you **invent** and put at the wrong layer, which is the same failure with
+no citation to give it away. Both happened in one session; the invented one was worse,
+because it landed in code shared by every device the driver serves.
+
+- **☠️☠️ Before writing any constant, name whose fact it is.** SoC / PMIC / board /
+  battery / *this one phone*. Then put it there, and nowhere else. **A driver serving N
+  devices may only contain facts that are true of all N.** (Worked example: a
+  fast-charge ceiling of 2 A was added to a per-PMIC variant table. 2 A is not a fact
+  about the PMI632 — the chip is rated 3 A — it is a fact about the battery in one
+  Fairphone. Every other PMI632 board would have been silently held to it.)
+- **☠️ A safety limit is not a hardware limit, and the variant table is only for
+  hardware limits.** "What this chip can do" is a datasheet number and belongs in the
+  driver; "what I am willing to allow" is policy and belongs to whoever describes the
+  board. Putting policy in the driver looks responsible and is how one device's caution
+  becomes every device's ceiling. When you catch yourself writing a bound, ask which of
+  the two it is; if you cannot point at a datasheet or a register width, it is policy.
+- **☠️ Moving a hardcoded value is not removing it.** A change whose point is "let the
+  device tree decide" and which then adds a *new* constant to bound what the device tree
+  may ask for has not removed the hardcode — it has renamed it, and the commit message
+  will honestly describe the improvement while shipping the same defect one layer over.
+  Read your own diff for constants introduced, not only for constants deleted.
+- **☠️ Convenience of access silently decides the layer, and the symptom is a
+  description that cannot express reality.** Battery properties were put on the
+  *charger* node because that is the node the driver already had a `struct device` for.
+  The tell: with them there, a board **cannot** describe two batteries — and this board
+  ships two. If a property sits on node X but describes Y, it is misplaced, however
+  convenient X is; reach Y properly (`fwnode_find_reference()`, a phandle, a child node)
+  instead of moving the data to where the code happens to be standing.
+- **The upstream test, applied before writing rather than at submission:** *if this
+  patch were applied to every board the file serves, would each of them still be
+  described correctly?* One question, and it catches all of the above.

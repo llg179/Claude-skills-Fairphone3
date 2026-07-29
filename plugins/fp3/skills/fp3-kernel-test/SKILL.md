@@ -184,6 +184,15 @@ cost a device, a boot, or a wrong conclusion at least once.
 - Discriminator unreadable ⇒ the value is a guess: label it, and take the branch that is safe either way.
 - Step 0 applies to a constant too — name the signal that confirms it belongs here.
 
+**Layer integrity — a constant belongs where the fact belongs:**
+
+- Name whose fact it is (SoC/PMIC/board/battery/this phone) before writing it, and put it there.
+- A driver serving N devices may only carry facts true of all N.
+- A safety limit is not a hardware limit; only hardware limits belong in a variant table.
+- Moving a hardcode into a new table is not removing it — read your diff for constants *added*.
+- If a property sits on the node the code can reach rather than the node it describes, it is misplaced.
+- Ask before writing: applied to every board this file serves, is each still described correctly?
+
 ## The loop: hypothesis → single change → deploy → measure → interpret
 
 ### Step 0 — Write the hypothesis as a measurement

@@ -254,6 +254,17 @@ single most common thing that gets a series bounced.
   GPIO / clock / regulator / bus address, what each pin does). The kernel reads it
   at boot. It is board-specific: "on the FP3 the WCD9335 is on SLIMbus, these are
   the mic-bias supplies, these the MBHC thresholds."
+☠️ **The split is a rule about *facts*, not only about file extensions.** A commit can
+keep `.c` and `.dts` perfectly apart and still put a board's fact inside the driver — a
+current ceiling, a threshold, a timing — usually as a constant in a per-variant table,
+which looks like driver data and is not. Before adding *any* constant to a driver, name
+whose fact it is: SoC, PMIC, board, battery, or this one phone. Only the first two may
+live in the driver, and only if a datasheet or a register width backs them. "What I am
+willing to allow" is policy, it belongs to whoever describes the board, and putting it
+in shared code is how one device's caution silently becomes every device's ceiling.
+The check, before writing rather than at review: **applied to every board this file
+serves, is each of them still described correctly?**
+
 - **Driver (`.c`/`.h`) = the logic** that works on *any* board that has the chip.
   `wcd9335.c` knows how to drive the codec whether it sits in an FP3 or a
   DragonBoard.
@@ -744,6 +755,13 @@ GitHub-flow conveniences any more.
 - [ ] **One branch for the whole subsystem** (audio/camera/charger/modem), not sub-split.
 - [ ] Commit count reduced; discovery steps consolidated; standalone bugfix kept apart.
 - [ ] **No commit mixes `.dts`/`.dtsi` with `.c`/`.h`.**
+- [ ] **No board/battery fact hidden in the driver.** Grep the diff for constants
+      *added* to a variant/quirk table and justify each from a datasheet or a register
+      width; policy numbers belong in the device tree. Ask: applied to every board this
+      file serves, is each still described correctly?
+- [ ] **Every vendor-sourced value can answer two questions**, not one: where it came
+      from, *and* how we know that variant applies to this board. If the vendor tree
+      ships alternatives (`ls` it), name the discriminator and the reading.
 - [ ] DTS split **per logical step**; no style/cleanup riding along with function.
 - [ ] Rebased across the base bump; **rebuilt + CONFIG-checked + `fp3-selftest` green.**
 - [ ] `scripts/checkpatch.pl --strict` clean; `scripts/get_maintainer.pl` used for
