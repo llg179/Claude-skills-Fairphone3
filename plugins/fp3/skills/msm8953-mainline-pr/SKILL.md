@@ -26,6 +26,10 @@ with the full base-bump procedure in
 Read those for *what the branches are*; read this for *how to turn them into a
 series*.
 
+More generally: current state and procedure live in the docs, method and traps in
+the skills, dated logs in archive — the split is stated in `fp3-porting-debug`
+"Where knowledge lives".
+
 The whole point: the fork's topic branches are ordered by *discovery* (one commit
 per thing you learned, DTS and driver interleaved). Upstream wants them ordered by
 *logic* (few commits, each one self-contained, DTS and driver never in the same

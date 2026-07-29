@@ -21,31 +21,51 @@ question. Everywhere below, concrete numbers/addresses/verdicts are illustration
 technique; re-measure before trusting them, and keep the *data packs in `references/`* (not this
 SKILL body) current as facts change.
 
-## Local knowledge base (bundled — the data travels with this skill, read on demand)
-All the project's durable knowledge now lives under `references/` (progressive disclosure — the
-SKILL body stays small; Read a pack only when you need it). The searchable index of everything,
-incl. the "what did we already rule out" map, is
-[`references/data-index.md`](references/data-index.md) — **read it first.**
+## Where knowledge lives — the boundary
 
-**Audio — SOLVED end to end (folyt.208-211, 2026-07-24): playback AND the built-in microphones work.**
-Two breakthroughs: (1) framer wall = QDSP6SS `0x0c20002c` bit3 (folyt.196-199); (2) missing physical
-MCLK = the codec `func1` pinmux never applied because the `gpio-gate-clock` used
-`pinctrl-names="active","sleep"` instead of `"default"` (folyt.208); (3) capture = a TX front-end
-hold that was asserted and never released, plus the DMIC clock rate and the board routes the codec
-expects from the DT (folyt.211). Volume control = `RX1/RX2 Mix Digital Volume` (numid 13/14), not
-the main-path `RX Digital Volume`. Fix commits on fork `github.com/llg179/linux`, under the branch model defined in
-[`fp3-pmaports/README.md`](https://github.com/llg179/fp3-pmaports#the-branch-model).
-The FP3's built-in mics are **digital** (DMIC0-3 all capture); the analog AMICs carry nothing except
-the headset mic on AMIC2, so a downstream label saying otherwise is not evidence.
-- [`references/slimbus-audio-context.md`](references/slimbus-audio-context.md) — entry doc: top banner
-  carries the full resolution; symptom, ruled-out catalogue, component address map (§7), device access.
-  **Read first for the audio history/method.**
-- `references/slimbus-audio-red-herrings.md` — the dead-lead archive (what was ruled out, and why).
-- `references/slimbus-audio-tracker.md` — the granular tracker for the same investigation.
+Three homes. Putting something in the wrong one is how both rot: the docs go
+stale because nobody reads them, and the skill goes stale because it carries
+facts that expire.
+
+| kind | home | why there |
+|---|---|---|
+| **How the device works today**, and any procedure that must be current — deploy, base bump, branch model, what a subsystem's code is and whose it is | [`fp3-pmaports/docs/`](https://github.com/llg179/fp3-pmaports/tree/main/docs) | public, English, reviewed in diffs, and the only copy that actually gets updated when the device changes |
+| **How to find out** — method, instruments, traps, safety rules, what not to trust | these skills | outlives the specific bug; a trap keeps its value long after the thing it caught is fixed |
+| **What happened, dated** — chronologies, live trackers, raw dumps, dead leads | [`references/archive/`](references/archive/), or `docs/*/bringup/{data,tools}` | needed to answer "was X already tried?", useless as instruction |
+
+Two questions decide it when writing something down:
+
+- **Would this be wrong next month?** Then it is *status* → docs.
+- **Would this still be true on a different phone?** Then it is *method* → here.
+
+Neither, and it is only "what we did on Tuesday" → archive.
+
+The visible consequence: **this skill carries no status section for any
+subsystem.** Whether audio, the camera or the charger works today, and what its
+code is, is in
+[`docs/`](https://github.com/llg179/fp3-pmaports/tree/main/docs) — start at
+[`docs/kernel/README.md`](https://github.com/llg179/fp3-pmaports/blob/main/docs/kernel/README.md)
+for whose code each change is, and the `docs/<subsystem>/bringup/` pages for how
+it was arrived at.
+
+## Local knowledge base (bundled — read on demand)
+
+Progressive disclosure: the SKILL body stays small, Read a pack only when you
+need it. The searchable index, including the "what did we already rule out" map,
+is [`references/data-index.md`](references/data-index.md) — **read it first.**
+
+**Audio (SLIMbus / WCD9335):** the settled account is
+[`docs/audio/`](https://github.com/llg179/fp3-pmaports/tree/main/docs/audio) (how
+it works) and
+[`docs/audio/bringup/`](https://github.com/llg179/fp3-pmaports/tree/main/docs/audio/bringup)
+(how it was brought up, including the traps worth carrying forward). Here:
+- `references/slimbus-audio-red-herrings.md` — the dead-lead catalogue: what was
+  ruled out and why. Still live, because "do not re-chase this" does not expire.
+- [`references/archive/`](references/archive/) — the dated investigation logs,
+  including the component address map in `slimbus-audio-context.md` §7.
 
 **Device + the other tracks:**
 - `references/hw-facts.md` — permanent HW/env facts (partitions, boot-image params, USB gadget/VID:PID, log channels).
-- `references/boot-debug-log.md` — the boot/ramdisk/USB-gadget bring-up chronology + architecture notes.
 - `references/pmos-bringup.md` — pmOS mainline bring-up: feature matrix, gap analysis, the §9.x execution log (charger, fuel-gauge, modem, the SLIMbus wall).
 - `references/sailfish-components.md` (+ `sailfish-customizations.md`, `sailfish-akcioterv.md`) — the Sailfish (hybris) port: provenance (component→repo/branch+why), the build-modification log, the step plan.
 - `references/report-attachments/` — polished write-ups (firmware strings/disasm, PIL-vs-PAS, golden IPC traces, devmem dumps, outreach drafts).
@@ -802,12 +822,9 @@ The search walked down the stack, each rung a differential measurement:
   message length changed nothing. So QMI byte-parity is not the lever either; the
   message content is exonerated.
 
-**Where it stands now (status lives in the docs, not here):** the fault is localised
-below the AP, inside the co-processor's own clock bring-up — a live verdict that keeps
-moving as measurements accumulate, so it is deliberately **not** pinned in this skill.
-Read the current verdict + open frontier in `references/slimbus-audio-context.md`
-§0 (+ its dead-lead archive, and `FP3-slim-debug-journal.md` in the project docs). Usable pmOS
-audio today is the aw8898 speaker (MI2S).
+**Where it stands now:** not here — see the boundary above. The outcome, and what
+is still open, is in
+[`docs/audio/bringup/`](https://github.com/llg179/fp3-pmaports/tree/main/docs/audio/bringup).
 
 **Why this example is in a *method* skill:** it shows the discipline that made
 progress possible — exonerate each layer with a register or a source diff before

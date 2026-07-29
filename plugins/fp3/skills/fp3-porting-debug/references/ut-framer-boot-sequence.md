@@ -101,6 +101,6 @@ then frames on 0x301-arrive. Mainline brings the ADSP up early (kernel) and the
 NGD driver waits on the same 0x301/lpass-SSR path. The QMI content is identical
 either way. So the boot-order is a candidate variable (late-userspace-ADSP vs
 early-kernel-ADSP) but the established wall is the ADSP not answering POWER_REQ,
-below the AP layer (see slimbus-audio-context.md; folyt.118-193). Firmware
+below the AP layer (see archive/slimbus-audio-context.md; folyt.118-193). Firmware
 identical across all Android (folyt.191); Bert's exact 6.11 kernel = 0/8 on our
 device (folyt.193) ⇒ device-specific + ADSP-internal, not AP-software.

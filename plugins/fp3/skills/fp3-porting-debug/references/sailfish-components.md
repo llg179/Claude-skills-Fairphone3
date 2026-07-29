@@ -1,7 +1,7 @@
 # Sailfish OS — Fairphone 3 (fp3) port — komponens-eredet (provenance) napló
 
 > Cél: **megosztható tapasztalat**. Minden komponens: honnan jön (repo + branch/commit),
-> mi a szerepe, mit kellett módosítani és **miért**. A kronológiai részletek: `boot-debug-log.md`.
+> mi a szerepe, mit kellett módosítani és **miért**. A kronológiai részletek: `archive/boot-debug-log.md`.
 > Build-recept és környezet: lentebb. Frissítendő minden új komponensnél/módosításnál.
 
 ## Cél-konfiguráció

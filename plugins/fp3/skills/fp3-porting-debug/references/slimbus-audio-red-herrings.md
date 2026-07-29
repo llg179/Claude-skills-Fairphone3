@@ -1,15 +1,15 @@
 # FP3 audio (SLIMbus) — VAKVÁGÁNYOK / red herrings (archívum)
 
-> Ez a fájl a `slimbus-audio-context.md`-ból kivett történeti/kizárt tartalom.
+> Ez a fájl a `archive/slimbus-audio-context.md`-ból kivett történeti/kizárt tartalom.
 > Célja az ISMÉTLŐDÉS-ŐR: mielőtt bármit újra megnéznél, keresd ki innen — sok lead már
 > lezárva, a bizonyíték helyével (folyt.X) együtt. A folyt.X hivatkozások a naplókra mutatnak:
-> `FP3-slim-debug-journal.md` (teljes napló) + `slimbus-audio-tracker.md` (élő tracker) + `data-index.md`.
+> `FP3-slim-debug-journal.md` (teljes napló) + `archive/slimbus-audio-tracker.md` (élő tracker) + `data-index.md`.
 >
 > **★★★★★ MEGOLDVA (folyt.196, 2026-07-23): a lenti „konszolidált verdikt" (a fal FIZIKAI/ADSP-belső/PLL)
 > TÉVES VOLT — SUPERSEDED.** A tényleges gyökér: **QDSP6SS `0x0c20002c` bit3**, amit a mainline PAS set-ben
 > hagy (downstream PIL törli). Törölve a framer felframel. Az AP-oldal exoneráció + a byte-azonos mérések
 > IGAZAK maradnak, de a belőlük levont „boot-env-függő fizikai fal" konklúzió hibás volt: a különbség EGY
-> AP-írható regiszter-bit, amit a load-út (PIL vs PAS) állít. Lásd `slimbus-audio-context.md` első ★★★★★ szakaszát.
+> AP-írható regiszter-bit, amit a load-út (PIL vs PAS) állít. Lásd `archive/slimbus-audio-context.md` első ★★★★★ szakaszát.
 > A lenti kizárt-leadek listája (mint ismétlés-őr) továbbra is érvényes és hasznos.
 >
 > **[TÖRTÉNELMI verdikt, SUPERSEDED] A konszolidált verdikt (miért holt MIND): azonos fw + azonos TZ + azonos AP-környezet → a framer

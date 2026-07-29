@@ -15,8 +15,9 @@
 # ┌─ OLVASÁSI SORREND ÚJ SESSIONBEN ─────────────────────────────────────────────┐
 # │ 0. FP3-2026-Jul-13-startup-instructions.md  (SESSION-INDÍTÓ: cél+skillek+next;   │
 # │    a PROJEKTBEN: $FP3_ROOT/) ← EZT ELŐSZÖR ÚJRAINDÍTÁS UTÁN             │
-# │ 1. slimbus-audio-context.md   (belépő §0; references/, co-located)                 │
-# │ 2. slimbus-audio-tracker.md   (élő tracker; references/, co-located)              │
+# │ 1. fp3-pmaports/docs/  (AKTUÁLIS ÁLLAPOT: docs/kernel = kié melyik kód,           │
+# │    docs/<alrendszer>/bringup = hogyan jött össze)  ← EZ A MÉRVADÓ                 │
+# │ 2. slimbus-audio-red-herrings.md  (mit zártunk ki és miért; references/)          │
 # │ 3. FP3-tierA-results-2026-Jul-10.md  (F1-UT + Tier A; a PROJEKTBEN maradt)        │
 # │ 4. fp3-porting-debug + fp3-kernel-test SKILLEK (módszer, guardrailek)              │
 # └───────────────────────────────────────────────────────────────────────────────┘
@@ -25,18 +26,12 @@
   ★ AKTUÁLIS / MÉRVADÓ (ezeket használd)
 ═══════════════════════════════════════════════════════════════════════════════
 
-slimbus-audio-context.md  → ÁTKÖLTÖZÖTT:
-  ~/.claude/skills/fp3-porting-debug/references/slimbus-audio-context.md
-  (+ a vakvágány-archívum: ...-red-herings.md ugyanott)
-  BELÉPŐ-KONTEXT. Szimptóma, cím/érték-térkép, kizárt-avenue katalógus, device-hozzáférés,
-  §0 aktuális verdikt + nyitott frontier. Kulcs: SLIMbus, WCD9335/Tasha, framer, FRM_STAT,
-  earpiece/mic silent, PIL vs PAS.
-
-slimbus-audio-tracker.md
-  ÉLŐ TRACKER (folyt.96-103). Kulcs: runtime-PM framer-lever (power/control on/auto),
-  fw-swap cross-teszt (folyt.99 = fw kizárva), proxy-hold kísérlet (folyt.103 = AP
-  power kizárva élőben), QDSP6SS-nem-AP-felület, NGD-setup=downstream, konszolidált
-  verdikt. IDE kerül minden új kísérlet.
+AUDIO (SLIMbus/WCD9335) → A MÉRVADÓ HELY A DOKUMENTÁCIÓ, NEM EZ A SKILL:
+  github.com/llg179/fp3-pmaports/tree/main/docs/audio          (hogyan működik ma)
+  github.com/llg179/fp3-pmaports/tree/main/docs/audio/bringup  (hogyan jött össze)
+  Itt maradt: slimbus-audio-red-herrings.md (vakvágány-katalógus — nem évül el).
+  A dátumozott nyomozási naplók: references/archive/ (lásd archive/README.md);
+  a komponens-címtérkép: archive/slimbus-audio-context.md §7.
 
 FP3-tierA-results-2026-Jul-10.md
   Tier A + F0 + F1 + F10/F11 + firmware-disasm-analízis részletes eredményei. Kulcs:
@@ -64,7 +59,7 @@ fp3-skill-feedback-log.md  (a skill hozza létre create-if-absent módon a sablo
 hw-facts.md   (references/, co-located — az Opus-fp3-facts.txt ÁLLANDÓ-TÉNYEK fele)
   PERMANENS HW-TÉNYEK. Kulcs: USB-gadget ID-k, partíciós térkép (mmcblk0p*), boot-header
   verziók, boot-image paraméterek, VID:PID szekvenciák.
-boot-debug-log.md   (references/, co-located — az Opus-fp3-facts.txt KRONOLÓGIA fele)
+archive/boot-debug-log.md   (ARCHÍVUM — dátumozott napló, nem módszer)
   BOOT/RAMDISK BRING-UP NAPLÓ + architektúra-jegyzetek (kronológia). Kulcs: pstore/SD/eMMC
   log-csatornák, A/B retry, skip_initramfs, NCM ramdisk, KOMPONENSEK.
 

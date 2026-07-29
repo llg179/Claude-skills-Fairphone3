@@ -1,7 +1,7 @@
 # FP3 → natív (EOL-álló) irány: postmarketOS + mainline kernel
 
 > Munkadokumentum a Fairphone 3 (fp3, MSM8953/SD632, Adreno 506) **natív**, blob-mentes,
-> EOL-álló Linux/Sailfish irányához. Forrás: `boot-debug-log.md` (factentry48–66) + `sailfish-components.md`.
+> EOL-álló Linux/Sailfish irányához. Forrás: `archive/boot-debug-log.md` (factentry48–66) + `sailfish-components.md`.
 > Készült: 2026-06-28.
 
 ---

@@ -19,6 +19,12 @@ addresses, register values and conclusions in here come from the WCD9326/SLIMbus
 bring-up and are kept as **worked examples** — they show the shape of a good
 measurement, but they age. Re-measure before you rely on any specific number.
 
+**What lives here and what lives in the docs** is settled in `fp3-porting-debug`
+"Where knowledge lives": current state and procedure go to
+[`fp3-pmaports/docs/`](https://github.com/llg179/fp3-pmaports/tree/main/docs),
+method and traps stay here, dated logs go to archive. This skill therefore
+carries no status for any subsystem.
+
 The prize you are always working toward is a **differential measurement**: the
 same probe on a known-good reference and on the system under test, so the *delta*
 localises the fault. On this device the reference is built in (dual-slot), which
@@ -943,7 +949,7 @@ clock) lives **once**, in `fp3-porting-debug` ("how the SLIMbus wall was localis
 
 The *method* lessons it teaches are already embedded in the sections above; the
 *current* status of the investigation lives in the data pack bundled with the umbrella
-skill — `fp3-porting-debug/references/slimbus-audio-context.md` §0
+skill — `fp3-porting-debug/references/archive/slimbus-audio-context.md` §0
 (verdict + open frontier), plus `FP3-slim-debug-journal.md` in the project docs — **not
 here**, because a status pinned in skill text ages into a wrong claim. Re-measure before
 trusting any specific number in this file.

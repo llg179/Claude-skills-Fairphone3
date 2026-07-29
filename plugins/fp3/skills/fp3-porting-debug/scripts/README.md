@@ -22,7 +22,7 @@ Forrás-tudás: `../references/pmos-bringup.md` és `../references/hw-facts.md`.
 | `charge-test.sh [cycles] [dwell] [abort]` | duty-cycle charger-teszt harness (pmOS-burst → TWRP hő/SoC-mérés) | bg-ben |
 | `fg-verify.sh` | **FUEL-GAUGE ellenőrzés**: `pmi632-battery` capacity/voltage/status + UPower SSH-n | pmOS |
 
-### Audio / SLIMbus diagnosztika (lásd `../references/slimbus-audio-context.md`)
+### Audio / SLIMbus diagnosztika (lásd `../references/archive/slimbus-audio-context.md`)
 Ezek a `scratchpad`-ből kerültek ide — a SLIMbus-framer-fal bemérésének teljes eszközkészlete.
 
 | script | mit csinál | mód |
