@@ -147,6 +147,18 @@ from this skill verbatim; if it already exists, just append (never overwrite a l
   recipe, and the measured proof that a USB replug **cannot** be emulated from the host,
   is under "Unattended access" in the repository README.
 
+- **The vendor's full 4.9 source is on disk, not just its device trees.** Register
+  maps, scaling tables and the reasons behind a downstream device-tree value live in
+  the *drivers* (`drivers/power/supply/qcom/`, `sound/soc/msm/`, …), and that tree is
+  checked out locally — the FP3's UT kernel source doubles as Fairphone's published
+  release. `fp3-pmaports/docs/device_tree/downstream/` checks in only the `.dts`/
+  `.dtsi` files, so when a question is "what does this register mean" or "what step
+  size is that field", go to the local kernel checkout, not to the docs. (Everything
+  the charger work needed — the JEITA block layout, the 25 mA compensation step, the
+  per-PMIC parameter tables — came from `smb5-reg.h`, `smb5-lib.c` and `qpnp-smb5.c`
+  there, none of which is in the repo.) Locate it once per session; the path drifts
+  with the disks.
+
 ## The three OS tracks — and the *role* each plays in debugging
 
 The reason to keep three OSes on one phone is that they check each other. Think in
@@ -266,6 +278,21 @@ your remaining hypotheses in half.
    bed on one disposable phone with **zero-risk rollback** — you can break `slot_b`
    arbitrarily and always return to a working phone. It is also your reset:
    `set_active` clears a slot's unbootable/retry state.
+
+1b. **The oracle is a reference for CONFIGURATION, not only for signal — use it to
+   validate a register layout you reverse-engineered from the vendor source.** When
+   the port has to program a block the vendor also programs, boot the oracle and read
+   *those same registers back*. Agreement byte-for-byte confirms the encoding, the
+   byte order and the value domain in one read, far more cheaply than re-reading the
+   source; a disagreement is a bug in your port, and it will be in the value you were
+   least sure about. (Worked example: the FP3's four JEITA comparator thresholds —
+   three matched what we had derived from `smb5-lib.c`, which validated the
+   big-endian hot-then-cold layout, and the fourth did not, which is how a wrong
+   device-tree threshold was found. `/sys/kernel/debug/pmic-votable/*/status` on the
+   oracle then said *why* the stock system settles where it does, per voter.)
+   ☠️ Before framing any such difference as "the two sides disagree", check that
+   **both sides are actually measuring**: a value hardcoded in your device tree is a
+   previous session's *assumption*, not a measurement, however numeric it looks.
 
 2. **Capture the golden sequence when you can't probe the oracle live.** The oracle
    often lacks the debug node you want, so capture its working handshake once into

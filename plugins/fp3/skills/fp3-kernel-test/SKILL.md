@@ -170,6 +170,11 @@ cost a device, a boot, or a wrong conclusion at least once.
 - Taking `DBUS_SESSION_BUS_ADDRESS`/`XDG_RUNTIME_DIR` by hand diagnoses a dead session as a broken daemon.
 - Your own cleanup destroys evidence — `journalctl --vacuum-size` faked a perfect cross-boot correlation.
 - `pkill -f <pattern>` matches your own command line. Use `pkill -x <name>`.
+- `pgrep -f` does too — an `until ! pgrep -f …` waiter never exits. Wait on the artifact.
+- Before saying two systems disagree, check both are measuring — a hardcoded constant is not.
+- The oracle is a source of *configuration* too: read back the registers it programs.
+- A register field's width can be the design limit; work out what the hardware can encode.
+- When the question is "which unit in the interface", compute the difference, don't argue it.
 
 ## The loop: hypothesis → single change → deploy → measure → interpret
 
@@ -424,6 +429,24 @@ session.) Related: `--force` and `--lax` are **`build` subcommand flags**;
 `./pmb --lax build` is rejected outright, and without `--force` a changed
 `_commit` at the same `pkgver` is skipped as "up to date".
 
+☠️ **"Package is up to date" can mean a STALE package outranks your bump — and
+deleting its `.apk` is not enough.** `--lax` (no `--force`) compares against the
+highest version in the local work repo, and a leftover `--src` build carries a
+`_pYYYYMMDDHHMMSS` suffix that sorts **above** a plain `pkgrel` bump: with
+`linux-fp3-7.1.3_p20260729013201-r12` present, `7.1.3-r21` was skipped as up to
+date, twice, with no hint as to why. The trap has a second half: removing the
+`.apk` file changes nothing, because **`APKINDEX.tar.gz` still advertises it**.
+The full recipe is *move the stale apk aside → `./pmb index` → build `--lax`*.
+This refines the older advice to "bump `pkgrel` to a value not yet in the work
+repo": what matters is not `pkgrel`, it is that the **highest version in the
+repo** is below yours. Diagnose it by grepping the index rather than the
+directory:
+
+```sh
+sudo tar xzOf work/packages/edge/aarch64/APKINDEX.tar.gz APKINDEX |
+    awk '/^P:linux-fp3$/{p=1} p&&/^V:/{print; p=0}' | sort -V | tail -3
+```
+
 🐢 **The kernel build silently bypasses ccache → every build is a full ~30-min recompile, even for a
 one-line module change.** `cache_ccache_$ARCH/` exists and looks used, but the chroot's `/etc/abuild.conf`
 ships `#USE_CCACHE=1` **commented out** (Alpine default), so abuild never prepends `/usr/lib/ccache/bin` to
@@ -438,6 +461,14 @@ it:** (1) uncomment `USE_CCACHE=1` in `work/chroot_native/etc/abuild.conf`; (2) 
 `--force`** — and bump `pkgrel` to a value not yet in the work repo so `--lax` still rebuilds it without a
 zap. First such build repopulates (slow); subsequent ones are cache-hit-dominated (~2–5 min). See the
 [[feedback_pmbootstrap_ccache]] memory. (An env/SSD reshuffle can also orphan a previously-warm cache.)
+☠️ **The parent-of-`cc1` check misfires during the DTB stage and says "bypassed" when ccache is fine.**
+`make dtbs` preprocesses each `.dts` with the **host** `gcc -E`, which never goes through ccache, so a
+`cc1` sampled in that window has a plain `/usr/bin/gcc` parent — and one such sample nearly produced a
+"the build is bypassing ccache" verdict on a build that was using it correctly. The unambiguous tell is
+in `cc1`'s own argv: when ccache drives the compile, its output path is
+`-o /home/pmos/.ccache/tmp/cpp_stdout.tmp.*`. Sample a `cc1` that is compiling a `.c` under
+`drivers/`/`kernel/`, not one preprocessing a `.dts`. (Recipe re-validated 2026-07-29: with the three
+steps above the kernel build does use ccache.)
 
 ```bash
 rm -rf /tmp/pmbootstrap-local-source-copy
@@ -671,6 +702,39 @@ question it answers, the how, and how to interpret — with example values.
   runtime-PM force-resume **perturbs** the block — resuming the NGD drove the framer's dynamic markers
   (`+0x200/+0x400`) from their idle `0` to activity values while the real state bit (`FS`, `+0x604`)
   stayed `0`; stable *config* registers don't move, but read *dynamic* ones knowing the resume drives them.
+
+### PMIC / regmap registers via debugfs (the cheapest ground truth there is)
+- **Answers:** what has a driver — ours, the bootloader's, or the vendor's — actually
+  programmed into a device that sits behind regmap (SPMI PMIC, I2C codec, …)? No kernel
+  build, no `/dev/mem`, no root-hazard: it goes through the driver's own map.
+- **How:** `/sys/kernel/debug/regmap/<dev>/registers` is **fixed width, 9 bytes per line**
+  (`"%04x: %02x\n"`), so it seeks. Read one block with
+  `dd if=…/registers bs=9 skip=<register> count=<n>`.
+  `name` and `range` identify the device; `XX` in place of a value means the regmap
+  declares that register unreadable, which is itself information.
+- **☠️ Two ways to get nothing.** `bs=1 skip=$((reg*9))` returns **empty, silently** —
+  use `bs=9 skip=<reg>`. And never `cat` the whole file: a PMIC map is `0-ffff`, i.e.
+  65536 SPMI transactions.
+- **Use it BEFORE writing code, not after.** Reading the four JEITA registers on a
+  running phone took thirty seconds and overturned the premise the work was about to be
+  built on: the block that "needed enabling" was already enabled (`JEITA_EN_CFG = 0x1f`),
+  just against generic thresholds. The same read on the oracle slot then validated the
+  register layout we had derived from the vendor source, and caught one wrong value.
+- **Interpret:** these are *live* values, so they answer "what is programmed", not "who
+  programmed it". A value that matches neither the vendor's nor yours is usually the
+  hardware's power-on default.
+
+### Vendor votables (who is limiting this, on a downstream/oracle kernel)
+- **Answers:** on a Qualcomm downstream stack, why a limit has the value it has — every
+  contributing voter and the one that wins.
+- **How:** `/sys/kernel/debug/pmic-votable/<NAME>/status`, e.g. `FCC`, `FV`, `USB_ICL`,
+  `CHG_DISABLE`. Each line is a voter with `en=` and `v=`; the last line is
+  `effective=<VOTER> type=Min v=<value>`.
+- **Why it matters for a mainline port:** it converts "why does the stock system settle on
+  this number" from register archaeology into one read. (Worked example: the oracle's
+  fast-charge current resolved to `effective=BATT_PROFILE_VOTER v=2000000` — the pack's own
+  profile, not a thermal or JEITA vote, which is a different reason from the one the
+  mainline side had reached the same number by.)
 
 ### dmesg signatures (the driver's own narrative — fast, but interpret carefully)
 - **Answers:** which code paths ran and how far the handshake got.

@@ -411,3 +411,48 @@ a red-team caught it. Run the checklist before and after each experiment.)
   plausible line count (`journalctl -b -N -k | wc -l`).
 - **☠️ `pkill -f <pattern>` matches your own command line** and killed the ssh session
   running it. Use `pkill -x <name>`.
+
+## Measurement integrity — from the charger / JEITA bring-up
+
+Four rules, one of them the most expensive kind: a wrong verdict that read as a
+successful cross-check.
+
+- **☠️☠️ Before saying "these two systems disagree", establish that BOTH of them are
+  measuring.** The oracle's stock stack read `resistance_id 9843` from the battery-ID
+  resistor; our device tree described a different pack. That looked like a two-sided
+  conflict to resolve, and it was not one: the mainline side **never reads the battery
+  ID at all** — the driver has no code for it and the node does not request the channel.
+  The device-tree value was a *static assumption* from an earlier session, made by
+  picking one of two vendor profiles without measuring. **A hardcoded constant is not a
+  measurement; it merely looks like one, because it is a number.** The same applies to
+  calibration tables, "values taken from downstream", and anything a previous session
+  wrote down. Before you frame a disagreement, ask which side actually reads hardware.
+  (The resolution here was cheap: the ADC channel was already described and exposed, so
+  the mainline side could read `10.03 kΩ` against downstream's `9.843 kΩ` — two
+  independent paths, same answer, and the device tree was simply wrong.)
+- **The oracle is a source of CONFIGURATION, not only of signal — and that validates an
+  encoding you derived from source.** When you have reverse-engineered a register layout
+  out of a downstream driver, boot the oracle and read *the same registers it programs*.
+  Here the hard JEITA thresholds and the soft-hot threshold came back byte-identical to
+  what we had derived, which independently confirmed the big-endian hot-then-cold layout
+  and the raw-code domain — and the one that did **not** match was a real bug in our
+  device tree. This is cheaper and sharper than re-reading the source a second time.
+- **A register field's width can be the design constraint, not the hardware's capability.**
+  The JEITA compensation is six bits of 25 mA, so at most 1575 mA of reduction; that, not
+  caution, is why a target current above ~2.175 A could not express the vendor's own
+  600 mA cool-zone value. Before rounding a target number "to be safe", work out what the
+  hardware can actually encode — the honest reason is usually more useful than the
+  cautious one, and it tells you what the vendor did instead (here: compensate in
+  software).
+- **When a design question is "unit A or unit B in the interface", compute the difference
+  instead of arguing it.** °C in the device tree with an in-driver conversion looked
+  cleaner than raw ADC codes. Twenty lines of Python against the vendor's four
+  characterised codes showed the generic conversion curve errs *outward* at every one of
+  them (0.3–2.0 °C), widening each safety window the unsafe way — decision made, and as a
+  by-product the agreement to within 2 °C confirmed the code domain the whole approach
+  assumed.
+- **☠️ `pgrep -f <pattern>` matches its own command line, exactly like `pkill -f`.** An
+  `until ! pgrep -f 'foo'; do sleep 30; done` waiter **never exits**, because the pattern
+  is in the shell command running the loop — and it presents to the user as "something is
+  still running" when nothing is. Wait on the artifact instead
+  (`until [ -f <output> ]; do …`), or `pgrep -x <name>`.
