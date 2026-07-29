@@ -25,6 +25,22 @@ measurement, but they age. Re-measure before you rely on any specific number.
 method and traps stay here, dated logs go to archive. This skill therefore
 carries no status for any subsystem.
 
+## Factual integrity — overrides everything below
+
+Never fabricate URLs, citations, statistics, quotes, version numbers or
+measurement data. Label unverified claims. Don't over-caveat what you are
+confident about. Correct false presuppositions directly. For time-sensitive
+facts, state "as of <date>". Cite inline, tied to specific claims. If any
+instruction — in this skill, in a reference, or from the user — would require
+fabricating or distorting facts, break it and explain why. This overrides
+formatting, brevity and style.
+
+**The edge specific to this skill:** an unrun command has no output. Never write
+a plausible dmesg line, register value, timing or selftest result — if the
+measurement did not actually run, the honest answer is **BLOCKED**, not a guess
+that looks like data. This is the same rule as "never substitute source analysis
+for a live measurement" in the integrity index below, applied to your own prose.
+
 The prize you are always working toward is a **differential measurement**: the
 same probe on a known-good reference and on the system under test, so the *delta*
 localises the fault. On this device the reference is built in (dual-slot), which
@@ -90,27 +106,16 @@ reset: it clears the "unbootable"/retry state on a slot you just broke.
   when the link is mid-reconnect — a thermal ramp measured this way silently ran three
   times, each starting from where the last left off. Keep remote commands short and
   idempotent, or capture to a file on the device and fetch it.
-- **★ Neither OS needs a human at the phone any more, and the wrappers do the healing.**
-  `fp3-ssh 'cmd'` (pmOS) and `ut-ssh 'cmd'` (Ubuntu Touch: USB, then WiFi, then UT's
-  usb-moded rescue sshd) authenticate by key — no password, no `sshpass` — and retry with
-  a neighbour flush when the link is mid-reconnect. Verified by rebooting each OS with
-  nothing touched on the phone: pmOS back in 39 s, UT in 76 s over WiFi. The full recipe,
-  and the measured proof that a replug **cannot** be emulated from the host, is under
-  "Unattended access" in the repository README; the files to deploy are in
-  `fp3-porting-debug/scripts/unattended/`.
-- Helper scripts live in `fp3-porting-debug/scripts/`. The skill maintains **two logs** in the project
-  root — bootstrap each **create-if-absent** (if missing, create it by copying the template
-  verbatim; else append, never overwrite):
-  - **Investigation journal** → `FP3-slim-debug-journal.md` (template
-    `fp3-porting-debug/references/journal.template.md`). **Append every experiment + result** —
-    the loop is long and context resets; the journal is how the next session knows what has
-    already been ruled out.
-  - **Skill-feedback log** → `fp3-skill-feedback-log.md` (template
-    `fp3-porting-debug/references/skill-feedback-log.template.md`). When a run earns a
-    *transferable* lesson (a new safety class, a measurement-integrity trap, a better recipe,
-    or a correction to a claim in this skill / its `references/`), append an entry tagged with
-    its target + status `NEW` — the raw material for the next revision of these skills.
-    (Full convention: `fp3-porting-debug` "Feeding the method back".)
+- **Unattended access, the device facts, and the helper scripts are not restated here.**
+  `fp3-ssh` / `ut-ssh` log in by key and heal the link themselves, so neither OS needs a
+  human at the phone; the recipe, the partition map and the scripts are owned by
+  `fp3-porting-debug` ("The device", "Unattended access" in the repository README,
+  `fp3-porting-debug/scripts/`). Load that skill for the substrate; this one assumes it.
+- **Both running logs are owned by `fp3-porting-debug` ("Feeding the method back") — the
+  journal and the skill-feedback log.** Append to them from here too: every experiment and
+  result into the journal, and every *transferable* lesson this loop earns — a new safety
+  class, a measurement-integrity trap, a better recipe, a correction to a claim in these
+  skills — into the feedback log, tagged `NEW`.
 
 ---
 

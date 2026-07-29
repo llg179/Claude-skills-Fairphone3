@@ -595,7 +595,7 @@ Config-group live dispatch (folyt.114–118): handle = `memw(ctx+0xe18)`; `memw(
 - **Stock fw:** `scripts/m2/adsp.mbn` (md5 3ed6924d = pmOS) + the device `.stockbak`. The UT stock adsp.mdt is `bab175ed`.
 - **Journals/docs (the detailed history, see `data-index.md` in the project):** `slimbus-audio-tracker.md` (live tracker);
   `FP3-slim-debug-journal.md` (the full journal). The dated result files are listed by `data-index.md`.
-  HW basics: `hw-facts.md`; the Sailfish port (a SEPARATE track, not audio): `sailfish-components.md`+`sailfish-customizations.md`+`sailfish-akcioterv.md`.
+  HW basics: `hw-facts.md` (this directory); the Sailfish port (a SEPARATE track, not audio): `sailfish-components.md`+`sailfish-customizations.md`+`sailfish-akcioterv.md`.
   **★ `pmos-bringup.md` §9.15–9.30** = the genesis of the audio investigation + **§9.17 the FULL golden call UCM/mixer recipe**
   (earpiece=SLIMBUS_0_RX→RX INT0 EAR PA; headset=SLIMBUS_6_RX→HPHL/R; mic=SLIMBUS_0_TX←DMIC) — THIS is what you need once the framer comes up.
   **Memory:** `~/.claude/projects/-mnt-1TB-Fp3-Sailfish/memory/` (`project_fp3_audio_codec.md`).

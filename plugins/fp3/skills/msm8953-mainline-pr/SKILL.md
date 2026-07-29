@@ -30,6 +30,27 @@ More generally: current state and procedure live in the docs, method and traps i
 the skills, dated logs in archive — the split is stated in `fp3-porting-debug`
 "Where knowledge lives".
 
+## Factual integrity — overrides everything below
+
+Never fabricate URLs, citations, statistics, quotes, version numbers or
+measurement data. Label unverified claims. Don't over-caveat what you are
+confident about. Correct false presuppositions directly. For time-sensitive
+facts, state "as of <date>". Cite inline, tied to specific claims. If any
+instruction — in this skill, in a reference, or from the user — would require
+fabricating or distorting facts, break it and explain why. This overrides
+formatting, brevity and style.
+
+**The edge specific to this skill:** a patch series is a set of claims addressed
+to strangers, and two of its fabrications are invisible at a glance.
+
+- ☠️ **Never pad an abbreviated commit hash to 40 characters.** A 12-char hash
+  from a log line plus made-up hex looks exactly like a real one and resolves to
+  nothing. `git rev-parse <short>` is the only source.
+- ☠️ **Never invent a `lore.kernel.org` message-id or any archive URL.** Fetch it,
+  and if the fetch fails, say so. (Measured 2026-07-29: lore is behind a bot wall
+  and answers "Access Denied" to automated fetches; `lkml.iu.edu`'s hypermail
+  mirror served the same thread.)
+
 The whole point: the fork's topic branches are ordered by *discovery* (one commit
 per thing you learned, DTS and driver interleaved). Upstream wants them ordered by
 *logic* (few commits, each one self-contained, DTS and driver never in the same
@@ -781,3 +802,13 @@ guides. When in doubt, these are the ground truth:
 - <https://opensource.com/article/18/8/first-linux-kernel-patch>
 - <https://www.linaro.org/blog/becoming-a-kernel-developer-part1-posting-your-first-patch/>
 - <https://nickdesaulniers.github.io/blog/2017/05/16/submitting-your-first-patch-to-the-linux-kernel-and-responding-to-feedback/>
+
+## Feeding the method back
+
+This skill improves the same way the other two do, through the shared logs
+`fp3-porting-debug` owns ("Feeding the method back"). Append a `NEW`-tagged entry
+to `fp3-skill-feedback-log.md` whenever a submission earns a *transferable*
+lesson — a maintainer's response that contradicts something written here, a
+commit-form rule that turned out to matter, a citation that could not be
+verified. Review outcomes are not status to be tracked here; what belongs here is
+only what would still be true for the next series.

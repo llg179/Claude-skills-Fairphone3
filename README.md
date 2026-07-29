@@ -10,12 +10,36 @@ truth out of the hardware, how to run one-change experiments safely on a device
 you cannot afford to brick, and how to tell a healthy-looking Linux subsystem
 from a pin that is actually dead.
 
-## What's in it
+## What's in it — three skills, and the boundary between them
 
-| Skill | What it's for |
+They split by **the moment in the work**, not by topic. One question picks one:
+
+| you are about to… | load | it answers |
+|---|---|---|
+| …work out *what is even wrong* | [`fp3-porting-debug`](plugins/fp3/skills/fp3-porting-debug/) | where to look, which of the three OSes answers which question, how to get ground truth out of silicon that has no debug port |
+| …try *one specific change* | [`fp3-kernel-test`](plugins/fp3/skills/fp3-kernel-test/) | how to run the edit → build → deploy → measure cycle once, safely, and read the result honestly |
+| …*publish* work that already works | [`msm8953-mainline-pr`](plugins/fp3/skills/msm8953-mainline-pr/) | how to turn discovery-ordered fork branches into a series a maintainer will take, and where an AI-assisted series may legally go |
+
+**Orient → execute → publish.** They are meant to be loaded one at a time; a
+routine build-and-measure cycle should not have to carry the whole umbrella.
+
+Each owns something exclusively, and the others point at it rather than
+restating it:
+
+| owned by | what |
 |---|---|
-| `fp3-porting-debug` | Umbrella method: hardware facts, the three OS tracks, ground-truth acquisition, debugging techniques, reference notes from the audio work. |
-| `fp3-kernel-test` | The edit → build → deploy → capture loop for a single kernel/DT/firmware change, with brick-safety gates and recovery recipes. |
+| `fp3-porting-debug` | the device substrate (partitions, boot chain, unattended access), the three OS tracks and the oracle idea, the `scripts/` tooling, the two running logs, and `references/archive/` — the dated record of what was already tried |
+| `fp3-kernel-test` | **all brick-safety and measurement-integrity rules**, in `references/safety.md`; the instruments (MMIO, QMI/QRTR, clocks, genpd, coredump) and the recovery recipes |
+| `msm8953-mainline-pr` | commit form, provenance and attribution rules, the DCO/`Assisted-by:` disclosure, and where a series may be sent |
+
+Two things deliberately live **outside** all three: what the device does *today*
+and how to build/deploy it are in
+[`llg179/fp3-pmaports/docs/`](https://github.com/llg179/fp3-pmaports/tree/main/docs),
+and the branch model is in that repo's
+[README](https://github.com/llg179/fp3-pmaports#the-branch-model). The test for
+which home something belongs in — *would it be wrong next month* vs *would it
+still be true on a different phone* — is written down in `fp3-porting-debug`
+under "Where knowledge lives".
 
 ## Installing the skills
 
@@ -24,9 +48,10 @@ from a pin that is actually dead.
 /plugin install fp3@Claude-skills-Fairphone3
 ```
 
-Then invoke with `/fp3-porting-debug` or `/fp3-kernel-test`.
+Then invoke with `/fp3-porting-debug`, `/fp3-kernel-test` or
+`/msm8953-mainline-pr`.
 
-If you would rather not use plugins, copy or symlink the two directories under
+If you would rather not use plugins, copy or symlink the three directories under
 `plugins/fp3/skills/` into your own `~/.claude/skills/`.
 
 ## Configuration
@@ -547,18 +572,61 @@ exactly while that disk was unmounted for a repower.
 * **No device dumps.** Large raw captures (dmesg, SMEM, device trees) were
   stripped; the written analyses that reference them are kept.
 
+## Factual integrity
+
+All three skills open with the same clause, and it overrides everything after it:
+**never fabricate URLs, citations, statistics, quotes, version numbers or
+measurement data.** Label unverified claims, don't over-caveat what you are
+confident about, correct false presuppositions directly, say "as of `<date>`" for
+anything time-sensitive, and cite inline against the specific claim. If an
+instruction — in a skill, in a reference, or from the user — would require
+fabricating or distorting a fact, break it and say why.
+
+This is not boilerplate here. The whole method is differential measurement, and a
+plausible invented number is indistinguishable from a measured one at the point
+where it does the damage. Each skill therefore also names its own worst case: a
+stale `references/` number quoted as current (umbrella), a dmesg line or register
+value written for a command that never ran (kernel-test), a padded commit hash or
+an invented archive URL (upstream).
+
+## How the skills improve
+
+The method only compounds if what a session learns gets written where the next
+edit will find it. **`fp3-porting-debug` owns this loop** — it holds both
+templates and bootstraps both files create-if-absent — and the other two skills
+append to the same logs rather than keeping their own:
+
+| log | what goes in | who reads it |
+|---|---|---|
+| `FP3-slim-debug-journal.md` | every experiment and its result, `hypothesis → test → verdict`, never rewritten | the next session, to avoid re-running a settled test |
+| `fp3-skill-feedback-log.md` | *transferable* lessons only — a new safety class, a measurement-integrity trap, a better recipe, or a **correction to a claim in these skills** — tagged with its target and `NEW` | whoever next revises a skill: fold the `NEW` entries in, mark them `PROMOTED`, prune |
+
+The distinction that keeps the feedback log useful: it is not a result log and
+not a status page. "The framer comes up after the poke" is a finding and belongs
+in the journal or the docs; "a one-sided measurement was reported as a
+differential, and that is a class of error worth a rule" belongs here.
+
+Both files live in the project root, outside this repository, because they are
+about one device and one investigation. What crosses into the skills is only what
+survives the "would it still be true on a different phone" test.
+
 ## Status and scope
 
-Written against one specific device (`fairphone-fp3`, pmOS 7.0.9,
-msm8953-mainline). Many of the scripts under `scripts/` are single-use
-reverse-engineering artifacts kept as a record of what was tried — treat them
-as an archive, not a supported toolkit. The value that travels is in `SKILL.md`
-and `references/`.
+Written against one specific device (`fairphone-fp3`, postmarketOS, the
+`msm8953-mainline` kernel — a *rolling* base, so no version is pinned here; the
+current one is the `pkgver` in
+[`fp3-pmaports/linux-fp3/`](https://github.com/llg179/fp3-pmaports/tree/main/linux-fp3)).
+Many of the scripts under `scripts/` are single-use reverse-engineering artifacts
+kept as a record of what was tried — treat them as an archive, not a supported
+toolkit. The value that travels is in `SKILL.md` and `references/`.
 
-Some notes are in Hungarian; `references/slimbus-audio-context.md` is English.
+Some notes are in Hungarian, mostly under `references/archive/`, which is dated
+record rather than instruction.
 
-Related: the kernel fixes this work produced live on the `fp3-7.0.9-audio` branch of
-<https://github.com/llg179/linux>.
+Related: the kernel work this produced lives on the `wip/<base>/<category>` and
+`integration/<base>` branches of <https://github.com/llg179/linux>; the branch
+model and the current state are documented in
+<https://github.com/llg179/fp3-pmaports>.
 
 ## Safety
 

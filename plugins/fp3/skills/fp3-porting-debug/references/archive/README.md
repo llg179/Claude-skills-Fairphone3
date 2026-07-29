@@ -16,6 +16,7 @@ Read them for one question only: *was X already tried, and what happened?*
 | `slimbus-audio-context.md` | the SLIMbus/WCD9335 audio investigation, `folyt.` entries through the framer wall coming down | [`docs/audio/bringup/`](https://github.com/llg179/fp3-pmaports/tree/main/docs/audio/bringup) for the story, [`docs/audio/`](https://github.com/llg179/fp3-pmaports/tree/main/docs/audio) for how audio works today |
 | `slimbus-audio-tracker.md` | the runtime-trigger sub-investigation, appended live as it ran | same |
 | `boot-debug-log.md` | ramdisk / USB-gadget / boot bring-up chronology, June–July 2026, plus the Sailfish component notes it grew out of | the Sailfish track is still live — see `../sailfish-components.md` and `../pmos-bringup.md` |
+| `hw-facts.md` | a verbatim migration of the 2026-06-25 `Opus-fp3-facts.txt`: partition numbers, boot-image params, USB gadget IDs, log channels, charger/PMI632 notes. Mostly Hungarian, session-dated, and it opens by installing `adb` on a live USB | the device substrate the skills actually rely on is in `../../SKILL.md` "The device"; partition layout and the two-OS setup are in the [repository README](https://github.com/llg179/Claude-skills-Fairphone3/tree/main#how-the-fp3-is-laid-out) |
 
 Two things worth knowing before mining them:
 

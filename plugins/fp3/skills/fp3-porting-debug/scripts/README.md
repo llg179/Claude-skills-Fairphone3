@@ -4,7 +4,7 @@
 > Single-use reverse-engineering artifacts now live in `archive/`.
 
 Tipikus parancs-szekvenciák scriptként (ne gépeld újra). Minden `/mnt/1TB`-n.
-Forrás-tudás: `../references/pmos-bringup.md` és `../references/hw-facts.md`.
+Forrás-tudás: `../references/pmos-bringup.md` és `../references/archive/hw-facts.md`.
 
 | script | mit csinál | mód |
 |---|---|---|
@@ -80,7 +80,7 @@ A framing-START trigger bemérésének eszközei. **Offline RE** (eszköz nélk�
 - Boot-watch tanulság: ≥90s ablak kell (a 25s rövid a kernel+phoshhoz; téves BACK_IN_FASTBOOT-ot adott).
 - ⚡ TÖLTÉS MEGOLDVA (2026-06-29): saját PMI632-charger driver `qcom_smbx.c`-ben TÖLT pmOS-ben
   (`/sys/class/power_supply/pmi632-charger` status=Charging, ~200mA SDP-ről, akku 37°C). Lásd
-  `../references/hw-facts.md` (charger/PMI632 szakasz). Telepítés: kernel-csomag
+  `../references/archive/hw-facts.md` (charger/PMI632 szakasz). Telepítés: kernel-csomag
   `apk add --allow-untrusted` (pmbootstrap `sideload` kulcsos SSH-t vár → manuális scp+apk add kell).
   Régi workaround (ha kell): TWRP-töltés `./to-twrp.sh` ⇄ `./to-pmos.sh`.
 - ✅ health=Warm MEGOLDVA (2026-06-29): a spurious `health=Warm` 2 bug volt — (1) SMB5-ön a JEITA temp-status
@@ -103,7 +103,7 @@ A framing-START trigger bemérésének eszközei. **Offline RE** (eszköz nélk�
   `./fg-verify.sh`. Korlát: töltés alatt kissé felfelé olvas (megemelt VBAT; IR-drop komp = jövő).
 - ⚠️ pmOS→fastboot FLAKY: a `reboot bootloader` néha visszabootol pmOS-be → `to-twrp.sh` most TÖBB PRÓBÁS
   (get_fastboot 4×/90s). TWRP→fastboot (adb) megbízható. Slot-művelet előtt MINDIG `adb get-state` ellenőrzés.
-- Charger-port: lásd `../references/hw-facts.md` (charger/PMI632 szakasz) + `charge-test.sh` (duty-cycle harness).
+- Charger-port: lásd `../references/archive/hw-facts.md` (charger/PMI632 szakasz) + `charge-test.sh` (duty-cycle harness).
 - 🌡️ THERMAL (mért, 2026-06-29, pmOS full 8-mag `sha256sum` terhelés): a CPU-zónák ~76°C-on
   PLATEAU-znak (HW-throttle, A53 junction biztonságos ~95-105°C-ig). A `pmi632-thermal`
   (AKKU-OLDALI szenzor = a valódi tűzkockázat-jelző) VÉGIG **37°C**, meg se rezzen. Ezért a

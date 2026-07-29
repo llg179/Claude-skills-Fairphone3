@@ -1,6 +1,12 @@
 # fp3-kernel-test — Safety & measurement integrity (full text)
 
 > Split out of `SKILL.md` for size; the SKILL body carries the headline list, this file the full mechanisms + worked examples.
+>
+> **This is the single home for brick-safety** — `fp3-porting-debug` points here
+> rather than restating any of it. The numbered list is **append-only: never
+> renumber it**, because other files cite these numbers. Prefer citing a rule by
+> what it says; a number that silently shifts turns a correct reference into a
+> wrong one.
 
 ## Safety constraints (the "why" matters — they define what you may measure)
 
@@ -250,6 +256,22 @@ device, with the mechanism, so you can recognise *new* instances of the same cla
     set (`vmlinuz-fallback` + its dtb), rewrite `extlinux.conf` **after** the package
     install and immediately before the reboot — otherwise you believe you have a way back
     and you do not.
+
+18. **☠️ A downstream ADSP-SSR on the Ubuntu Touch oracle defaults to
+    `restart_level=SYSTEM` — one ADSP crash REBOOTS THE WHOLE PHONE. Set it `RELATED`
+    first.** This rule protects the *oracle*, which is worth as much as the device: the
+    entire differential method depends on one slot that still works.
+
+    Recon: `/sys/bus/msm_subsys/devices/subsysN/{name,restart_level,state,crash_count}`
+    (adsp = subsys2 as measured on this UT build). The clean debugfs trigger
+    (`/sys/kernel/debug/msm_subsys/adsp`) is **absent** on that kernel; `/dev/subsys_adsp`
+    (243,2) exists but its char-device restart ioctl semantics are uncertain — do **not**
+    fire an uncertain ioctl at the working oracle's ADSP. The mainline NGD runtime-PM
+    re-trigger reports `unsupported` there (downstream driver).
+
+    If you must SSR: set `restart_level=RELATED` (contained, auto-recovery), drain the
+    rings at T0 (a read *is* a drain), trigger, capture, then restore `SYSTEM` — and
+    verify `crash_count=0` to confirm it never actually fired.
 
 ## Measurement integrity (don't report soft evidence as hard — the anti-patterns that fake progress)
 

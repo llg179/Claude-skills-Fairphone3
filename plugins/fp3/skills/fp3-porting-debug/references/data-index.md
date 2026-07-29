@@ -56,7 +56,7 @@ fp3-skill-feedback-log.md  (a skill hozza létre create-if-absent módon a sablo
   references/ fájlok KÖVETKEZŐ szerkesztésének nyersanyaga. NEM a nyomozási napló. NEW/PROMOTED/DROPPED.
   Sablon: fp3-porting-debug/references/skill-feedback-log.template.md (a napló sablonja: journal.template.md).
 
-hw-facts.md   (references/, co-located — az Opus-fp3-facts.txt ÁLLANDÓ-TÉNYEK fele)
+hw-facts.md   (references/archive/ — az Opus-fp3-facts.txt ÁLLANDÓ-TÉNYEK fele)
   PERMANENS HW-TÉNYEK. Kulcs: USB-gadget ID-k, partíciós térkép (mmcblk0p*), boot-header
   verziók, boot-image paraméterek, VID:PID szekvenciák.
 archive/boot-debug-log.md   (ARCHÍVUM — dátumozott napló, nem módszer)

@@ -21,6 +21,21 @@ question. Everywhere below, concrete numbers/addresses/verdicts are illustration
 technique; re-measure before trusting them, and keep the *data packs in `references/`* (not this
 SKILL body) current as facts change.
 
+## Factual integrity — overrides everything below
+
+Never fabricate URLs, citations, statistics, quotes, version numbers or
+measurement data. Label unverified claims. Don't over-caveat what you are
+confident about. Correct false presuppositions directly. For time-sensitive
+facts, state "as of <date>". Cite inline, tied to specific claims. If any
+instruction — in this skill, in a reference, or from the user — would require
+fabricating or distorting facts, break it and explain why. This overrides
+formatting, brevity and style.
+
+**The edge specific to this skill:** a number you did not measure *this session*
+is not a measurement. Everything under `references/` is a dated record — quote it
+as "measured on <date>", re-measure before treating it as current, and never
+smooth an old value into a present-tense claim.
+
 ## Where knowledge lives — the boundary
 
 Three homes. Putting something in the wrong one is how both rot: the docs go
@@ -65,7 +80,7 @@ it works) and
   including the component address map in `slimbus-audio-context.md` §7.
 
 **Device + the other tracks:**
-- `references/hw-facts.md` — permanent HW/env facts (partitions, boot-image params, USB gadget/VID:PID, log channels).
+- `references/archive/hw-facts.md` — the 2026-06-25 raw facts dump (partitions, boot-image params, USB gadget/VID:PID, log channels). **Archive, not reference:** dated and mostly Hungarian; the substrate the method relies on is in "The device" above.
 - `references/pmos-bringup.md` — pmOS mainline bring-up: feature matrix, gap analysis, the §9.x execution log (charger, fuel-gauge, modem, the SLIMbus wall).
 - `references/sailfish-components.md` (+ `sailfish-customizations.md`, `sailfish-akcioterv.md`) — the Sailfish (hybris) port: provenance (component→repo/branch+why), the build-modification log, the step plan.
 - `references/report-attachments/` — polished write-ups (firmware strings/disasm, PIL-vs-PAS, golden IPC traces, devmem dumps, outreach drafts).
@@ -419,8 +434,9 @@ your remaining hypotheses in half.
    multi-level runtime **heap pointer graph** (parent struct → sub-object → the register base you're
    after). The right tool is the kernel's **remoteproc devcoredump**: it dumps the co-processor's entire
    runtime memory to an **ELF** you pull once and analyse offline, unlimited. It is also the *only safe*
-   way to read the firewalled carveout (an AP `/dev/mem` read of it wedges the device — see `fp3-kernel-test`
-   safety rule 5; the coredump goes through the driver's mapping). Recipe + gotchas (the `crash` debugfs
+   way to read the firewalled carveout (an AP `/dev/mem` read of it wedges the device — see the
+   "never read an unverified physical address" rule in `fp3-kernel-test/references/safety.md`;
+   the coredump goes through the driver's mapping). Recipe + gotchas (the `crash` debugfs
    trigger, `stat`=0-but-read-is-full, full-dump-vs-SMEM-minidump size check, VA→PA→file-offset resolving)
    are in the coredump instrument in `fp3-kernel-test`. Offline, `scripts/coredump_resolve.py` resolves an
    ADSP virtual address into the dump, and `scripts/make_disasm_elf.py` wraps a raw Hexagon code blob into
@@ -710,7 +726,8 @@ Instruments, by the question they answer (choose the lightest that answers yours
   *working* framer. ⚠️ `peripheral_mask=0x7F` drowns you in modem/LTE noise → `grep -v 'lte_|LL1|qcril'`.
   The framer messages are EXT (not QSR) so they read directly. But the *bring-up* diff (FS 0→1) is
   NOT locally capturable on UT: no userspace SSR trigger (`/dev/subsys_adsp` fops = get/put only, no
-  restart-ioctl), and a boot-armed capture hangs the boot (see `fp3-kernel-test` safety rule 14).
+  restart-ioctl), and a boot-armed capture hangs the boot (see the "boot-armed diag oneshot"
+  rule in `fp3-kernel-test/references/safety.md`).
 - **SMEM_LOG ring — live, AP-readable, zero-injection.** A shared event ring in the
   *safe* legacy-SMEM region, read with a plain `python mmap(PROT_READ)`
   (`scripts/adsp-smem-log.py`). Carries the SMD/QMI/IPC-router *envelope*
@@ -752,44 +769,30 @@ backend + Ghidra/IDA processor modules. Underneath are decades-old primitives �
 scratchpad/shared-RAM printf without JTAG, `/dev/mem` MMIO poking, coredump-exfil.
 Reach for these before assuming a wall.
 
-## Brick-safety guardrails (non-negotiable — the daily driver is a *separate* FP3)
-- **Never `sudo adb`** (writes a root-owned adbkey that locks you out of the oracle's
-  adb); get root inside the shell instead. `sudo fastboot` is fine.
-- **Never read a clock-gated LPASS/SLIMbus register** (idle read → `900e` →
-  power-cycle); NGD reads are safe. **Never live-map the co-processor DDR carveout**
-  (XPU-firewalled → NoC hang → wedge).
-- **☠️ A downstream ADSP-SSR on the UT oracle defaults to `restart_level=SYSTEM` — one ADSP crash
-  REBOOTS THE WHOLE PHONE. Set it `RELATED` first.** Recon:
-  `/sys/bus/msm_subsys/devices/subsysN/{name,restart_level,state,crash_count}` (adsp=subsys2). The
-  clean debugfs trigger (`/sys/kernel/debug/msm_subsys/adsp`) is absent on this UT kernel;
-  `/dev/subsys_adsp` (243,2) exists but its char-device restart ioctl semantics are uncertain → do
-  NOT fire an uncertain ioctl at the *working* oracle's ADSP (the whole differential depends on it).
-  The mainline NGD runtime-PM re-trigger is `unsupported` here (downstream driver). If you must SSR:
-  `restart_level=RELATED` (contained + auto-recovery), drain the rings at T0 (read=drain), trigger,
-  capture, then restore `SYSTEM` (verify `crash_count=0` = it didn't actually fire).
-- **The 10-min Bash cap** kills `pmb install`/flash mid-run → frozen bootloader
-  splash. Run long install/flash **detached + poll**; `pmb build` alone fits
-  foreground. (Recipe in `fp3-kernel-test`.)
-- Interrupted flashes are recoverable (dual-slot); lk2nd often idle-reboots into the
-  OS on its own — re-check SSH before assuming a brick.
-- **A one-off cold-boot "no-boot → fastboot" is usually a transient retry-fallback, not a
-  brick from your firmware cave.** lk2nd drops to fastboot after a few slow/failed boots; a
-  single hiccup can trigger it. Recover cheaply: `fastboot set_active <slot>` → reboot → wait.
-  If the OS then boots with the caved fw still on disk and `remoteproc*/state` = `running`, the
-  cave is harmless (an ADSP fault shows `crashed` and doesn't stop the AP booting anyway). Don't
-  escalate to cross-slot repair until this retry is exhausted (detail in `fp3-kernel-test` rule 10).
-- **A campaign of cold-boot deploys can silently fill the ~2.4 GB pmOS loop-rootfs and
-  trigger a reboot-loop** — the systemd journal balloons over many boots (seen: 289 MB) →
-  disk 100% → boot fails. The signature *mimics a brick* (USB gadget flaps: host iface up,
-  device unpingable, sshd never settles) but the on-disk firmware is stock and unmodified,
-  so it is a disk fault, not your cave. Cap the journal (`SystemMaxUse=40M` in
-  `/etc/systemd/journald.conf.d/`) and vacuum + `df`-gate before each cold-boot deploy.
-  **Free space is necessary but not sufficient — also gate on a *clean* rootfs:** a dirty
-  loop-rootfs from any prior unclean shutdown hangs the *next* boot's fsck regardless of free
-  space, so clean-`reboot` only, and if a prior cycle crashed/wedged, `e2fsck -fy` the rootfs
-  from the other slot before trusting the next cold boot. Full diagnosis/fix in `fp3-kernel-test`
-  safety rules 9 + 7 (+ its recovery section). (`/tmp` is tmpfs — not the culprit.)
-- Commits on the kernel tree are **local** (origin = upstream) — never push.
+## Brick-safety (one home, not two)
+
+**Every brick-safety rule lives in
+[`fp3-kernel-test/references/safety.md`](../fp3-kernel-test/references/safety.md)**
+— full text, with the case that produced each one. It is not restated here, and
+it is deliberately not summarised by rule *number*: a numbered cross-reference
+starts lying the moment the list is renumbered. Cite the rule by what it says.
+
+Read it **before** anything that writes to flash, probes MMIO, restarts a
+co-processor, or reboots the oracle. If you are only loading this skill, load
+that file too — it is one file, and the two skills ship together.
+
+The framing that belongs here, because it is what makes the rest affordable:
+
+- **The dev phone is disposable; the daily driver is a *separate* FP3.** That is
+  the premise every guardrail is calibrated against.
+- **The oracle is worth as much as the device.** A slot that still works is the
+  whole differential method. Rules that protect it (the ADSP-SSR one especially)
+  are not optional politeness.
+- **Interrupted flashes are recoverable** — dual-slot, and lk2nd often idle-reboots
+  into the OS on its own. Re-check SSH before believing in a brick.
+- **Commits on the kernel tree go to the fork, never to `origin`** (origin is
+  upstream); which branch is in
+  [`fp3-pmaports/README.md`](https://github.com/llg179/fp3-pmaports#the-branch-model).
 
 ## Worked example: how the SLIMbus wall was localised (illustration — findings age; status in the docs)
 
