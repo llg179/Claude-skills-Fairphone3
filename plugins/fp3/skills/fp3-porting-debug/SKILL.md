@@ -182,6 +182,19 @@ from this skill verbatim; if it already exists, just append (never overwrite a l
   `data-index.md` in the project, never in the skills). When a skill/reference is next revised, fold in the `NEW`
   entries, mark them `PROMOTED`, and prune.
 
+☠️ **A commit message stating a hypothesis that later turned out false is a trap
+laid for a future session**, because it reads as a finding and carries a hash. Two
+of them are on record here: a DTS commit whose body explains why the ADSP derives
+its clock divider from the CX corner (measured false a day later), and a driver
+commit describing register tables as read off the sensor (they came with an
+import). Neither was wrong when written. So when an experiment is disproven or a
+provenance claim corrected, **fix the record where it will be read**: the doc page
+gets the correction, and if the commit's branch is being deleted anyway, tag it
+with the verdict in the tag message — `archive/cx-turbo-disproven` exists exactly
+so the three commits stay reachable *with* the note that their reasoning does not
+hold. A rewritten `wip` history is not worth it; an unannotated dead end is worse
+than a deleted one.
+
 ## The device (substrate — verify each session, names drift)
 - SoC MSM8953/Snapdragon 632, Adreno 506, aarch64. Codec WCD9326/Tasha-lite on
   **SLIMbus** (earpiece/mic/headset are SLIMbus-only; speaker = aw8898 on MI2S).
@@ -934,6 +947,26 @@ whether it's already done or in flight — before writing a line of patch.** (Le
   your driver against theirs (ours vs the maintainer's shared-base driver was ~54
   lines; the real value was a few FP3-slow-rail robustness fixes + a hardware
   difference). Credit the shared base (here: Intel IMX319/355 + the sdm670-mainline RE).
+- ☠️☠️ **Knowing this is not the same as having done it, and the gap is invisible
+  from inside.** The line above has named the camera driver's real origin — *"the
+  sdm670-mainline RE"* — for as long as this skill has existed. The commit message
+  that went onto the submit branch, and three pages of documentation, nonetheless
+  described the register programming as reverse-engineered *here*, crediting only
+  the in-tree ancestor. Nine days later an upstream review pass had to unpick all
+  four. So when a series is being prepared, **re-read this section against the
+  actual commit messages** rather than trusting that the rule was followed when
+  they were written; and for a sensor bring-up specifically, the two out-of-tree
+  RE efforts (camera, SMGR sensors) are the places to look first. The citation
+  mechanics and the "find the immediate source" procedure are in
+  [`../msm8953-mainline-pr/SKILL.md`](../msm8953-mainline-pr/SKILL.md#find-the-immediate-source-not-the-ancestor-you-recognise).
+- **When the maintainer's series is on a list rather than in a repo, patchwork's
+  API answers where lore does not** (both `lore.kernel.org` and `lkml.org` are
+  behind a bot wall and return *Access Denied* to automated fetches):
+  `curl -s 'https://patchwork.kernel.org/api/1.2/patches/?q=<terms>&order=-date' |
+  jq -r '.[] | "\(.date[0:10]) \(.state) \(.name)"'`. The **state** is the part
+  worth having — `changes-requested` says a maintainer is mid-review, which is a
+  different situation from `new` or `accepted`. LWN mirrors cover letters and is
+  fetchable when patchwork does not have the prose.
 - **Verify a hardware claim on-device before reporting it.** "Sensor is at 0x1a not
   0x10" was confirmed by powering the sensor and reading the chip-id at *both*
   addresses (0x1a→0x0363, 0x10→NAK), not inferred from a failed probe — a swappable

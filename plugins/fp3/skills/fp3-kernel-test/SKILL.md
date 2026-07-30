@@ -183,6 +183,10 @@ cost a device, a boot, or a wrong conclusion at least once.
 - The oracle is a source of *configuration* too: read back the registers it programs.
 - A register field's width can be the design limit; work out what the hardware can encode.
 - When the question is "which unit in the interface", compute the difference, don't argue it.
+- ☠️ `dtbs_check` is a differential too — this base fails it 44 times alone; diff base vs yours.
+- ☠️ An undocumented `compatible` is skipped **silently**: a clean `dtbs_check` may mean nothing was checked.
+- Never hand-review a schema you have not run; the checker finds your schema's bugs.
+- ☠️ A checker's **positive** needs validating as much as its null — suspect the check before the work.
 
 **Provenance integrity — the values you *write* are claims too:**
 

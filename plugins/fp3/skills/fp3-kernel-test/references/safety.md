@@ -587,3 +587,48 @@ because it landed in code shared by every device the driver serves.
   capture and is worth more than the filter: an init trace with timestamps shows every
   step *before* the one you care about closing cleanly, which is how you learn the fault
   is pointlike rather than environmental. A filtered capture cannot tell you that.
+
+## Validating what you wrote, not only what the hardware did
+
+Schema and style checkers are instruments too, and they mislead in their own ways.
+All of the below is from writing and validating a device-tree binding, 2026-07-30.
+
+- **☠️☠️ Run `dtbs_check` as a DIFFERENTIAL, exactly like every other measurement.**
+  The msm8953-mainline 7.1.3 base fails it **44 times on its own** (`opp-avg-kBps`,
+  `qfprom`, `gcc` power-domains, `rpm-proc`), so an absolute count says nothing
+  about your work, and a first look at the output reads like a catastrophe you
+  caused. Build the DTB with the base's board files, build it again with yours,
+  sort both error lists and `comm -13` them. On this port that turned "51 errors"
+  into **six that are ours**, and the difference is the whole finding.
+  ```sh
+  pip install dtschema yamllint      # needs swig, libfdt-dev, python3-dev first
+  make ARCH=arm64 CC=gcc HOSTCC=gcc CHECK_DTBS=y qcom/<board>.dtb
+  make ARCH=arm64 CC=gcc HOSTCC=gcc dt_binding_check DT_SCHEMA_FILES=<path>.yaml
+  ```
+  ☠️ Remove the `.dtb` between runs or `make` will not re-check it, and you will
+  compare a stale result against a fresh one — which reads as "my change fixed
+  everything".
+- **☠️☠️ A node whose `compatible` nothing documents is SKIPPED SILENTLY.** It is
+  not reported as unchecked; it simply produces no output. So a clean `dtbs_check`
+  is **not** evidence that a node was validated — it may mean the schema never
+  looked. On this port the charger node passed cleanly for weeks for exactly that
+  reason, and the six new properties on it only became visible once the binding
+  existed. Before believing a clean run, confirm a binding matches the node.
+- **The checker finds bugs in your schema, not only in the tree.** `minItems`
+  without `maxItems` makes dtschema infer `maxItems == minItems`, so a
+  deliberately open-ended array fails with *"is too long"* — in your own new
+  binding. Never hand-review a schema you have not run.
+- **Take a unit suffix from the authority, not from the neighbouring property.**
+  The canonical list is `property-units.yaml` inside the installed `dtschema`;
+  `-ohms` is plural, `-microamp` and `-percent` are singular. A wrong suffix is
+  invisible because the type check simply does not apply.
+- **☠️ A checker's POSITIVE needs validating too, not only its null result.** The
+  companion to "a null grep is not proof of absence": three checks written on the
+  same day each accused long-standing, correct work, and all three were the
+  checker's fault — a trailer audit grepping one hard-coded model name while older
+  commits legitimately name an older model; a "dangling hash" pass matching the
+  date inside a `lore.kernel.org` URL; an anchor checker whose slug algorithm
+  collapsed repeated spaces (GitHub does not) and then stripped underscores
+  (GitHub keeps them), so it took **three** runs before "0 broken links" meant
+  anything. When a fresh check reports a defect in work that has been in use,
+  suspect the check first and run it against a known-good case.

@@ -513,7 +513,43 @@ Don't "fix" these — they are correct as-is:
 - **`slim217,...` "undocumented vendor"** — SLIMbus compatibles are `slimMFG,PID`
   (manufacturer id), not a vendor-prefix; checkpatch's heuristic doesn't know that.
 - **"DT compatible … appears un-documented"** — real only in that a YAML binding is
-  still owed (a genuine follow-up for LKML), not a code defect.
+  still owed (a genuine follow-up for LKML), not a code defect. Writing it is cheap
+  and it is the item that closes; see [Writing the binding](#writing-the-binding).
+
+Before dismissing any of these, check the claim rather than the pattern: the
+`ENOTSUPP` verdict above rests on `soc-dai.c` actually returning it, on the base
+file already comparing against it twice, and on six other qcom machine drivers
+doing the same — re-measurable in one `git grep`. The `slim217` one rests on four
+device trees in Linus' tree already using it. A false positive you cannot
+re-justify is just a habit.
+
+### Writing the binding
+
+The undocumented-compatible warning is the one checkpatch item that goes away for
+a few hours' work, and it takes the series from "nearly clean" to clean. Worked
+2026-07-30 for `qcom,pmi632-charger`.
+
+- **Extend the existing file, do not add a second one**, when the same driver
+  serves the new compatible. One driver (`qcom_smbx`) covers pmi8998 / pm660 /
+  pmi632; SMB2 and SMB5 differ in register layout, not in the shape of the
+  binding, so the new compatible joins the `enum` in
+  `qcom,pmi8998-charger.yaml` and the title generalises. A second file duplicates
+  everything and invites the reviewer to ask why.
+- **Describe the driver you have, not the one you wish for.** If the driver takes
+  a channel with `devm_iio_channel_get()` and carries on unless the error is
+  `-EPROBE_DEFER`, the schema says `minItems`, not a fixed list. Read the probe
+  path before writing the `required:` block.
+- **Validate three ways, and expect the schema's own bugs.** `dt_binding_check`
+  (which compiles and checks every example), `yamllint -c
+  Documentation/devicetree/bindings/.yamllint`, and `CHECK_DTBS=y` against the
+  real board DTB — the last is the only one that proves the schema matches the
+  node you actually ship. The mechanics, the differential discipline and the
+  silent-skip trap are in
+  [`../fp3-kernel-test/references/safety.md`](../fp3-kernel-test/references/safety.md).
+- **Where a binding patch goes in the series:** its own commit, before the driver
+  patch that adds the compatible. One binding patch for the whole series, even
+  when it documents properties three later patches introduce — splitting a
+  binding across patches is unusual and reads worse.
 
 Trailing whitespace / space-before-tab in a reverse-engineered register table
 *are* real (checkpatch ERRORs) — strip them (`sed -i 's/[ \t]*$//' ; sed -i
@@ -667,10 +703,17 @@ auditing the branch before submission:
   2018 WCD9335 series, which was posted together with the codec driver but
   dropped before that series was merged" +
   `Link: https://lore.kernel.org/all/20180904102500.30318-1-srinivas.kandagatla@linaro.org/`.
-* `media: i2c: add Sony IMX363 image sensor driver` carries Intel's copyright
-  because it is derived from `imx258.c`; the message now cites
-  `commit e4802cb00bfe ("media: imx258: Add imx258 camera sensor driver")` and
-  says which parts are new.
+* `media: i2c: add Sony IMX363 image sensor driver` — **and this one is still
+  wrong, which makes it the most useful example on the page.** The message cites
+  `commit e4802cb00bfe ("media: imx258: Add imx258 camera sensor driver")`, in
+  the correct form, resolving to a real commit, for a file that genuinely carries
+  Intel's copyright. All of that is beside the point: the file was not derived
+  from `imx258.c` by us at all. It was **downloaded** from a third party's
+  out-of-tree branch, which had itself been built on an Intel driver and
+  reverse-engineered against a different phone's sensor. Citing the ancestor two
+  steps up while omitting the person you actually took the file from is a
+  misattribution that a perfectly-formatted citation hides. See
+  [Find the immediate source](#find-the-immediate-source-not-the-ancestor-you-recognise).
 * `ASoC: qcom: apq8016_sbc: add SLIMbus backend …` follows the SLIMbus flow in
   `sound/soc/qcom/sdm845.c` — the code said so in a comment, the message did not.
 * `arm64: dts: qcom: …: wire up WCD9335 audio` takes every address and value from
@@ -706,6 +749,137 @@ independent of the AI question. Check every branch, not just the one being sent:
 git log --format='%h|%s|%(trailers:key=Signed-off-by,valueonly,separator=;)|%(trailers:key=Assisted-by,valueonly,separator=;)' \
     <branch> ^origin/7.0.9/main
 ```
+
+☠️ Pin the audit to the *shape* of the trailer, not to a literal string. A pass
+that grepped `Assisted-by: Claude:claude-opus-5` accused nine perfectly correct
+commits, because they were written by an earlier model and legitimately say
+`claude-opus-4-8` — which is the convention. Match
+`^Assisted-by: Claude:claude-[a-z0-9-]+$`.
+
+### Find the immediate source, not the ancestor you recognise
+
+A file that arrived from outside has **two** provenance questions, and the
+interesting one is not the one that comes to mind. "What is this structured on?"
+is answerable from the copyright header and feels like an answer. "Who did I get
+this file from?" is the one the DCO and the credit depend on, and the header does
+not carry it — the intermediate author usually adds no copyright line at all.
+
+Four things to do before writing the paragraph, in cost order:
+
+1. **Grep the project's own bring-up notes.** On this port the answer had been
+   written down 27 days earlier — one line naming the repo, the branch, that it
+   was reverse-engineered, and the line count of the file that was downloaded. It
+   was never read again, and three documents plus a commit message were written
+   as if the code were ours. The notes are searchable; the recollection is not.
+2. **Read the imported code's comments as provenance evidence.** They outrank
+   your memory of where the numbers came from, because whoever wrote them was
+   there. `//Magical … Regs & Values - Found in downstream`,
+   `// not present in android downstream logs`, and — decisively —
+   `636000000ULL, // NOT SURE HOW TO FIND THIS VALUE` on a link frequency. A
+   commit message claiming the tables were "read back from the sensor rather than
+   taken from vendor code" cannot survive next to those lines, and a reviewer
+   opening the file sees both.
+3. **Check the register/table values against the claim you are about to make.**
+   "Measured here" and "read out of a vendor log" are different risks and a
+   reviewer treats them differently; guessing wrong in the *flattering* direction
+   is the one that damages trust.
+4. **If you cannot retrieve the upstream file, say the delta is unmeasured.** Do
+   not estimate what fraction is yours. Fetching it may simply fail — the source
+   in this case was a GitLab merge request and a GitHub API fetch of the same path
+   returned nothing — and "unmeasured, and here is what to run" is a usable state.
+   A number you made up is not.
+
+The structural consequence is [§2b](#2b-split-the-import-from-the-invention-and-make-the-import-traceable):
+one commit importing the file with **their** authorship and the full citation,
+one commit with your changes. Doing that late is expensive, which is the argument
+for asking the question when the file arrives.
+
+### A `Fixes:` target comes from blame, never from the file's age
+
+A line that looks like an ancient oversight may be two months old, and the
+difference changes what the patch *is*. Worked 2026-07-30 on `qmi_encdec.c`: a
+four-byte read of a one-byte length field looked like an original-import bug from
+2017. `git blame` on today's mainline put it at a commit from **this year** whose
+subject and message state a premise — *"QMI_DATA_LEN is always of type `u32` on
+the host"* — that the measurement disproves. So the patch became a regression fix
+with `Fixes:` and a `get_maintainer.pl` run that puts the author of the regression
+on Cc, instead of a vague cleanup nobody owns.
+
+On a shallow fork clone, blame the real tree over the API:
+
+```sh
+gh api graphql -f query='{ repository(owner:"torvalds", name:"linux") {
+  object(expression:"master") { ... on Commit {
+    blame(path:"drivers/soc/qcom/qmi_encdec.c") {
+      ranges { startingLine endingLine commit { oid messageHeadline committedDate } } } } } }' \
+  --jq '.data.repository.object.blame.ranges[]
+        | select(.startingLine <= 409 and .endingLine >= 409)
+        | "\(.commit.oid[0:12]) \(.commit.committedDate[0:10]) \(.commit.messageHeadline)"'
+```
+
+☠️ **Do not reconstruct the history from a commit's diff.** Reading the `-` side of
+one patch led to the confident, wrong conclusion that the bug had already been
+fixed upstream; a later commit had changed the line back and the pre-image no
+longer described anything current. Two facts settled it, both fetched directly:
+the **current** file content at `master`, and blame on the line. Fetch the state,
+do not infer it from a chain of diffs.
+
+### You cannot submit somebody else's unsigned WIP
+
+Two gates before building a series on an import, both of which stopped a sensor
+series on 2026-07-30:
+
+- **No `Signed-off-by`, no submission.** The two commits underneath twelve of ours
+  carried none at all — not even their author's — and only he can supply one. This
+  is not a formality that a cover letter can explain away; the DCO chain simply is
+  not there. Check with the trailer audit above *before* planning the series, not
+  after distilling it.
+- **Check whether the author is already submitting it.** `lore.kernel.org` and
+  `lkml.org` are behind a bot wall, but **patchwork's REST API answers**, and it
+  carries the state a mailing-list archive does not:
+
+  ```sh
+  curl -s 'https://patchwork.kernel.org/api/1.2/patches/?q=Sensor+Manager&order=-date' \
+    | jq -r '.[] | "\(.date[0:10]) \(.state) \(.name)"'
+  ```
+
+  That returned `v2 … changes-requested`, posted a year earlier, with a maintainer
+  asking for a rework — and a cover letter listing the sensor types already
+  supported, two of which we had re-implemented against the older snapshot.
+  Sending our own series would have been a competing submission of another
+  person's driver. The right move is a reply on their thread, and the part worth
+  offering is what their cover letter names as *missing*.
+
+What survives such a series is whatever does not live in the imported files. Here
+that was exactly one commit — a core fix in a different subsystem — and one honest
+patch beats twelve unsendable ones.
+
+### `submit` must stay a distillation of `wip`
+
+The rule says `submit/<base>/<cat>` is regenerated from `wip`, never hand-edited,
+and the way it breaks is benign-looking: you run `checkpatch --strict` on the
+submit branch, fix the alignment complaints there, and never carry them back. Now
+regenerating — the documented way to produce the branch — would silently drop
+them, and the branch you tested is not the branch you would send.
+
+```sh
+git diff wip/<base>/<cat> submit/<base>/<cat>    # must be empty
+```
+
+Two of five branches failed this on 2026-07-30. Run it after every submit
+regeneration, and put style fixes on `wip` first, then cherry-pick.
+
+☠️ **Regenerating a submit branch orphans its old commits, and every link to them
+dies.** Documentation that cites a submit-branch hash silently rots: the object
+stays in a local clone long after GitHub has pruned it, so the link 404s while
+`git cat-file -e` still succeeds. Test reachability, not resolvability:
+
+```sh
+git branch -a --contains <hash> | grep -q . || echo "unreachable: $hash"
+```
+
+Thirteen documentation links had died this way. Prefer citing the `wip` or
+`integration` commit, which survives regeneration.
 
 ---
 
@@ -780,8 +954,21 @@ was true three rounds ago reads exactly like a current one.
 - [ ] Rebased across the base bump; **rebuilt + CONFIG-checked + `fp3-selftest` green.**
 - [ ] `scripts/checkpatch.pl --strict` clean; `scripts/get_maintainer.pl` used for
       the recipient set.
-- [ ] DT work is **warning-free** (`make dtbs_check`, `make dt_binding_check` if a
-      binding changed).
+- [ ] DT work is **warning-free** — and measured as a **differential**, because this
+      base fails `dtbs_check` 44 times by itself. `make dt_binding_check` for every
+      binding touched, `yamllint` against the bindings' own config, and `CHECK_DTBS=y`
+      on the real board DTB.
+- [ ] **A new compatible has a binding.** Until it does, `dtbs_check` skips its node
+      **silently**, so a clean run proves nothing about it.
+- [ ] **`git diff wip/<base>/<cat> submit/<base>/<cat>` is empty** — no style fix
+      applied on the submit side only.
+- [ ] **The immediate source of every imported file is named**, not just the ancestor
+      it is structured on: grep the project's own bring-up notes, and read the imported
+      code's comments before writing the provenance paragraph.
+- [ ] **Nothing in the series rests on a commit with no `Signed-off-by`** — an imported
+      WIP cannot be signed on its author's behalf. And check patchwork: if the author's
+      own series is in flight, reply to it instead of competing with it.
+- [ ] **`Fixes:` taken from `git blame` on the real tree**, not from the file's age.
 - [ ] Commits are `-s` signed, imperative-mood, body wrapped ~75 cols; `Fixes:`/`Cc:
       stable` on bugfixes.
 - [ ] Human `Signed-off-by` on **every** commit — audit for the empty-trailer

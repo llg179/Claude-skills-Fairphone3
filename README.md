@@ -29,8 +29,8 @@ restating it:
 | owned by | what |
 |---|---|
 | `fp3-porting-debug` | the device substrate (partitions, boot chain, unattended access), the three OS tracks and the oracle idea, the `scripts/` tooling, the two running logs, and `references/archive/` — the dated record of what was already tried |
-| `fp3-kernel-test` | **all brick-safety and measurement-integrity rules**, in `references/safety.md`; the instruments (MMIO, QMI/QRTR, clocks, genpd, coredump) and the recovery recipes |
-| `msm8953-mainline-pr` | commit form, provenance and attribution rules, the DCO/`Assisted-by:` disclosure, and where a series may be sent |
+| `fp3-kernel-test` | **all brick-safety and measurement-integrity rules**, in `references/safety.md`; the instruments (MMIO, QMI/QRTR, clocks, genpd, coredump, and the device-tree schema checkers) and the recovery recipes |
+| `msm8953-mainline-pr` | commit form, provenance and attribution rules, writing and validating a DT binding, the DCO/`Assisted-by:` disclosure, and where a series may be sent |
 
 Two things deliberately live **outside** all three: what the device does *today*
 and how to build/deploy it are in
