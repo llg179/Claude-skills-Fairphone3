@@ -157,6 +157,9 @@ cost a device, a boot, or a wrong conclusion at least once.
 - A mid-operation snapshot can read identical working-vs-broken.
 - Every measurement needs a real path to PASS, stated in advance.
 - A null `grep` is not proof of absence until the pattern is validated against a known positive.
+- A clean log proves nothing until the channel is shown to report that event class at all.
+- A source or device-tree comment is not evidence, and must not reopen a measured verdict.
+- Capture the full histogram and the init band, not only the filtered hits.
 - Confirm on the oracle that an endpoint is the **right** one before reverse-engineering its protocol.
 - A content-independent echo means a wrong or stub endpoint, not a wrong framing.
 - Verify the **process**, not the service label — a daemon can ignore SIGTERM while the label says `stopping`.
@@ -171,6 +174,10 @@ cost a device, a boot, or a wrong conclusion at least once.
 - Your own cleanup destroys evidence — `journalctl --vacuum-size` faked a perfect cross-boot correlation.
 - `pkill -f <pattern>` matches your own command line. Use `pkill -x <name>`.
 - `pgrep -f` does too — an `until ! pgrep -f …` waiter never exits. Wait on the artifact.
+- The loudest error line is not the error — reconstruct the causal order before interpreting.
+- Error codes layer per phase; after each fix go looking for the NEXT error, not for success.
+- When a working implementation turns up, diff it against your model — the delta is your gap.
+- A write that hangs can leave no D-state task: issue it from a disposable process.
 - Before saying two systems disagree, check both are measuring — a hardcoded constant is not.
 - The oracle is a source of *configuration* too: read back the registers it programs.
 - A register field's width can be the design limit; work out what the hardware can encode.
@@ -492,6 +499,14 @@ rm -rf /tmp/pmbootstrap-local-source-copy
 touch <edited-file>            # force pmb to see the change
 cd $FP3_PMOS && ./pmb build --src $FP3_PMOS/linux-fp3 linux-postmarketos-qcom-msm8953
 ```
+☠️ **A `--src` build silently drops files the kernel's `.gitignore` un-ignores.**
+`pmbootstrap` copies the tree with rsync `--exclude-from=.gitignore`, and rsync does
+**not** understand `!` negation. The kernel's `.gitignore` has `*.bc` followed by
+`!kernel/time/timeconst.bc`, so that one file never arrives and the build dies in
+`prepare0` with *"No rule to make target `kernel/time/timeconst.bc`"* — an error that
+points at the kernel's build system rather than at the copy. Workaround: comment the
+`*.bc` line out of the source tree's `.gitignore` for the duration of the build.
+
 ☠️ **`--src` wants an ABSOLUTE path.** `./pmb build --src src/linux-fp3 …` fails (`Invalid path specified
 for --src`) — the wrapper does *not* resolve it relative to its own cwd. Always
 `--src $FP3_PMOS/linux-fp3`. And **a mid-build `pkill` (e.g. aborting a broken-DT run to keep ccache)
@@ -727,6 +742,35 @@ question it answers, the how, and how to interpret — with example values.
   runtime-PM force-resume **perturbs** the block — resuming the NGD drove the framer's dynamic markers
   (`+0x200/+0x400`) from their idle `0` to activity values while the real state bit (`FS`, `+0x604`)
   stayed `0`; stable *config* registers don't move, but read *dynamic* ones knowing the resume drives them.
+
+### Dynamic kprobes (arguments and return values where mainline has no tracepoint)
+- **Answers:** did this kernel function run, with which arguments, and what did it
+  return — for a function nobody thought to add a tracepoint to.
+- **Why it comes up:** downstream kernels carry vendor tracepoints (`scm:scm_call_*`)
+  that mainline simply does not have, so a two-sided diff of an AP↔TZ or AP↔co-processor
+  handshake has no matching instrument on the mainline side. The symbols are still in
+  `available_filter_functions`, which is all a kprobe needs.
+- **How:** `p:<name> <symbol> <arg>=%<reg>` for entry, `r:<name> <symbol> ret=$retval`
+  for the return. On arm64 the first argument is `%x0`:
+
+```sh
+echo 'p:pas_auth qcom_scm_pas_auth_and_reset peripheral=%x0' >> /sys/kernel/tracing/kprobe_events
+echo 'r:pas_auth_ret qcom_scm_pas_auth_and_reset ret=$retval'  >> /sys/kernel/tracing/kprobe_events
+echo 1 > /sys/kernel/tracing/events/kprobes/enable
+```
+
+- **Pair it with a reboot-free re-trigger** so the sequence can be replayed at will:
+  `echo stop > /sys/class/remoteproc/remoteprocN/state; echo start > …` re-runs the whole
+  PAS bring-up (`pas_shutdown` → `init_image` → `mem_setup` → `auth_and_reset`) live, with
+  the bug reproducing faithfully — cheaper than a coredump when what you need is the
+  bring-up's SCM/clock/regulator sequence rather than memory.
+- **Interpret:** this is how the "maybe the TZ SCM arguments or ordering differ" branch
+  was closed — boot-ftrace on the oracle against remoteproc stop/start plus kprobes on
+  mainline gave a byte-identical PAS triple, same `pas_id`, `auth` returning 0 on both
+  sides. A negative result from this instrument is a real exclusion, not a soft one.
+- **☠️ Check the symbol is traceable before believing an empty trace** — `grep <symbol>
+  /sys/kernel/tracing/available_filter_functions`. An inlined or optimised-out function
+  gives no kprobe and no error you will notice.
 
 ### PMIC / regmap registers via debugfs (the cheapest ground truth there is)
 - **Answers:** what has a driver — ours, the bootloader's, or the vendor's — actually

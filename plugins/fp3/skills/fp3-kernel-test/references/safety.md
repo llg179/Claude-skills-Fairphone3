@@ -528,3 +528,62 @@ because it landed in code shared by every device the driver serves.
 - **The upstream test, applied before writing rather than at submission:** *if this
   patch were applied to every board the file serves, would each of them still be
   described correctly?* One question, and it catches all of the above.
+
+## Reading a failure — three rules that each cost a wrong diagnosis
+
+- **☠️ The loudest error message is not necessarily *the* error.** Three lines arrived
+  together: `qmi_encode: Invalid data length` → `-22` → `Buffering request failed:
+  0x501`. The `0x501` was the eloquent one, and a ready-made plausible story attached
+  itself to it ("this is an on-change sensor, so it does not support buffering") which
+  would have led to writing a whole second QMI protocol path. In fact `0x501` was the
+  *teardown's* answer **after** the failure; the real fault was the `-22` two lines
+  above. **Recipe:** on a multi-line eruption, reconstruct the **causal order** first —
+  which call follows which in the code — and only then interpret any code.
+- **★ Error codes layer per phase; always go looking for the NEXT error.** The sequence
+  here ran `-18` (not all services present) → `-2` (present, but on one port only) →
+  no error at all (per-port). Each step removed one class of failure and **revealed
+  another**; stopping at the first clean-looking line would have looked like success.
+  Find the cheapest success/failure indicator in the trace — here it was one argument
+  of the closing message, `[0]` versus `[1]` — and watch that rather than the noise.
+- **★ Independent confirmation is worth a great deal, and the DIFFERENCE is the
+  finding.** A hand-built request and an upstream implementation agreed on the service
+  id, the version, the instance and the group ids; what they did **not** agree on was
+  the missing piece — `SNS_REG_GROUP_MSG_ID = 0x4`, the request itself. So when a
+  working implementation turns up, do not simply adopt it: **diff it against your own
+  model**, because the delta is precisely the hole in your hypothesis.
+
+## Writing to a register that may not be yours
+
+- **☠️ A write that hangs uninterruptibly can be invisible to every "is something
+  stuck" check.** The symptom was not an SPMI timeout, and `ps -eo stat` showed no
+  task in D state, yet every call froze. Three recipes:
+  1. **Issue the writing ioctl from a separate, disposable process** (`sudo timeout N
+     python3 …`, plus an `alarm()` inside the script) and accept that the process may
+     survive as a zombie — the point is that your session does not go with it.
+  2. **On a write-type experiment, restore the device tree as the FIRST step after
+     seeing the failure**, before the reboot, so the next boot is clean even if the
+     shutdown itself wedges.
+  3. **"Reads work, writes hang" is a strong signal that the register is owned by TZ or
+     by a co-processor**, not that your access is malformed.
+
+## Absence of evidence, and evidence that is not evidence
+
+- **☠️ "No error message" is not "no problem" — a clean log proves nothing until you
+  have shown the channel would report that class of event at all.** Four logs were
+  clean here (TZ log, ADSP F3, dmesg, SMEM) and not one of them had ever been tested
+  against a *known* violation, so the silence excluded nothing. What did exclude
+  something was a **positive** signal: the ADSP's own F3 trace showing `Hardware reset
+  successful`, which proves it can reach the register at all. And the specific trap:
+  **a silent physical gap** — a missing bus-drive or pad grant — looks exactly like a
+  frame-sync timeout and logs *nothing*, so "the log is clean" cannot rule it out.
+  Prefer a positive "the operation succeeded" marker over any amount of quiet.
+- **☠️ A source comment, or a comment in a device tree, is not evidence — and must not
+  reopen a lead that a live measurement closed.** One mainline DTS comment ("this PD
+  frames the bus") reopened a question that a golden-side measurement had already
+  answered the other way months earlier. A comment describes intent or aspiration, and
+  sometimes an intent that was never implemented; the running device describes fact.
+- **When capturing a co-processor trace, take the full histogram and the init band, not
+  only your filtered hits.** The subsystem's own boot sequence comes free with the
+  capture and is worth more than the filter: an init trace with timestamps shows every
+  step *before* the one you care about closing cleanly, which is how you learn the fault
+  is pointlike rather than environmental. A filtered capture cannot tell you that.

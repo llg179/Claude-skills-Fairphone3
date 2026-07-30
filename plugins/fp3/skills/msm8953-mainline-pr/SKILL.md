@@ -746,6 +746,19 @@ GitHub-flow conveniences any more.
 
 ---
 
+## Before sending: re-check the draft against the latest verdicts
+
+☠️ **A claim in a draft can be internally inconsistent with a table in the same
+document and still survive to the recipient.** One outreach message asserted that a
+register block was "not AP-readable, ADSP-owned" while a table two paragraphs down
+showed that exact register having been read from the AP through `/dev/mem`. The claim
+was a leftover from an earlier round; it went out anyway and pulled the reader towards
+an ownership hypothesis that had already been excluded.
+
+**Recipe:** before sending anything outward, grep the draft's factual assertions against
+the journal's most recent verdicts, and against the draft's own data. A statement that
+was true three rounds ago reads exactly like a current one.
+
 ## Pre-submit checklist
 
 - [ ] Destination is **LKML** — msm8953-mainline will not merge AI-assisted work,
