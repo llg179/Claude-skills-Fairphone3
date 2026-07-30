@@ -63,6 +63,59 @@ code is, is in
 for whose code each change is, and the `docs/<subsystem>/bringup/` pages for how
 it was arrived at.
 
+## Working unattended — what actually stops, and what does not
+
+"Unattended access" elsewhere in these skills means *no human at the phone*. This is
+the other half: what to do when there is no human **in the conversation** either — an
+overnight run, a "go until morning", any instruction that hands you the flash gates.
+
+**The failure this section exists to prevent.** Five independent items remained, all
+specified, none blocked; the turn ended with *"which should I start with?"* — and named
+the default in the same breath. **A stated default plus a question is still a stop**, and
+it costs the whole night. If you can name the default you do not need the answer:
+execute it, and say which order you chose and why.
+
+**Only three things legitimately stop an unattended run.**
+
+1. **A physical act only the human can perform** — plug or unplug the charger or the
+   jack, swap a battery, read a label off the hardware, press a button, place a call,
+   hold the phone in an orientation. `fp3-kernel-test` Step 4h enumerates these and
+   gives the handshake: one action, stop, resume on their reply.
+2. **An outward-facing or hard-to-reverse action beyond the standing authorisation** —
+   posting to a mailing list, pushing to a repository that is not the user's own,
+   anything that reaches a third party.
+3. **A brick-safety gate the guardrails say needs a human** —
+   [`../fp3-kernel-test/references/safety.md`](../fp3-kernel-test/references/safety.md).
+
+Everything else continues. **None of these is a reason to stop:**
+
+- *"Which of the remaining items first?"* — pick one, say so, reorder later if it was
+  wrong. Redirecting afterwards costs the user one message; asking costs the night.
+- *"Is this the design you want?"* — build the one you can defend and write down the
+  alternative you rejected, with the reason. A reviewable artifact beats an
+  unanswered question.
+- *A milestone finished cleanly.* Green is a reason to continue, not to hand back. The
+  urge to report a success is not the same thing as needing permission for the next step.
+- *The next step is large* — a full build, a flash, a rebase. Size is not a gate; the
+  guardrails are, and they are written down.
+- *A number surprised you.* Measure it again, by a different instrument, and record both.
+
+**A default order, so the choice does not re-litigate itself every time.** When several
+items are ready and nothing else distinguishes them:
+
+1. **Measurements the current device state makes possible.** A phone in a known state is
+   perishable — the next deploy, reboot or slot switch destroys the opportunity, and no
+   amount of later reasoning recovers it. Measure first, write up afterwards.
+2. **Anything that makes an already-written claim false.** Stale status misleads the next
+   session, which is usually you.
+3. **Whatever unblocks the most other items.**
+4. The rest, cheapest first.
+
+**If you do have to stop, leave a one-line resume point, not a menu.** End on the single
+physical act or the single decision that is actually needed, phrased so the reply can be
+one word. A five-way list guarantees the human has to re-read the whole session before
+they can answer anything.
+
 ## Local knowledge base (bundled — read on demand)
 
 Progressive disclosure: the SKILL body stays small, Read a pack only when you

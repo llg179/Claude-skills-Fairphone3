@@ -560,8 +560,16 @@ your DBG breadcrumb.
 Some signals only exist while a human performs a physical act you cannot script:
 plug/unplug the 3.5 mm jack, press a headset button, insert/remove the SIM,
 connect the charger, speak into the mic, listen on the speaker, place/answer a
-call. For these, **a read is only meaningful against a *confirmed* physical
-state.** Discipline (learned the hard way — a timing-window test produced hours
+call, swap a battery, read a label off the hardware. For these, **a read is only
+meaningful against a *confirmed* physical state.**
+
+☠️ **This list is exhaustive, and that cuts both ways.** A physical act is the
+*only* reason a measurement waits for the human. If what you are missing is a
+preference, a priority, an ordering among ready items, or reassurance that a
+design is the wanted one, that is **not** a blocker — decide it, record the
+reasoning, and keep going. Working unattended is covered in `fp3-porting-debug`
+("Working unattended — what actually stops, and what does not"); the short form
+is that a stated default plus a question is still a stop. Discipline (learned the hard way — a timing-window test produced hours
 of invalid data because the human was multitasking and an edited chat message
 desynced us):
 
