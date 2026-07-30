@@ -39,6 +39,13 @@ smooth an old value into a present-tense claim.
 
 ## Where knowledge lives — the boundary
 
+☠️ **Never write status into a skill.** Not a table of what works today, not a
+difficulty or percentage estimate, not a literal commit hash / branch tip /
+"here are the N offending commits" list, not a roadmap or a checked-off plan.
+A skill carries **method only**. State the *command*, never its current answer;
+where the answer is needed, link to the docs. This is a prohibition, not a
+preference — the section below records what it cost when it was treated as one.
+
 Three homes. Putting something in the wrong one is how both rot: the docs go
 stale because nobody reads them, and the skill goes stale because it carries
 facts that expire.

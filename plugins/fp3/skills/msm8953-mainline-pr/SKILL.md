@@ -26,6 +26,14 @@ with the full base-bump procedure in
 Read those for *what the branches are*; read this for *how to turn them into a
 series*.
 
+☠️ **Never write status into a skill** — no table of what works today, no
+difficulty or percentage estimate, no literal commit hash / branch tip / "here
+are the N offending commits" list, no roadmap or checked-off plan. State the
+*command*, never its current answer. A 2026-07-30 audit found a seven-hash
+"these commits have no sign-off" list in this file whose series had since been
+rebuilt into three commits with an intact DCO chain, one hash no longer
+resolving, and the real gap moved to another subsystem.
+
 More generally: current state and procedure live in the docs, method and traps in
 the skills, dated logs in archive — the split is stated in `fp3-porting-debug`
 "Where knowledge lives".

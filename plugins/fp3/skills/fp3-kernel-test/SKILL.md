@@ -25,6 +25,13 @@ measurement, but they age. Re-measure before you rely on any specific number.
 method and traps stay here, dated logs go to archive. This skill therefore
 carries no status for any subsystem.
 
+☠️ **Never write status into a skill** — no table of what works today, no
+difficulty or percentage estimate, no literal commit hash / branch tip / "here
+are the N offending commits" list, no roadmap or checked-off plan. State the
+*command*, never its current answer. This skill passed the 2026-07-30 audit
+clean — its worked examples are labelled as such above, which is what kept it
+clean. The other two did not.
+
 ## Factual integrity — overrides everything below
 
 Never fabricate URLs, citations, statistics, quotes, version numbers or
