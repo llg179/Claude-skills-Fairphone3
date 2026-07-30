@@ -4,7 +4,7 @@
 > Single-use reverse-engineering artifacts now live in `archive/`.
 
 Tipikus parancs-szekvenciák scriptként (ne gépeld újra). Minden `/mnt/1TB`-n.
-Forrás-tudás: `../references/pmos-bringup.md` és `../references/archive/hw-facts.md`.
+Forrás-tudás: `../references/archive/pmos-bringup-log.md` és `../references/archive/hw-facts.md`.
 
 | script | mit csinál | mód |
 |---|---|---|

@@ -15,4 +15,7 @@ fp3-env.local.sh
 *.tar.gz
 
 # Personal report/outreach drafts and raw device captures — kept local.
-**/references/report-attachments/
+# Match the directory anywhere: it moved under references/archive/ on 2026-07-30,
+# and the old references/-only pattern silently stopped matching, which staged
+# ~9000 lines of raw dmesg/smem/tzlog dumps for the public repo.
+**/report-attachments/

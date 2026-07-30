@@ -1,6 +1,6 @@
 # FP3 — DATA-INDEX (kereshető kulcsszavakkal)
 
-> **Note:** paths under `report-attachments/` are kept locally and are not part of
+> **Note:** paths under `archive/report-attachments/` are kept locally and are not part of
 > this repository (personal outreach drafts and raw device captures). The entries
 > below are retained as a record of what was collected.
 # Cél: gyorsan felismerni, hogy egy témát MÁR megvizsgáltunk-e, és MELYIK fájlban van.
@@ -67,15 +67,15 @@ archive/boot-debug-log.md   (ARCHÍVUM — dátumozott napló, nem módszer)
   FIRMWARE RE / DISASSEMBLY (ADSP adsp.mbn, Hexagon/QDSP6)
 ═══════════════════════════════════════════════════════════════════════════════
 
-report-attachments/adsp-firmware-framer-strings.txt
+archive/report-attachments/adsp-firmware-framer-strings.txt
   ADSP fw ULOG string-ek. Kulcs: "Switching driver mode (master: %d)", framer-mód
   döntés, device.cfg/ACDB, ADSP.VT.3.0-00161 build 2020-05-18, ELF32 nem-titkosított.
 
-report-attachments/adsp-framer-decision-disasm.txt
+archive/report-attachments/adsp-framer-decision-disasm.txt
   Framer-MÓD döntés disasm. Kulcs: immext constant-extender xref, ctx+0x74
   satellite_hw_owner, ctx+0x78 framer_mode, ph4 0xf015f000.
 
-report-attachments/adsp-slimbus-clock-disasm.txt
+archive/report-attachments/adsp-slimbus-clock-disasm.txt
   SLIMbus ref-clock enable path disasm. Kulcs: LPASS core clock, clock_manager,
   afe_lpass_core_clk, ctx-struct, HalHwIo.
 
@@ -98,18 +98,18 @@ pil_bringup.txt
 boot_trace.txt
   Boot-time ftrace (scm_call_start/end). Kulcs: func id 0x42000404, PAS SCM funcId-k.
 
-report-attachments/downstream-golden-ipc-trace.txt
+archive/report-attachments/downstream-golden-ipc-trace.txt
   GOLDEN: működő UT framer bring-up ipc_logging. Kulcs: SELECT_INSTANCE + POWER_REQ
   SvcId 0x301, NINCS CHECK_FRAMER, ~2ms után master capability.
 
-report-attachments/pmos-slim-ctx-devmem.txt
+archive/report-attachments/pmos-slim-ctx-devmem.txt
   pmOS (FAILING) /dev/mem dump. Kulcs: NGD_STATUS=0x40c, NGD_CFG=0x0, INT_STAT=0x0.
 
-report-attachments/ut-slim-ctx-devmem.txt
+archive/report-attachments/ut-slim-ctx-devmem.txt
   UT (WORKING) /dev/mem dump. Kulcs: uniform 0x70 (idle clock-gated blokk = tooling
   artifact, NEM valós 0), framer verified working.
 
-report-attachments/pmos-dmesg-full.txt
+archive/report-attachments/pmos-dmesg-full.txt
   Teljes pmOS boot dmesg (2026-07-02). Kulcs: qcom-ngd-ctrl DBG, bb_clk1 force,
   capability timeout, teljes bring-up.
 
@@ -120,12 +120,12 @@ scratchpad/ut-enabled-clocks.txt
   PIL vs PAS BOOT-ÖSSZEHASONLÍTÁS (source-diff)
 ═══════════════════════════════════════════════════════════════════════════════
 
-pas-launch-diff.md  (+ azonos: report-attachments/pas-launch-diff.txt)
+pas-launch-diff.md  (+ azonos: archive/report-attachments/pas-launch-diff.txt)
   PAS(mainline,FAIL) vs PIL(downstream,WORK) source-diff. Kulcs: qcom_q6v5_pas.c,
   msm8996_adsp_resource, pas-id=1, carveout 0x8d600000, mdt_loader, Delta A
   (feltételes MEM_SETUP — később HALOTT: mbn relocatable).
 
-report-attachments/pil-tz-vs-pas-boot-comparison.md
+archive/report-attachments/pil-tz-vs-pas-boot-comparison.md
   subsys-pil-tz vs qcom_q6v5_pas lépésről-lépésre. Kulcs: TZ PAS SCM, proxy-reg
   vdd_cx TURBO, crypto clocks, azonos carveout, "funkcionálisan ekvivalens".
 
@@ -136,23 +136,20 @@ report-attachments/pil-tz-vs-pas-boot-comparison.md
 fairphone-slimbus-framer-report.md
   A fő publikus report (framer-never-comes-up). Kulcs: SDM632, összefoglaló ask.
 
-report-attachments/issue-comment-firmware-analysis.md   fw-disasm komment #255
-report-attachments/issue-comment-register-level.md      v1: framer HW nem fut PAS-on
-report-attachments/issue-comment-register-level-v2.md   v2: ground-truth ADSP-belülről
-report-attachments/issue-comment-register-level-v3.md   v3: root-clock force fires, mégsem indul
-report-attachments/issue-comment-register-level-v4.md   v4: rc=0 false-success, teljes cím-térkép
-report-attachments/issue-comment-runtime-tests.md       6 runtime datapoint, APR/AVS működik
-report-attachments/issue-comment-draft.md               raw evidence attach lista
-report-attachments/github-reply-to-z3ntu.md             z3ntu válasz: DT-plumbing egyezik
-report-attachments/github-reply-to-z3ntu-2.md           Bjorn 1075549 series tesztelve: no change
-report-attachments/fairphone-forum-post-draft.md        fórum draft v1
-report-attachments/fairphone-forum-post-draft-v2.md     fórum draft v2 (LPASS core-clock)
-report-attachments/forum-reply-to-yvmuell.md            fórum válasz (ticket #1453513)
-report-attachments/fairphone-support-ticket.md          FP support ticket szöveg
-report-attachments/fairphone-support-followup-1.md      support follow-up (Noah)
-report-attachments/pmos-matrix-message.md               pmOS Matrix üzenet
-report-attachments/slimbus-false-success-consolidation.md  "false success" konszolidált konklúzió
-report-attachments/issue-comment-draft.md               (ld. fent)
+archive/report-attachments/issue-comment-firmware-analysis.md   fw-disasm komment #255
+archive/report-attachments/issue-comment-register-level-v5.md   a regiszter-szintű komment VÉGLEGES verziója
+                                                                (v1-v4 törölve 2026-07-30: felváltva, nem hivatkozott)
+archive/report-attachments/issue-comment-runtime-tests.md       6 runtime datapoint, APR/AVS működik
+archive/report-attachments/issue-comment-draft.md               raw evidence attach lista
+archive/report-attachments/github-reply-to-z3ntu.md             z3ntu válasz: DT-plumbing egyezik
+archive/report-attachments/github-reply-to-z3ntu-2.md           Bjorn 1075549 series tesztelve: no change
+archive/report-attachments/fairphone-forum-post-draft-v2.md     fórum draft v2 (LPASS core-clock)
+archive/report-attachments/forum-reply-to-yvmuell.md            fórum válasz (ticket #1453513)
+archive/report-attachments/fairphone-support-ticket.md          FP support ticket szöveg
+archive/report-attachments/fairphone-support-followup-1.md      support follow-up (Noah)
+archive/report-attachments/pmos-matrix-message.md               pmOS Matrix üzenet
+archive/report-attachments/slimbus-false-success-consolidation.md  "false success" konszolidált konklúzió
+archive/report-attachments/issue-comment-draft.md               (ld. fent)
 
 ═══════════════════════════════════════════════════════════════════════════════
   PORTOLÁS (nem-audio) — charger, audio-DT, Sailfish/hybris build

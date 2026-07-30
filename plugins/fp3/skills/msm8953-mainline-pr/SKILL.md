@@ -870,16 +870,28 @@ The one that was not is exactly the kind this catches: *"take the mic bias volta
 and DMIC clock rate from the DT"* reads its values out of Fairphone's downstream
 `msm8953-audio.dtsi` and never said so.
 
-**Audit the branches before submitting — some commits have no sign-off at all.**
-The seven IMX363 camera commits on `integration/<base>` (`b00ba1f5`, `526d569e`,
-`757b41e6`, `df906c4d`, `4beba115`, `1adc5540`, `0c5dd72e`) carry an **empty
-trailer block**: no `Signed-off-by`, no attribution. Those are unsubmittable as-is,
-independent of the AI question. Check every branch, not just the one being sent:
+**Audit the branches before submitting — commits with no sign-off at all do
+exist.** A commit can carry an **empty trailer block**: no `Signed-off-by`, no
+attribution. Those are unsubmittable as-is, independent of the AI question, and
+they are easy to miss because nothing in the subject line says so. Check every
+branch, not just the one being sent:
 
 ```sh
-git log --format='%h|%s|%(trailers:key=Signed-off-by,valueonly,separator=;)|%(trailers:key=Assisted-by,valueonly,separator=;)' \
-    <branch> ^origin/7.0.9/main
+# every commit whose Signed-off-by field is empty
+git log --format='%h|%s|%(trailers:key=Signed-off-by,valueonly,separator=;)' \
+    <base>..<branch> | awk -F'|' '$NF==""'
 ```
+
+Filter on the sign-off field itself, not on the whole line ending in `||` — a
+commit can carry an `Assisted-by:` and still be missing its `Signed-off-by`, and
+the line-shaped test walks straight past it.
+
+☠️ **Do not carry the last audit's hit list in here.** A previous revision named
+seven specific camera commits by hash; by the time anyone read it the series had
+been rebuilt into three commits with an intact DCO chain, one of the seven hashes
+no longer resolved, and the sign-off gap had moved to a different subsystem
+entirely. Which commits are currently missing a trailer is **status** — run the
+command, do not trust a list.
 
 ☠️ Pin the audit to the *shape* of the trailer, not to a literal string. A pass
 that grepped `Assisted-by: Claude:claude-opus-5` accused nine perfectly correct

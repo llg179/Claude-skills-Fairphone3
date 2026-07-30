@@ -1,183 +1,25 @@
-# FP3 → natív (EOL-álló) irány: postmarketOS + mainline kernel
+# postmarketOS mainline bring-up — dated execution log (2026-06-28 … 06-30)
 
-> Munkadokumentum a Fairphone 3 (fp3, MSM8953/SD632, Adreno 506) **natív**, blob-mentes,
-> EOL-álló Linux/Sailfish irányához. Forrás: `archive/boot-debug-log.md` (factentry48–66) + `sailfish-components.md`.
-> Készült: 2026-06-28.
-
----
-
-## 0. A döntés / irány
-
-- **Cél: KIZÁRÓLAG az EOL-álló irány.** A felhasználó nem érdekelt a rövid-közép távban.
-- A hybris-port (hybris-22.2 / Android 15, downstream 4.9 kernel) **NEM a végcél** — hanem:
-  1. **hardver-validáció** (bizonyítja, hogy a készülék jó),
-  2. **adat- és infrastruktúra-forrás** a natív munkához (downstream DTS, vendor configok, firmware),
-  3. esetleges napi **fallback**, amíg a natív beérik.
-- **Hybris image KÉSZ (2026-06-28):** a teljes HADK-lánc lefutott, flashelhető zip elkészült:
-  `hadk22/SailfishOScommunity-release-5.0.0.71-fp3/Sailfish_OS-5.0.0.71-fp3-0.0.1.202606281607.zip` (1.2 GB,
-  hybris-boot+sailfish rootfs+vendor+dtbo+recovery+flash.sh). Eszközön még nem tesztelve.
-- Felhasználói felállás: **2× FP3** (1 gyári OS, 1 TWRP-n). Motiváció: LTE/hálózati változás.
-  A TWRP-s készülék **bootloader-unlocked**, USB-n elérhető → kísérleti/cél-eszköz.
-- Munkamód: én vezérlem, a felhasználó a „kéz" (USB-n, `!`-parancsokkal). Live USB → minden a `/mnt/1TB`-re.
-
-**A natív stack = mainline Linux kernel (6.x) + Mesa/freedreno + nyílt userspace driverek.**
-Nincs libhybris, nincs Android HAL, nincs vendor partíció. A blobokat elejtjük.
-
----
-
-## 1. Miért EOL-álló a natív (és miért nem a hybris)
-
-| | Hybris (jelenlegi build) | Natív (cél) |
-|---|---|---|
-| Kernel | downstream **4.9.337** (EOL, nem CIP-SLTS) | **mainline 6.x** (örökké karbantartott) |
-| Driverek | zárt Android blobok (KGSL/ion/binder ABI-hoz láncolva) | nyílt: Mesa/freedreno, ofono, ALSA, mainline |
-| Média-dekód | Android média-stack (pl. ALAC CVE-felület) | glibc/GStreamer (disztró-frissített) |
-| EOL-kockázat | a SoC-hoz Qualcomm már nem ad fixet → örökre sebezhető | mainline + nyílt userspace → frissül |
-
-> Az „elavult processzor nem patchelhető" fórumérv (ALHACK/CVE-2021-30351 ALAC) **pont az EOL-érv**, és a
-> natívot erősíti. (A konkrét ALAC CVE userspace, Qualcomm 2021-ben javította, a megtartott A15 vendorban benne
-> van — de a JÖVŐbeli vendor/DSP/modem bugokra már nem lesz fix. A natív ezt kezeli: mainline + GStreamer.)
-
----
-
-## 2. pmOS FP3 mainline — hiteles feature-mátrix
-
-Forrás: pmOS wiki „Fairphone 3 (fairphone-fp3)" (felhasználó letöltötte; kernel `linux-postmarketos-qcom-msm8953`
-~6.15; karbantartó **Luca Weiss / Fairphone**, @z3ntu; pmOS „community" szint).
-
-| Működik ✅ | Részleges ⚠️ | Törött ❌ |
-|---|---|---|
-| Kijelző, touch | Audio (**csak hangszóró**; earpiece+mic NEM) | **Akku/töltés** (nincs fuel-gauge/charger driver) |
-| **GPU 3D** (freedreno a506) | **Hívás** (Calls Partial) | Kamera + vaku¹ |
-| WiFi, Bluetooth, GPS | | Szenzorok (gyorsulás, magnetométer) |
-| **Mobil adat, SMS** | | |
-| FDE, USB net/OTG, flash | | |
-
-¹ A wiki-snapshot „Camera Broken", **de Luca Weiss 2025-nov-ben felhozta az FP3 mindkét kameráját mainline-on**
-(libcamera) — újabb, mint a wiki. → a kamera javul.
-
-**Két napi-driver showstopper MA: (1) akku/töltés, (2) használható hanghívás.**
-A mag (GPU/WiFi/BT/kijelző/adat/FDE) viszont kiváló.
-
----
-
-## 3. Gap-elemzés — mi hiányzik konkrétan
-
-### 3a. Akku / töltés (BROKEN) — nehézség: **közepes**
-- FP3 PMIC = **PMI632**. Downstream driverek (megvan a fánkban):
-  - töltő: `CONFIG_QPNP_SMB5=y` → `drivers/power/supply/qcom/qpnp-smb5.c` + `smb5-lib.c`
-  - fuel-gauge: `CONFIG_QPNP_QG=y` → `qpnp-qg.c` + `qg-soc.c` + `qg-battery-profile.c` + `qg-sdam.c`
-- Mainline: az **SMB5/PMI632 töltő közel van** upstream (`qcom_smbx`/smb5 PMI632 patch-ek). A **QG fuel-gauge NINCS
-  mainline-ozva**. Mainline-út: SMB5 töltő + fuel-gauge ADC/`qcom-vadc` + battery-profil, VAGY QG-port.
-- **Mi van meg (hybrisből):** downstream qpnp-smb5/qg register-map + **`qcom,battery-data` profil a downstream
-  DTS-ben** (OCV/kapacitás táblák) — kinyerhető.
-
-### 3b. Earpiece + mikrofon (média) — nehézség: **alacsony-közepes**
-> ⚠️ **FRISSÍTÉS (lásd 9.15): ez a becslés TÉVES volt.** Az FP3 codec NEM belső sdm660-WCD, hanem
-> **WCD9326 (Tasha-lite) SLIMbuson**, és a fal az ADSP-framer (nem UCM/mixer). Valós nehézség = **magas**,
-> platform-szinten megoldatlan. A hangszóró (aw8898 / Quinary MI2S) viszont működik. Az alábbi „aranybánya"
-> mixer_paths-érv csak a hangszóróra/MI2S-re igaz; a SLIMbus-útra nem segít, amíg a framer néma.
-- FP3 codec = belső **sdm660/msm8x16-stílusú WCD analóg+digitális** (`techpack/audio/asoc/codecs/sdm660_cdc/
-  msm-analog-cdc.c` + `msm-digital-cdc.c`), machine: `techpack/audio/asoc/sdm660-internal.c`.
-- **Mainline-ban a codec + MSM8953 ASoC machine NAGYRÉSZT MEGVAN** (msm8916-wcd analóg+digitális upstream;
-  MSM8953/8976 ASoC machine felupstreamelve).
-- Hiány: (a) FP3 DT audio-routing, (b) **Sailfish/ALSA-UCM verb** earpiece/mic-re.
-- **Aranybánya:** `out/target/product/FP3/vendor/etc/mixer_paths.xml` — pontos control-szekvenciák:
-  `EAR PA Gain`/`EAR PA Boost`/`EAR_S` (earpiece), `ADC1 Volume`/DMIC (mic), `Voice Tx Mixer TERT_MI2S_TX_Voice`
-  (hívás-útvonal). Szinte 1:1 UCM-be. + gyári FP3 élő `tinymix`/`amixer` orákulumként.
-
-### 3c. Hívás-audio / q6voice DSP — nehézség: **magas** (a long-pole)
-**NEM fekete-doboz RE:** a teljes GPL `q6voice.c` (258 KB) + `q6voice.h` (VSS opcode-szótár) + q6 stack
-(afe/adm/asm/core) + APR transport mind a fánkban van. Feladat = **GPL downstream q6voice portolása a mainline
-APR/ASoC keretre** (mindkettő GPL, tiszta).
-
-A hívás-recept (forrásból):
-```
-voc_start_voice_call()             [q6voice.c:7218]
-  → voice_apr_register()           ADSP szolgáltatások: MVM / CVS / CVP   [626/639/653]
-  → voice_create_mvm_cvs_session() [898]
-  → voice_setup_vocproc()          [4393]  (CVP: dev cfg, cal, media fmt, topology commit)
-  → voice_send_start_voice_cmd()   [2414]  VSS_IMVM_CMD_START_VOICE 0x00011190
-```
-- **Mainline-hiány pontosan az MVM/CVS/CVP réteg** (`q6voice`). Mainline-ban van: q6afe/q6asm/q6adm/q6routing/
-  q6core + APR/GPR. q6voice **egyetlen qcom-eszközön sincs mainline-ozva** → MEGOLDATLAN upstream probléma,
-  kutatási szint, valós kockázat.
-- Esély működő kétirányú hívás-audióra: **~25–40%** kitartó közös erőfeszítéssel + upstream-partnerséggel.
-
----
-
-## 4. Modem bring-up (a hívás vezérlés-oldala, az audiótól külön)
-
-A Qualcomm-modemhez **nem driver íródik** — a modem külön Hexagon-processzor zárt firmware-rel. A meló = bekötés:
-1. **remoteproc** (`q6v5-mss`/PAS) bootolja a modem fw-t (`mba.mbn`/`modem.mbn`) — DT-meló, mainline-ban van.
-2. **QRTR + QMI** (`qrtr`, `qmi_wwan`) + userspace **`rmtfs`** (kalibráció) + `qrtr-ns`.
-3. **Mobil adat + SMS:** `qmi_wwan`/`rmnet` + **ModemManager** → a wiki szerint MÁR Works.
-4. **Hívás-vezérlés:** QMI Voice (ModemManager/oFono) — közepes. **Hívás-AUDIO** = q6voice (lásd 3c).
-- Firmware + DT memória-régiók a downstream fából / vendor partícióból (hybrisből megvan).
-
----
-
-## 5. pmOS vs Sailfish OS (azonos alsó stack, eltérő felső)
-
-| | postmarketOS | Sailfish OS |
-|---|---|---|
-| Lényeg | Alpine; „Linux a telefonon", 250+ eszköz | kész mobil-termék-OS (Jolla), saját UX |
-| UI | választható (Phosh/Plasma/Sxmo) | egységes **Lipstick/Silica** |
-| Csomag/libc | `apk` / **musl** | `rpm`+`zypper` / **glibc** |
-| Middleware | UI-függő | kész: **ofono**, **sensorfw**, MCE |
-| Android-app | **Waydroid** | App Support (zárt, licenc) / community: **Waydroid** |
-| **FP3 állapot** | **hivatalos device-support van** (kész deviceinfo, kernel-aport) | **nincs** — natív adaptációt nulláról |
-
-**Következmény:** a pmOS NEM versenytárs, hanem **a natív Sailfish-port lépcsőfoka és tesztpadja.**
-A Sailfish a végcél (UX/termék), a pmOS az út: bevált mainline kernel + driverek, amin a hibákat
-reprodukáljuk/javítjuk, majd a kész réteg fölé jön a Sailfish-middleware (ofono, sensorfw, Lipstick/Mesa-EGL, UCM).
-Android-app natívon = **Waydroid** (mainline binder + Mesa megvan; nem kell blob/hybris).
-
----
-
-## 6. Megvalósíthatóság (becslés, jelenlegi felállással)
-
-| „Használható" definíció | Esély |
-|---|---|
-| Bootol pmOS + dokumentált működő HW (WiFis Linux-kézigép) | **~85%** (napokban, mert hivatalos pmOS-eszköz) |
-| + mobil adat + SMS | ~70% |
-| + akku-kezelés (tölt + látszik a szint) | ~45–55% |
-| + **működő hanghívás** (napi telefon) | **~15–25%** (q6voice long-pole, upstream is megoldatlan) |
-
-Kockázatok az én oldalamon: remote-hands (te flashelsz/nyomsz gombot), live-USB efemer root, flash-buktatók
-(`dtbo.img`, `lk2nd`).
-
----
-
-## 7. Roadmap / következő lépések
-
-**Ajánlott sorrend (könnyű győzelmektől a long-pole-ig):**
-1. **pmOS telepítés a TWRP-s FP3-ra** → bootoló referencia-platform (validálja a mátrixot). [~85%]
-2. **Adat + SMS** megerősítése (ModemManager + rmtfs).
-3. **Earpiece/mic UCM** a `mixer_paths.xml`-ből (média-audio). [3b]
-4. **Akku:** SMB5 töltő + fuel-gauge + `qcom,battery-data` profil a DT-be. [3a]
-5. **Szenzorok** (iio + sensorfw).
-6. **Hívás-audio (q6voice)** — upstream-mel közösen, utoljára. [3c]
-7. **Natív Sailfish adaptáció** a kész mainline-réteg fölé (PinePhone/Jolla-C2 modell).
-
-**Azonnal, hardver nélkül megtehető:** q6voice „mit kell mainline-ba vinni" delta-dokumentum
-(a `voice_setup_vocproc` + `start_voice` pontos APR-flow-ja + mainline-integrációs pontok).
-
----
-
-## 8. Kulcs-erőforrások (provenance)
-
-- pmOS FP3 wiki: `wiki.postmarketos.org/wiki/Fairphone_3_(fairphone-fp3)` (Anubis-blokkolt; letöltve)
-- pmOS kernel-aport: `linux-postmarketos-qcom-msm8953` (~6.15), pmaports GitLab
-- **mainline állás:** `github.com/msm8953-mainline` (Vladimir Lypak + Luca Weiss), `linux-msm.github.io/mainline-status/`
-- ASoC msm8916-wcd: lwn.net/Articles/704366 ; MSM8953/8976 ASoC upstream (lkml)
-- SMB5/PMI632 töltő: `qcom_smbx`/smb5 (linux-hardening mail-archive)
-- natív Sailfish modell: forum.sailfishos.org `/the-pinephone-thread/13845`, `/mainline-kernel-and-sailfish/26289`,
-  Jolla C2 mainline szál (adat+SMS megy, VoLTE még nem)
-- **adat-forrás a saját fánkban** (`hadk22/kernel/fairphone/sdm632`): `techpack/audio/dsp/q6voice.c` (+ q6 stack,
-  APR), `drivers/power/supply/qcom/qpnp-smb5.c`+`qpnp-qg.c`, downstream DTS `qcom,battery-data`,
-  `out/target/product/FP3/vendor/etc/mixer_paths.xml`, kinyert firmware (adsp/q6, wcd, modem)
-- FP3 referencia-fák (Halium-9, hw-confighoz): luksus42 (kernel/device/vendor), WeAreFairphone/android_device_fairphone_FP3
+> **Archive, not reference.** This is *what happened*, in order, with the dead
+> ends kept — the record that answers "was this already tried?". It is not a
+> description of how the device works today, and it is not a plan.
+>
+> **Where the current state lives:** `fp3-pmaports/docs/` — start at
+> [`docs/kernel/README.md`](https://github.com/llg179/fp3-pmaports/blob/main/docs/kernel/README.md),
+> then the per-subsystem `docs/<subsystem>/` pages. **Method** — how to acquire
+> ground truth, which instrument answers which question — is in the skill body
+> and in `references/{safety,firmware-re,recovery,devmem-oracle-kernel}.md`.
+>
+> ☠️ **What was removed on 2026-07-30, and why.** The file opened with eight
+> sections of status: a "hiteles feature-mátrix", a per-subsystem gap analysis
+> with difficulty ratings, a feasibility estimate and a roadmap. Every one of
+> them had gone false — the matrix still listed audio as "csak hangszóró;
+> earpiece+mic NEM", charging as "nincs fuel-gauge/charger driver" and the
+> sensors as missing, and put working voice calls at "~15-25%". All four are
+> long done. They were deleted rather than updated: status does not belong in a
+> skill, which is exactly the rot the "Where knowledge lives" rule exists to
+> prevent. The dated log below is kept unchanged, because a dated log cannot go
+> stale — it only ever claimed to describe the day it was written.
 
 ---
 

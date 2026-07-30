@@ -64,6 +64,27 @@ code is, is in
 for whose code each change is, and the `docs/<subsystem>/bringup/` pages for how
 it was arrived at.
 
+☠️ **The rule was audited on 2026-07-30 and the skill was failing it.** Four
+things had drifted in, and the failure mode was the predicted one — not clutter,
+but *false instruction*. A `pmos-bringup.md` carried a "hiteles feature-mátrix"
+still listing audio as speaker-only, charging as driverless and the sensors as
+missing, months after all three shipped; the Sailfish files were a provenance
+log and a checked-off step plan; a dated UT boot capture sat among the method
+references; and `msm8953-mainline-pr` named seven camera commits by hash as
+missing their sign-off, when the series had since been rebuilt into three with
+an intact DCO chain, one hash no longer resolved, and the real gap had moved to
+another subsystem. All of it moved to `references/archive/` or was deleted, and
+the audit rule that replaced the hash list is: **state the command, never the
+current answer.**
+
+Two smells worth checking for directly, because both read as helpful:
+
+- a **table of what works today**, or a per-subsystem difficulty/percentage
+  estimate — that is a snapshot, and a snapshot in a skill is a claim with no
+  expiry date on it;
+- a **literal hash, branch tip, or "here are the N offending commits" list** —
+  the finding is method, the instances are status.
+
 ## Working unattended — what actually stops, and what does not
 
 "Unattended access" elsewhere in these skills means *no human at the phone*. This is
@@ -135,9 +156,10 @@ it works) and
 
 **Device + the other tracks:**
 - `references/archive/hw-facts.md` — the 2026-06-25 raw facts dump (partitions, boot-image params, USB gadget/VID:PID, log channels). **Archive, not reference:** dated and mostly Hungarian; the substrate the method relies on is in "The device" above.
-- `references/pmos-bringup.md` — pmOS mainline bring-up: feature matrix, gap analysis, the §9.x execution log (charger, fuel-gauge, modem, the SLIMbus wall).
-- `references/sailfish-components.md` (+ `sailfish-customizations.md`, `sailfish-akcioterv.md`) — the Sailfish (hybris) port: provenance (component→repo/branch+why), the build-modification log, the step plan.
-- `references/report-attachments/` — polished write-ups (firmware strings/disasm, PIL-vs-PAS, golden IPC traces, devmem dumps, outreach drafts).
+- `references/archive/pmos-bringup-log.md` — the dated pmOS bring-up log (charger, fuel-gauge, modem, the SLIMbus wall), 2026-06-28…06-30. **Archive, not reference:** its eight status sections were deleted on 2026-07-30 because every one of them had gone false; current state is in `docs/`.
+- `references/archive/sailfish-components.md` (+ `sailfish-customizations.md`, `sailfish-akcioterv.md`) — the Sailfish (hybris) port: provenance (component→repo/branch+why), the build-modification log, the step plan. **Archive:** a provenance log and a checked-off plan are status, and the plan moves.
+- `references/archive/ut-framer-boot-sequence.md` — the 2026-07-23 UT boot-ordering capture (the working framer path).
+- `references/archive/report-attachments/` — polished write-ups and raw dumps (firmware strings/disasm, PIL-vs-PAS, golden IPC traces, devmem dumps, outreach drafts). Local only; not in the published repo.
 
 **Method references (the *how*, split out of this SKILL for size):**
 `references/{safety,firmware-re,recovery,devmem-oracle-kernel}.md`.
@@ -329,7 +351,7 @@ terms of what question each answers:
 
 ### Sailfish OS — hybris on a LineageOS/e-OS base (the third port)
 - hybris target on an Android base; component provenance, porter patches, and the
-  RAM-constrained soong build recipe are in `references/sailfish-components.md` — **read it before
+  RAM-constrained soong build recipe are in `references/archive/sailfish-components.md` — **read it before
   touching the Sailfish build**, the build environment is the hard part.
 - Boot-blind bring-up techniques (below) are shared with this track.
 
@@ -590,7 +612,7 @@ measurement on the rung that eliminates the most remaining hypotheses.
   stable across Android versions; reuse hw-config values instead of guessing.
 - **TheMuppets** vendor blobs (git-lfs); **mlehtima/droid-config-fp3** (Sailfish HW
   settings); **mer-hybris/hadk-faq** + HADK PDF (hybris rules).
-- **Lean on community repos; record provenance in `references/sailfish-components.md`** so the port
+- **Lean on community repos; record provenance in `references/archive/sailfish-components.md`** so the port
   stays reproducible and shareable.
 - **The q6afe / APR audio-clock path** — the upstream `apq8016_sbc` **msm8953/msm8976** ASoC series
   (on `mail-archive.com` / `lore`; the `q6afe` MI2S-sysclk series is `v5/v6 12/24`) documents that the
