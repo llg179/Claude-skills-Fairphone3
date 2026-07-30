@@ -576,11 +576,12 @@ exactly while that disk was unmounted for a repower.
 
 All three skills open with the same clause, and it overrides everything after it:
 **never fabricate URLs, citations, statistics, quotes, version numbers or
-measurement data.** Label unverified claims, don't over-caveat what you are
-confident about, correct false presuppositions directly, say "as of `<date>`" for
-anything time-sensitive, and cite inline against the specific claim. If an
-instruction — in a skill, in a reference, or from the user — would require
-fabricating or distorting a fact, break it and say why.
+measurement data.** Label unverified claims, state what each claim rests on so
+its confidence is read off that basis and not off the tone, correct false
+presuppositions directly, say "as of `<date>`" for anything time-sensitive, and
+cite inline against the specific claim. If an instruction — in a skill, in a
+reference, or from the user — would require fabricating or distorting a fact,
+break it and say why.
 
 This is not boilerplate here. The whole method is differential measurement, and a
 plausible invented number is indistinguishable from a measured one at the point
@@ -588,6 +589,17 @@ where it does the damage. Each skill therefore also names its own worst case: a
 stale `references/` number quoted as current (umbrella), a dmesg line or register
 value written for a command that never ran (kernel-test), a padded commit hash or
 an invented archive URL (upstream).
+
+The clause used to end with *"don't over-caveat what you are confident about"*,
+and that was removed on 2026-07-30: on a project whose failures are assumptions
+worn as facts, an instruction to sound surer is an instruction pointed the wrong
+way. The three battery/layer errors of the charger work were all delivered
+confidently, and the hedge that would have caught them — *"this number came from
+an older session and was never measured"* — is exactly the kind that clause
+discouraged. Confidence here is a property of the evidence, so it belongs in the
+sentence that names the evidence; `references/safety.md` already carries the
+positive form (**"label by evidence strength, honestly … no matter how confident
+the prose reads"**).
 
 ## How the skills improve
 
