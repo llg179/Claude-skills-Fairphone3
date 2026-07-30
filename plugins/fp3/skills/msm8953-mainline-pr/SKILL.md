@@ -581,6 +581,137 @@ This matters more than usual here: `generated-content.rst` invites maintainers t
 demand extra testing of tool-assisted work, so arriving with a measured result is
 the difference between a review and a dismissal.
 
+### Trial-rebase early — it is the only thing that answers "does this apply?"
+
+Step 1 above is normally done at post time. Do it **as a throwaway, months
+earlier**, because until it runs every statement about readiness is inference.
+
+The tempting substitute is checking that the files exist upstream. It is not the
+same question and it can be wrong in both directions. Measured 2026-07-30 on five
+series: every file one series touched was present upstream *and* it conflicted on
+the first patch, while another series whose driver had been assumed to be a moving
+target applied 6 for 6. Overall **11 of 21 commits applied with no conflict at
+all** — a fact nobody had, and two of the three failures had causes worth knowing
+rather than conflicts worth resolving.
+
+Nothing needs to be committed anywhere. Group the commits by *destination tree*
+(driver vs DTS vs a third subsystem), cherry-pick each group onto a detached head
+at that tree's tip, record, abort:
+
+```sh
+git worktree add --detach /tmp/trial <target>
+cd /tmp/trial
+for c in <oldest> … <newest>; do
+        git cherry-pick -x "$c" || {
+                git diff --name-only --diff-filter=U   # the answer you came for
+                git cherry-pick --abort; break; }
+done
+```
+
+Two things to get right, both of which quietly invalidate the run:
+
+- **Use the real per-subsystem tips, not one tree.** ASoC is `broonie/sound`
+  `for-next`, power-supply is `sre/linux-power-supply` `for-next`, DTS is fresh
+  torvalds. Fetching them into an existing full clone is cheap; a shallow clone is
+  useless here.
+- **Fresh detached head per group.** Two groups touching the same board `.dts`
+  will conflict with *each other* if stacked, and that conflict is an artefact.
+
+☠️ **Then ask what the conflict is made of.** A conflict is a symptom, and the
+diagnosis changes the plan completely. Here the audio conflict was pure
+context — `HEAD` had nothing where our patch expected a neighbouring line — and
+tracing that line found `qcom,msm8953-qdsp6-sndcard`, `msm8953_qdsp6_add_ops` and
+a `use_ibit_clk` field that come from two **out-of-tree** commits in the base,
+while everything our code actually *calls* was upstream. So the series is not
+rotten; it has a prerequisite. Cheap way to tell the two apart:
+
+```sh
+# for each symbol/label the conflicting hunk touches:
+git grep -c '<symbol>' <target>/<branch> -- <file>      # 0 = it is not upstream
+```
+
+### A dependency that was posted is a citable prerequisite, not a blocker
+
+Having found the missing scaffolding, the next question is whether anyone ever
+tried to upstream it — and the answer changes the outcome by a lot. Search
+patchwork by the *file* name, not the feature:
+
+```sh
+curl -s 'https://patchwork.kernel.org/api/1.2/patches/?q=apq8016_sbc&order=-date&per_page=50' \
+  | jq -r '.[] | "\(.date[0:10]) \(.state) \(.name)"'
+curl -s 'https://patchwork.kernel.org/api/1.2/series/<id>/' \
+  | jq -r '"\(.name) v\(.version)  cover: \(.cover_letter.msgid)", (.patches[]|"  \(.name)")'
+```
+
+That turned "depends on out-of-tree code" into "depends on *MSM8953/MSM8976 ASoC
+support* v3, eight patches, 2024-07-31, state `new`, with a cover-letter
+message-id". Three states with three different plans:
+
+| what the search says | what to do |
+|---|---|
+| posted, still `new`/`changes-requested` | declare it as a prerequisite; consider asking on the thread whether it is alive |
+| **never posted at all** (patchwork empty) | there is no message-id to depend on; the file does not exist upstream to patch. Do not send. Offer the work to whoever carries it |
+| merged since your base | just rebase; there is no dependency |
+
+The declaration mechanism is `b4`, not prose and not a fork branch:
+
+```sh
+b4 prep --edit-deps      # add change-id: or message-id: of the prerequisite series
+b4 prep --check-deps     # verifies it exists, is current, and that deps+yours apply
+```
+
+`git format-patch --base=<ref>` also emits `base-commit:` and, when the base is not
+upstream, `prerequisite-patch-id:` lines. Use it sparingly: the b4 documentation
+warns that *"a large number of prerequisites is hard for maintainers to keep track
+of"* and that it is usually better to send one problem at a time.
+
+☠️ **Publishing the dependency to your own fork does nothing.** A maintainer
+applies to *their* tree; a mirror branch under your account is not in anyone's
+`-next`. Mirroring is worth doing for **provenance durability** only — see the
+archival-snapshot recipe below — and it must never become the base of a `submit`
+branch, because that hides exactly the fact a reviewer needs.
+
+### Archive an import as a parentless snapshot, not a mirror
+
+The citation in §2b resolves only while the source repository exists, and personal
+reverse-engineering repos are exactly the ones that disappear — the branch behind
+this port's camera driver had **already** been deleted. Keep the source reachable
+under your own account, in a namespace that cannot be mistaken for a base
+(`vendor/*` here), and prune it with nothing.
+
+Do not mirror the branch. Measured: the real branch was 71 541 commits unique
+against mainline, because a downstream tree following a stable series carries
+cherry-picks with fresh SHAs. Snapshot the **tree** instead — it is
+byte-verifiable, and pushes in under a minute because a fork network shares its
+objects with the upstream it was forked from:
+
+```sh
+git fetch --no-tags <url> <sha> && git update-ref refs/vendor/x FETCH_HEAD
+SNAP=$(GIT_AUTHOR_NAME="<their name>" GIT_AUTHOR_EMAIL="<their mail>" \
+       GIT_AUTHOR_DATE="<their date>" \
+       git commit-tree refs/vendor/x^{tree} -F msg.txt)   # no -p: parentless
+git branch vendor/<name> "$SNAP"
+git diff vendor/<name> refs/vendor/x        # MUST be empty - that is the guarantee
+```
+
+Put the full citation and the `git diff` verification line in the snapshot's
+message, keep their authorship and date, and state in the body that it is an
+archive and not a re-submission. Quote the original commit message rather than
+re-emitting its trailers as live ones, so nothing reads as a fresh certification
+by someone who did not make it.
+
+☠️ **Force-pushing a rewritten branch can break a pinned build, silently and
+later.** The package here fetches a GitHub tarball of an exact `_commit`, and
+GitHub serves that only while the commit is reachable from some ref — rewriting the
+branch it sat on would have left the installed kernel un-rebuildable, with no
+error until someone tried. Tag the old tip first, then verify the pin:
+
+```sh
+git tag -a archive/<what>-pre-<change> <old-tip> -m 'why this must stay reachable'
+curl -sI -o /dev/null -w '%{http_code}\n' \
+  "https://github.com/<user>/linux/archive/<pinned-sha>.tar.gz"   # 302, not 404
+```
+
 ---
 
 ## Authorship and provenance
@@ -783,16 +914,86 @@ Four things to do before writing the paragraph, in cost order:
    "Measured here" and "read out of a vendor log" are different risks and a
    reviewer treats them differently; guessing wrong in the *flattering* direction
    is the one that damages trust.
-4. **If you cannot retrieve the upstream file, say the delta is unmeasured.** Do
-   not estimate what fraction is yours. Fetching it may simply fail — the source
-   in this case was a GitLab merge request and a GitHub API fetch of the same path
-   returned nothing — and "unmeasured, and here is what to run" is a usable state.
-   A number you made up is not.
+4. **Retrieve the original file and diff it.** This is the check that breaks a
+   *self-consistent* false claim, and it is two commands. Until it is run, "our
+   delta" is a feeling; after it, it is `12 hunks, +68/−21 on 1514 lines`. If the
+   fetch genuinely fails, say the delta is unmeasured and name the command —
+   never estimate the fraction that is yours.
+
+☠️ **"The fetch failed" is usually "I looked in the wrong forge".** This skill
+carried *"a GitHub API fetch of the same path returned nothing"* for a day as if
+it were a property of the source. It was not: `panpanpanpan/linux` does not exist
+on GitHub at all, the tree was on **GitLab**, and once looked for there the file
+came back in minutes. A 404 tells you about your URL, not about the world.
+
+Two mechanics worth having, both worked 2026-07-30:
+
+```sh
+# 1. find the project and the merge request, when all you have is a nickname
+curl -s "https://gitlab.com/api/v4/groups/<group>/projects?per_page=50" \
+  | jq -r '.[] | "\(.id) \(.path_with_namespace)"'
+curl -s "https://gitlab.com/api/v4/projects/<id>/merge_requests?search=<term>&scope=all&state=all" \
+  | jq -r '.[] | "!\(.iid) \(.state) \(.author.username) \(.source_branch) | \(.title)"'
+curl -s "https://gitlab.com/api/v4/projects/<id>/merge_requests/<iid>/commits" \
+  | jq -r '.[] | "\(.id) \(.author_name) <\(.author_email)> \(.authored_date[0:10]) \(.title)"'
+
+# 2. fetch ONE commit by SHA - works even when the branch has been deleted
+git fetch --no-tags <clone-url> <full-40-char-sha>     # GitLab allows SHA-want
+git update-ref refs/vendor/<name> FETCH_HEAD
+```
+
+☠️ **The merge-request author is not necessarily the code's author.** The
+attribution this port used for a day named the person who opened the MR and wrote
+its device tree; the driver inside it was somebody else's commit, cherry-picked in.
+Take the fields from the **commit**, per the `git log -1 --format=` line in §2b —
+never from the MR page, the branch name, or a nickname in an old note.
 
 The structural consequence is [§2b](#2b-split-the-import-from-the-invention-and-make-the-import-traceable):
 one commit importing the file with **their** authorship and the full citation,
 one commit with your changes. Doing that late is expensive, which is the argument
 for asking the question when the file arrives.
+
+Two things the split buys beyond etiquette, both observed when it was finally
+done:
+
+- **It localises what the checkers blame on you.** As one commit the camera series
+  showed 4 `checkpatch` errors and 17 warnings, indistinguishable from our own
+  sloppiness. Split, the import carries all 4 and 17 of them and our own patch
+  reads 0 errors / 1 warning. That is also the argument for cleaning the imported
+  style in a **third** commit: folding the cleanup into the import destroys the
+  byte-identity that makes the import checkable at all.
+- **The DCO question often answers itself in your favour.** The fear was that the
+  import carried no sign-off, as had just happened with a sensor series. It
+  carried three — the author's, the MR author's and the committer's — so
+  forwarding it needed only ours appended. Check before assuming the worse case;
+  the two situations look identical from the outside and have opposite outcomes.
+
+### Look for prior art before writing, not after
+
+☠️ **On an out-of-tree subsystem, someone else is probably carrying it further
+than your base is.** A one-line DAPM route was written on this port as a
+discovery, recorded in three documents as new, and turned out to exist line for
+line — including the exact route whose absence had been "found" — in a 2022 commit
+on another downstream tree, which implemented it for seven ports where ours did
+one.
+
+Nothing was published as someone else's, and the patch was not wrong. The cost was
+narrower and more annoying: weeks of debugging spent re-deriving a solved problem,
+and a claim of novelty in a commit message that a reviewer could have punctured in
+one search. The check belongs *before* the work:
+
+```sh
+# who else carries this file, and how far?
+git ls-remote --heads <other-downstream-tree>      # look for topic branches
+git fetch --no-tags <url> <sha> && git diff FETCH_HEAD:<path> HEAD:<path>
+curl -s 'https://patchwork.kernel.org/api/1.2/patches/?q=<file-or-subsystem>&order=-date' \
+  | jq -r '.[] | "\(.date[0:10]) \(.state) \(.name)"'
+```
+
+The trigger is mechanical: **if the file you are patching is not in Linus' tree,
+find out who else patches it before you write.** The same search that later found
+the camera driver's real origin would have found this; it was simply never run for
+that category.
 
 ### A `Fixes:` target comes from blame, never from the file's age
 
@@ -964,10 +1165,28 @@ was true three rounds ago reads exactly like a current one.
       applied on the submit side only.
 - [ ] **The immediate source of every imported file is named**, not just the ancestor
       it is structured on: grep the project's own bring-up notes, and read the imported
-      code's comments before writing the provenance paragraph.
+      code's comments before writing the provenance paragraph. Take the fields from the
+      **commit**, never from a merge-request page or a remembered nickname — the person
+      who opened the MR is often not the author.
+- [ ] **The original file was fetched and diffed**, so the delta is a number and not an
+      impression. If the forge search failed, it was searched on the *right* forge —
+      a 404 is a fact about the URL. And the byte-identical import is its own commit,
+      with any style cleanup in a third one.
 - [ ] **Nothing in the series rests on a commit with no `Signed-off-by`** — an imported
       WIP cannot be signed on its author's behalf. And check patchwork: if the author's
       own series is in flight, reply to it instead of competing with it.
+- [ ] **For every file not in Linus' tree, someone else's tree was searched for prior
+      art before the patch was written** — not after. On an out-of-tree subsystem the
+      thing you are about to discover may already exist, more generally, elsewhere.
+- [ ] **The series was trial-rebased onto the destination tree**, per subsystem tip,
+      on a throwaway head. "The files exist upstream" is a different question and gets
+      the answer wrong in both directions.
+- [ ] **Any prerequisite is declared, not assumed**: patchwork searched by file name,
+      and if the dependency was posted, cited via `b4 prep --edit-deps` /
+      `prerequisite-patch-id:`. If it was never posted, the series is not sendable and
+      publishing its base to our fork does not change that.
+- [ ] **No published branch was force-pushed without tagging the old tip**, and any
+      pinned `_commit` still resolves (`curl -sI …/archive/<sha>.tar.gz` → 302).
 - [ ] **`Fixes:` taken from `git blame` on the real tree**, not from the file's age.
 - [ ] Commits are `-s` signed, imperative-mood, body wrapped ~75 cols; `Fixes:`/`Cc:
       stable` on bugfixes.

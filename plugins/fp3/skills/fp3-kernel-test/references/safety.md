@@ -273,6 +273,34 @@ device, with the mechanism, so you can recognise *new* instances of the same cla
     rings at T0 (a read *is* a drain), trigger, capture, then restore `SYSTEM` — and
     verify `crash_count=0` to confirm it never actually fired.
 
+19. **☠️ Force-pushing a rewritten kernel branch can make the INSTALLED package
+    un-rebuildable, and nothing complains until you try.** The `linux-fp3` APKBUILD
+    fetches a GitHub source tarball of an exact `_commit`; GitHub serves that only while
+    the commit is reachable from *some* ref. Rewriting the branch that commit sat on —
+    a rebase of `integration/<base>` to correct a message, say — orphans it, and the next
+    build 404s. This belongs with the brick-safety rules rather than the measurement ones
+    because it removes a **way back**: the reproducible source of the kernel currently on
+    the phone.
+
+    Before any history rewrite of a published branch: tag the old tip, push the tag, and
+    only then force-push. Then verify the pin, because reasoning about reachability is
+    exactly the step that goes wrong (`git cat-file -e` still succeeds on an orphan while
+    GitHub 404s it):
+
+    ```sh
+    git tag -a archive/<branch>-pre-<change> <old-tip> -m 'why this must stay reachable'
+    git push fork refs/tags/archive/<branch>-pre-<change>
+    git push --force-with-lease fork <branch>
+    curl -sI -o /dev/null -w '%{http_code}\n' \
+      "https://github.com/<user>/linux/archive/<pinned-sha>.tar.gz"   # 302, not 404
+    ```
+
+    Two corollaries. `--force-with-lease`, never bare `--force`, so a concurrent push is
+    a conflict rather than a loss. And after such a rewrite the pinned commit is **no
+    longer an ancestor of the branch**, so "N commits behind" stops being meaningful —
+    say which lineage it is on instead, or the next person will compute a nonsense
+    number.
+
 ## Measurement integrity (don't report soft evidence as hard — the anti-patterns that fake progress)
 
 Distinct from the brick-safety constraints above: those protect the *device*, these
@@ -632,3 +660,16 @@ All of the below is from writing and validating a device-tree binding, 2026-07-3
   (GitHub keeps them), so it took **three** runs before "0 broken links" meant
   anything. When a fresh check reports a defect in work that has been in use,
   suspect the check first and run it against a known-good case.
+- **☠️☠️ A trap written down in this file was re-introduced the same week.** The
+  anchor checker above was rewritten from scratch a few days later and stripped
+  underscores **again** — same tool, same bug, same single false positive, in a
+  session that had itself authored the warning. Prose in a skill does not protect
+  a rewrite; only something that fails does. So when a checker's bug is worth
+  recording, put the guard **where the code is**: the offending line now reads
+  ```python
+  text = re.sub(r'[*~]', '', text)   # NOT _ : GitHub keeps it (this bug bit twice)
+  ```
+  and better still, give any homemade checker a **known-positive and a
+  known-negative fixture** so a rewrite that breaks it says so on the first run.
+  The general form: a lesson that lives only in documentation protects the reader,
+  not the next author — and those are often the same person.

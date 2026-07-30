@@ -943,6 +943,37 @@ whether it's already done or in flight — before writing a line of patch.** (Le
   months before it hit any release)? on patchwork/lore? A GitHub fork's *age* and its
   stale default branch say nothing about upstream status — the maintainer's work lands
   via mailing lists; the fork is just their staging area.
+- ☠️ **"Before writing a line of patch" is the part that gets skipped, and the cost
+  is silent.** A one-line DAPM route on the voice path was written here, debugged
+  for weeks, and recorded in three documents as a discovery. It existed line for
+  line — including the exact missing route — in a 2022 commit on another downstream
+  tree, implemented for seven SLIMbus ports where ours did one. Nobody's work was
+  published as ours and the patch was not wrong; what was lost was the weeks. The
+  trigger is mechanical and worth making a habit: **if the file you are about to
+  patch is not in Linus' tree, list who else carries it first.**
+  ```sh
+  git ls-remote --heads <other-downstream-tree>   # topic branches name the effort
+  git fetch --no-tags <url> <sha> && git diff FETCH_HEAD:<path> HEAD:<path>
+  ```
+  Downstream trees advertise their in-flight work in branch names
+  (`rdacayan/for-sdm845/q6voice-series` was one `ls-remote` away all along).
+- **Search the right forge, and take authorship from the commit.** A repo named in
+  an old note as `panpanpanpan/linux` does not exist on GitHub; the tree was on
+  **GitLab**, under a group, and the driver's author was not the person the note
+  named — they had opened the merge request, the code inside was somebody else's
+  cherry-pick. A 404 means the URL is wrong, not that the source is unreachable.
+  ```sh
+  curl -s "https://gitlab.com/api/v4/groups/<group>/projects?per_page=50" \
+    | jq -r '.[] | "\(.id) \(.path_with_namespace)"'
+  curl -s "https://gitlab.com/api/v4/projects/<id>/merge_requests?search=<term>&scope=all&state=all" \
+    | jq -r '.[] | "!\(.iid) \(.state) \(.author.username) \(.source_branch) | \(.title)"'
+  curl -s "https://gitlab.com/api/v4/projects/<id>/merge_requests/<iid>/commits" \
+    | jq -r '.[] | "\(.id) \(.author_name) <\(.author_email)> \(.authored_date[0:10]) \(.title)"'
+  git fetch --no-tags <clone-url> <full-sha>     # works after the branch is deleted
+  ```
+  Deleted branches are the normal case for a personal RE repo, which is also why an
+  import is worth archiving under your own account — recipe in
+  [`../msm8953-mainline-pr/SKILL.md`](../msm8953-mainline-pr/SKILL.md#archive-an-import-as-a-parentless-snapshot-not-a-mirror).
 - **If it exists, contribute the DELTA to their effort, not a rival series.** Diff
   your driver against theirs (ours vs the maintainer's shared-base driver was ~54
   lines; the real value was a few FP3-slow-rail robustness fixes + a hardware
@@ -959,6 +990,15 @@ whether it's already done or in flight — before writing a line of patch.** (Le
   RE efforts (camera, SMGR sensors) are the places to look first. The citation
   mechanics and the "find the immediate source" procedure are in
   [`../msm8953-mainline-pr/SKILL.md`](../msm8953-mainline-pr/SKILL.md#find-the-immediate-source-not-the-ancestor-you-recognise).
+
+  **Resolved 2026-07-30, and the fix was cheap:** the original file was fetched by
+  SHA and diffed. 1514 lines in, 1568 out, +68/−21 — so the driver is ~96 % Joel
+  Selvaraj's and the four things that are ours are all in the power sequence. The
+  series is now import → our change → device tree, and the import turned out to
+  carry a full `Signed-off-by` chain, so nothing was blocked. The lesson to keep is
+  the *asymmetry*: the wrong claim survived nine days of self-consistent
+  documentation, and one `git diff` against the original ended it. **Fetch the
+  thing you copied.**
 - **When the maintainer's series is on a list rather than in a repo, patchwork's
   API answers where lore does not** (both `lore.kernel.org` and `lkml.org` are
   behind a bot wall and return *Access Denied* to automated fetches):

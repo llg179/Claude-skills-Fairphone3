@@ -145,6 +145,8 @@ cost a device, a boot, or a wrong conclusion at least once.
 15. ☠️ Never read co-processor MMIO across an SSR stop-window — the sampler dies leaving no trace.
 16. ☠️ A zero-length DT boolean can hang uninterruptibly; an outer `timeout` does **not** break it.
 17. ☠️ `apk add linux-fp3` regenerates `extlinux.conf` and drops a hand-added fallback — rewrite it *after* the install.
+18. ☠️ A downstream ADSP-SSR on the UT oracle defaults to `restart_level=SYSTEM` — one crash reboots the phone; set `RELATED` first.
+19. ☠️ Force-pushing a rewritten branch orphans the package's pinned `_commit` — tag the old tip first, then check the tarball still 302s.
 
 **Measurement integrity — protect the measurement:**
 
@@ -187,6 +189,10 @@ cost a device, a boot, or a wrong conclusion at least once.
 - ☠️ An undocumented `compatible` is skipped **silently**: a clean `dtbs_check` may mean nothing was checked.
 - Never hand-review a schema you have not run; the checker finds your schema's bugs.
 - ☠️ A checker's **positive** needs validating as much as its null — suspect the check before the work.
+- ☠️ A trap recorded only in prose gets re-introduced: put the guard in the code, and give a homemade checker fixtures.
+- "Does it apply upstream?" is answered by a trial rebase onto the real subsystem tip, never by checking the files exist.
+- A conflict is a symptom: `git grep` the symbols in the conflicting hunk against the target to see what is missing.
+- Fetch the original of an imported file and diff it — a 404 is a fact about your URL, not about the world.
 
 **Provenance integrity — the values you *write* are claims too:**
 
