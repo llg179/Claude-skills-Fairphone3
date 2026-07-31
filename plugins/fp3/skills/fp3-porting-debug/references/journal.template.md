@@ -1,5 +1,12 @@
 # FP3 SLIMbus/ADSP debug journal
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 Running hypothesis→test→verdict record for the FP3 audio/SLIMbus bring-up (and any other
 co-processor fault). **Append one entry per experiment; never rewrite history** — a wrong
 verdict earns a *follow-up* entry, not an edit. This is *what was tried*, so the next session

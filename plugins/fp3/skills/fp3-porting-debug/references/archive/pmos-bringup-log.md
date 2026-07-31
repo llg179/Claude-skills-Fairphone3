@@ -1,5 +1,12 @@
 # postmarketOS mainline bring-up — dated execution log (2026-06-28 … 06-30)
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 > **Archive, not reference.** This is *what happened*, in order, with the dead
 > ends kept — the record that answers "was this already tried?". It is not a
 > description of how the device works today, and it is not a plan.

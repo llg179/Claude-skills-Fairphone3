@@ -1,5 +1,12 @@
 # Runtime outputs → `generated/`
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 `generated/` is a symlink → `/tmp` (re-pointable). **All runtime-generated files
 (signed `.mbn`s, dumps, staged readers, logs) live under `/tmp` = `generated/`** — the
 skill's `scripts/` dir stays source-only, nothing generated is committed here.

@@ -1,5 +1,12 @@
 # FP3 skill-feedback log
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 **Cél:** a munka közben felismert *átvihető* módszertani tanulságok futó gyűjtője —
 gotcha-k, új brick-safety osztályok, mérés-integritási csapdák, jobb receptek, vagy egy
 jelenlegi skill-állítás *korrekciója*. Ez a **nyersanyag a `fp3-porting-debug` /

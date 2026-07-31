@@ -1,5 +1,12 @@
 # Script index
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 What each script in this directory is for. Everything here is driven by
 `fp3-env.sh` — source it (or let the script source it) so `FP3_PW`,
 `FP3_DEV_IP`, `FP3_ROOT` and friends are set; see the repository README.

@@ -1,5 +1,12 @@
 # FP3 pmOS bring-up eszköztár
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 > Full, English index of every script here: **[INDEX.md](INDEX.md)**.
 > Single-use reverse-engineering artifacts now live in `archive/`.
 

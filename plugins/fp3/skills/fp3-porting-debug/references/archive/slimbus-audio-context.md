@@ -1,5 +1,12 @@
 # FP3 audio (SLIMbus) — entry context for a new session
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 > **★★★★★★ FULLY SOLVED — AUDIBLE SOUND (folyt.208, 2026-07-24): clean music plays in the headphones, with correct rhythm and pitch, and working volume control. The project's GOAL is met on the earpiece/headphone SLIMbus path.**
 > The solution was TWO independent breakthroughs, one after the other:
 > 1. **Framer wall (folyt.196-199):** QDSP6SS `0x0c20002c` bit3 (see below) → the WCD9335 enumerates / gets a logical address.

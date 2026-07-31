@@ -1,5 +1,12 @@
 # Archive — dated records, not method
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 Nothing in this directory is instruction. These are **live investigation logs and
 chronologies** kept as a historical record: what was tried, in what order, and
 what was believed at the time. They contain superseded verdicts stacked on top of
@@ -28,6 +35,3 @@ Two things worth knowing before mining them:
   "the poke is required" is superseded by
   [`docs/audio/bringup/qdsp6ss-framer-poke.md`](https://github.com/llg179org/fp3-pmaports/blob/main/docs/audio/bringup/qdsp6ss-framer-poke.md).
 
-> **AI-generated.** Written by Claude (Opus 5) under the direction of
-> Lajosházi, László Gergely. The archived files themselves were written during
-> the sessions they describe, and are left exactly as they were.

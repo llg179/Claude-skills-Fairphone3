@@ -1,8 +1,7 @@
 {
   "name": "Claude-skills-Fairphone3",
   "owner": {
-    "name": "Lajosházi, László Gergely",
-    "email": "lajoshazilg@gmail.com"
+    "name": "Lajosházi, László Gergely"
   },
   "metadata": {
     "description": "Claude Code skills for Fairphone 3 (MSM8953/SDM632) mainline Linux bring-up and debugging",

@@ -2,7 +2,7 @@
   "name": "fp3",
   "description": "Fairphone 3 (MSM8953/SDM632) mainline Linux bring-up and debugging skills: hardware facts, postmarketOS/Sailfish/downstream tracks, ground-truth acquisition techniques, and a guard-railed kernel test loop.",
   "version": "0.1.0",
-  "author": { "name": "Lajosházi, László Gergely", "email": "lajoshazilg@gmail.com" },
+  "author": { "name": "Lajosházi, László Gergely" },
   "homepage": "https://github.com/llg179org/Claude-skills-Fairphone3",
   "keywords": ["fairphone", "fp3", "msm8953", "sdm632", "postmarketos", "kernel", "slimbus", "wcd9335", "asoc"]
 }

@@ -13,6 +13,13 @@ description: >-
 
 # FP3 kernel work → upstream submission
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 This is a **process** skill: how to take device-support work that currently lives
 on the personal fork (`github.com/llg179org/linux`) and shape it into something a
 maintainer will accept. The audio/WCD9335 series is the running worked example.
@@ -411,42 +418,47 @@ steps; it must never absorb charger/camera/modem DTS.
 
 ---
 
-## Worked example: the audio series (15 → 8 commits, one branch)
+## Reshaping a wip branch into a series
 
-Verified against the branch, not recalled: the audio wip branch had exactly **15**
-commits on top of its base, and three of them **mix** DTS with driver
-code — each touches `arch/arm64/boot/dts/qcom/sdm632-fairphone-fp3.dts` *plus* a
-driver file:
+The audio branch is the standing example, and the *shape* of the reshape is the
+transferable part. **The commits themselves are not written down here** — a wip
+branch is rebased, squashed and rebuilt continuously, and an earlier revision of
+this section carried three literal hashes and an eight-item series that had all
+ceased to exist within weeks. What the current series is belongs in
+[`fp3-pmaports/docs/`](https://github.com/llg179org/fp3-pmaports/tree/main/docs);
+what follows is how to get there.
 
-| commit | driver file it also touches |
-|---|---|
-| `81d06a36` "SLIMbus WCD9335 framer bring-up via QDSP6SS quirk + codec graft" | `drivers/remoteproc/qcom_q6v5_pas.c` |
-| `eb2c18d7` "clear QDSP6SS framer quirk bit3 right before capability" | `drivers/slimbus/qcom-ngd-ctrl.c` |
-| `ffef69f4` "apq8016_sbc: add SLIMbus backend support + FP3 WCD9335 card" | `sound/soc/qcom/apq8016_sbc.c` |
+**Measure the branch first, never recall it.** Two questions, two commands:
 
-Reshaped as one `submit/audio` branch — **based on `sound/for-next`, not on
-`7.1.3/main`**, since LKML is the destination — driver commits first, one
-consolidated DTS commit last:
+```sh
+# how many commits, and what are they?
+git log --oneline <base>..wip/<base>/<cat>
 
-1. `remoteproc: qcom_q6v5_pas: apply QDSP6SS framer quirk for WCD9335 SLIMbus`
-   — driver half of the framer bring-up.
-2. `slimbus: ngd: clear the QDSP6SS framer quirk bit before capability exchange`
-   — driver half of the NGD change.
-3. `ASoC: qcom: apq8016_sbc: add SLIMbus backend, the FP3 WCD9335 card and the digital-mic widgets`
-   — machine-driver: SLIMbus backend + FP3 card + DMIC widgets.
-4. `ASoC: wcd9335: fix codec init (efuse sense state and MCLK_CFG)`
-   — two init fixes squashed.
-5. `ASoC: wcd9335: release the TX front-end hold after the ADC is up`
-   — standalone capture bugfix; carries `Fixes:` (and `Cc: stable` on the LKML path).
-6. `ASoC: wcd9335: take the mic bias voltage and DMIC clock rate from the DT`.
-7. `ASoC: wcd9335: add MBHC headset jack detection`
-   — the revived 2018 MBHC series adapted for the FP3.
-8. `arm64: dts: qcom: sdm632-fairphone-fp3: wire up WCD9335 audio`
-   — the single DTS commit: the `.dts` halves of the three mixed commits plus all
-   the pure-DTS ones (framer/codec graft node, MCLK routing + pinmux, analog
-   mic-bias supplies, DMIC wiring, MBHC button thresholds).
+# which of them MIX dts with driver code? (the ones that must be split)
+git log --format='%h %s' <base>..wip/<base>/<cat> | while read h s; do
+  f=$(git show --name-only --format= "$h")
+  echo "$f" | grep -q '\.dtsi\?$' && echo "$f" | grep -qE '\.[ch]$' \
+    && echo "MIXED $h $s"
+done
+```
 
-Result: **7 driver commits + 1 DTS commit**, one branch, nothing mixed.
+**Then reshape to this shape**, on the subsystem's `-next` and not on
+`<base>/main`, since LKML is the destination:
+
+1. **driver commits first, DTS last.** Every `.dts` hunk in the branch —
+   including the halves cut out of the mixed commits — collects into the trailing
+   board commit, unless the board genuinely has two separate enablement steps.
+2. **one commit per logical change, not per thing you learned.** Discovery order
+   is the wip branch's job; the series is ordered by what a reviewer needs to read
+   in sequence.
+3. **an imported file lands unchanged in its own commit**, with your changes to
+   it in the next one — see §2b.
+4. **a standalone bugfix stays standalone**, so it can carry `Fixes:` and, where
+   it applies, `Cc: stable`.
+
+The result is *n* driver commits plus one DTS commit, one branch, nothing mixed.
+Rebuilding the series is cheap and rebuilding it is the norm: regenerate from
+`wip`, never hand-edit `submit`.
 
 ---
 
@@ -818,9 +830,14 @@ Failure to acknowledge the assistance "may impede the acceptance of your work."
 **So the trailer block for an upstream-bound commit is:**
 
 ```
-Signed-off-by: Lajosházi, László Gergely <lajoshazilg@gmail.com>
+Signed-off-by: Lajosházi, László Gergely <your@address>
 Assisted-by: Claude:claude-opus-4-8
 ```
+
+`<your@address>` is a placeholder in this public file. Take the real address
+from the private `CLAUDE.md`, and take it from there every time — a
+`Signed-off-by` with a guessed or a `noreply` address certifies nothing, and a
+maintainer who cannot reply to it will not take the patch.
 
 i.e. **replace** the fork's `Co-authored-by: Claude …` line with `Assisted-by:`.
 `Co-authored-by:` is a GitHub convention, not a kernel trailer — and its kernel
@@ -831,7 +848,7 @@ requires every `Co-developed-by:` to be **immediately followed by a
 exists precisely to fill that gap: attribution without an authorship claim.
 
 - **Fork commits (llg179org/linux):** keep the fork rule — author
-  `Lajosházi, László Gergely <lajoshazilg@gmail.com>` + `Signed-off-by:` +
+  `Lajosházi, László Gergely <your@address>` + `Signed-off-by:` +
   `Co-authored-by: Claude Opus 4.8 <noreply@anthropic.com>`, kernel comments in
   **English only**. That is the local convention (CLAUDE.md), unaffected.
 - **Upstream submission (LKML):** swap `Co-authored-by:` → `Assisted-by:` naming

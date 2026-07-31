@@ -1,5 +1,12 @@
 # FP3 downstream (UT/Halium 4.9.218) audio-framer boot sequence — full ordering
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 Live capture 2026-07-23 (folyt.194), on OUR device, slot_a UT. This is the
 **working** path: WCD9335 gets `laddr 0xc8/0xc7` at t≈21.94s. Source split
 (kernel-boot vs userspace-init) is the whole point — the ADSP that frames the

@@ -1,5 +1,12 @@
 # FP3 — boot-bring-up debug log (chronology + architecture notes)
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 > Migrated from `Opus-fp3-facts.txt` (chronology half). Dated experiment log for the
 > ramdisk/boot/USB-gadget bring-up + the KOMPONENSEK/architecture notes. History — read for 'was X tried?'.
 

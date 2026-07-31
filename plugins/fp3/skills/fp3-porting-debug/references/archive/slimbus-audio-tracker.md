@@ -1,5 +1,12 @@
 # FP3 SLIMbus framer — RUNTIME-TRIGGER investigation (LIVE tracker)
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 > **★★★★★ MEGOLDVA (folyt.196, 2026-07-23) — EZ A TRACKER TÖRTÉNELMI.** A framer-fal gyökere
 > **NEM** a „fizikai óra-realizáció / ADSP-belső PLL" (ahogy lentebb áll), hanem a **QDSP6SS `0x0c20002c`
 > bit3**, amit a mainline PAS set-ben hagy (downstream PIL törli). Törölve a framer felframel, a WCD9335

@@ -1,5 +1,12 @@
 # Sailfish OS — Fairphone 3 (fp3) community port — AKCIÓTERV
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 > Megjegyzés: Ez a dokumentum a hivatalos HADK (Hardware Adaptation Development Kit)
 > folyamatot követi. Hivatkozás: https://hadk.sailfishos.org
 > Referencia port: github.com/mlehtima/droid-config-fp4 (Fairphone 4)
@@ -41,7 +48,7 @@
 - [x] Git globális azonosító beállítása (repo init kéri) — beállítva host-on ÉS a HABUILD chroot /root/.gitconfig-ban
   ```bash
   git config --global user.name "lajoshazilg"
-  git config --global user.email "lajoshazilg@gmail.com"
+  git config --global user.email "<your@address>"
   ```
 - [ ] Hozz létre egy `restore_env.sh` szkriptet, ami reboot után újratelepíti az apt csomagokat és exportálja a változókat
 - [ ] Jegyezd fel a Sailfish OS célverziót (pl. `4.6.0.x`) — minden tarball/branch ehhez igazodik

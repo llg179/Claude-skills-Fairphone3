@@ -1,5 +1,12 @@
 # fp3-porting-debug — DEVMEM oracle-kernel recipe (repack + from-source build)
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 > Split out of `SKILL.md` (pure recipe/data). You only need this if the stock UT kernel
 > lacks `/dev/mem` — first check whether you even need MMIO (a debugfs `clk_summary` diff
 > often answers the question with no custom kernel). See SKILL.md "the oracle" for that decision.

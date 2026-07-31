@@ -13,6 +13,13 @@ description: >-
 
 # FP3 kernel/firmware experiment cycle
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 This is a **method** skill: how to ask a hardware question on the FP3 and get a
 trustworthy answer, one change at a time, without bricking the loop. The concrete
 addresses, register values and conclusions in here come from the WCD9326/SLIMbus

@@ -1,5 +1,12 @@
 # Sailfish OS — Fairphone 3 (fp3) port — komponens-eredet (provenance) napló
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 > Cél: **megosztható tapasztalat**. Minden komponens: honnan jön (repo + branch/commit),
 > mi a szerepe, mit kellett módosítani és **miért**. A kronológiai részletek: `archive/boot-debug-log.md`.
 > Build-recept és környezet: lentebb. Frissítendő minden új komponensnél/módosításnál.

@@ -1,5 +1,12 @@
 # fp3-kernel-test — Safety & measurement integrity (full text)
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 > Split out of `SKILL.md` for size; the SKILL body carries the headline list, this file the full mechanisms + worked examples.
 >
 > **This is the single home for brick-safety** — `fp3-porting-debug` points here

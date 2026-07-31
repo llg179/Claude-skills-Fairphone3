@@ -1,5 +1,12 @@
 # fp3-porting-debug — source trees & build system (portable manifest)
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 The symlinks in this `src/` dir point at the working checkouts. **Portability rule
 (the skill owns this):** if a symlink's target is missing (fresh machine), clone it from the
 URL+branch below and re-point the symlink here — never hardcode an absolute path elsewhere.

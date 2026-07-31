@@ -1,5 +1,12 @@
 # Unattended access — the files to deploy
 
+> ⚠️ **AI-generated.** This page — and the code, device tree and tooling it
+> describes — was written by Claude (Opus 5) working under the direction of
+> Lajosházi, László Gergely, who reviewed every change and made or reviewed
+> every measurement it rests on. Kernel commits carry `Co-authored-by: Claude`;
+> anything prepared for the LKML carries `Assisted-by:` instead and never a
+> `Signed-off-by` from the assistant, since only a human can certify the DCO.
+
 Drop-in configuration that makes both OSes reachable with **no on-device login
 and no USB replug**. The step-by-step procedure, and the reasoning behind each
 piece, is in the repository README under "Unattended access"; this directory
