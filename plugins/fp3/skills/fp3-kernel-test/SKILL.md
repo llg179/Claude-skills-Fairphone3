@@ -167,6 +167,7 @@ cost a device, a boot, or a wrong conclusion at least once.
 - Never substitute source analysis for a live measurement; not feasible now = **BLOCKED**, not done.
 - Label by evidence strength: live two-sided register diff = hard; source, one log line, one slot = soft.
 - Never close an avenue on wrong-layer evidence — confirm the signal measures *that* thing.
+- "The hardware cannot do this" is conditional on your own init — a register that never moves is a default, not a measurement.
 - One-sided is not a differential. Always run the oracle control.
 - A register that differs may be an **output/marker**, not a lever — prove causality before building on it.
 - Disprove a hypothesised lever **offline** first (a branch on a pointer bit is structurally constant).

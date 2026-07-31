@@ -612,6 +612,26 @@ because it landed in code shared by every device the driver serves.
   **a silent physical gap** — a missing bus-drive or pad grant — looks exactly like a
   frame-sync timeout and logs *nothing*, so "the log is clean" cannot rule it out.
   Prefer a positive "the operation succeeded" marker over any amount of quiet.
+- **☠️ "The hardware cannot do this" is a claim about the hardware *as you have
+  programmed it*, and a register that never moves is a default, not a
+  measurement.** Two rounds of headset-jack bring-up concluded that a codec status
+  register does not track the socket, and then designed around that conclusion —
+  a stored boolean that a single missed interrupt could leave inverted for a whole
+  boot. The register reads a constant under this port's own partial init and
+  follows the socket under the reference one. The block was never told to sense;
+  it was answering correctly. **The tell is the constant itself**: a register that
+  reads identically in two states you believe differ is far more often an
+  unprogrammed block than an incapable one, and the value alone cannot separate
+  them. So before concluding that a peripheral *cannot* do something, program it
+  the way the vendor driver or the in-tree shared driver does and measure again —
+  **the reference init sequence is part of your instrument**, not an
+  implementation detail of the thing you are trying to avoid writing. This is the
+  one negative you cannot get from a two-sided register diff either, because both
+  sides can be equally unprogrammed. When you cannot run the reference init, the
+  negative is *conditional*, and the condition belongs next to the result in
+  writing — that footnote is the cheapest line on this page. Writing it down every
+  time is what let a third round reopen the question in an afternoon instead of
+  rebuilding the argument from nothing.
 - **☠️ A source comment, or a comment in a device tree, is not evidence — and must not
   reopen a lead that a live measurement closed.** One mainline DTS comment ("this PD
   frames the bus") reopened a question that a golden-side measurement had already
