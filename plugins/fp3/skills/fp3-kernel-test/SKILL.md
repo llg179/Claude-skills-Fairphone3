@@ -188,6 +188,13 @@ cost a device, a boot, or a wrong conclusion at least once.
 - Error codes layer per phase; after each fix go looking for the NEXT error, not for success.
 - When a working implementation turns up, diff it against your model — the delta is your gap.
 - A write that hangs can leave no D-state task: issue it from a disposable process.
+- ☠️ **One sample is not a mechanism.** Name the control before generalising a reading.
+- A register live in one window can be inert in another — a steady-state read says nothing about its value at probe/init time.
+- regmap debugfs serves the **cache** for non-volatile registers; check the driver's volatile list before believing a constant.
+- `cache_bypass` reads everything live, but every read crosses the bus: switch on, take **one** dump, switch off.
+- A sound-server client run under `sudo` reaches no server — the test appears to run and measures nothing.
+- A DTB built from a topic branch can silently drop another layer's nodes; diff the decompiled DTB against the deployed one first.
+- `pmb build --src` applies `.gitignore` patterns but not their `!` negations, so a tracked file can be missing from the copy.
 - Before saying two systems disagree, check both are measuring — a hardcoded constant is not.
 - The oracle is a source of *configuration* too: read back the registers it programs.
 - A register field's width can be the design limit; work out what the hardware can encode.

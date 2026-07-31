@@ -673,3 +673,69 @@ All of the below is from writing and validating a device-tree binding, 2026-07-3
   known-negative fixture** so a rewrite that breaks it says so on the first run.
   The general form: a lesson that lives only in documentation protects the reader,
   not the next author — and those are often the same person.
+
+## Reading a register is not one thing — four ways the same read lies
+
+A register read looks atomic and is not. Four distinct failures, each of which
+produced a confidently wrong conclusion before being caught.
+
+**The value is served from a cache.** `regmap` debugfs calls `regmap_read()`,
+which returns the cached value for any register the driver has not marked
+volatile. Sampling a block of registers and reporting "none of them changed" is
+then meaningless for most of them: they *cannot* change, because nothing is
+reading the hardware. Check the driver's `volatile_reg` callback first and say
+which of the sampled registers are live. The cure for the rest is the regmap
+`cache_bypass` knob — but with it every read crosses the bus, so a full dump of
+a paged map takes minutes and hammers the interconnect. Switch it on, take
+**one** dump, switch it off; do not loop with it enabled.
+
+**The value is live but the window is wrong.** A status register can carry real
+information for a bounded period — around init, while a detection FSM is
+running — and stand still afterwards. A steady-state reading therefore licenses
+no claim at all about what the same register held at probe time. If a driver
+reads something once during bring-up, instrument *that* read rather than
+inferring its value from a later sample; the two answered opposite questions on
+one occasion, and the inference was wrong both times it was attempted.
+
+**The field means something else.** Register names are not fields. Before
+attributing meaning to a bit, find a driver family that maps the same register
+through a shared field table and read the mapping out of it. Adjacent bits in
+one status register belonged to a mechanical and an electrical measurement
+respectively, and the driver had been using the electrical one as the
+mechanical answer for its entire life.
+
+**The instrument was never validated.** A constant reading is only evidence of a
+constant when the read path has been shown to move for something. Pick a
+register in the same volatile set that must change under a change you can
+command — a bias that powers with a capture stream will do — and demonstrate it
+moving in the same log. Without that step, "nothing changed" and "nothing was
+being read" are the same output.
+
+## One sample is not a mechanism
+
+The most expensive class of error in a long bring-up session is not a bad
+measurement, it is a good measurement generalised too far. A single reading
+supports "at this moment, X" and nothing else; turning it into "X is how this
+works" needs either a control or a repetition, and saying so costs one clause.
+
+Two habits make it hard to get wrong:
+
+- **State the evidence class with the claim** — measured, inferred, or assumed —
+  so a later reader can see which conclusions are load-bearing.
+- **Name the control before generalising.** If you cannot name what would have
+  come out differently had the claim been false, the claim is a hypothesis, and
+  labelling it as one keeps the next experiment pointed the right way.
+
+A retraction is cheap; a retraction after the change shipped is not. Where a
+conclusion is about to become a patch, the question to ask is not "does this
+explain what I saw" but "what did I check that would have caught it if it did
+not".
+
+## When a hypothesis is not reproduced, say that
+
+An experiment that fails to produce the effect it was looking for has a result,
+and the result is not "the next hypothesis". Record what was exercised and what
+was therefore ruled out, keep the instrument in place so the effect can be
+caught passively if it happens during real use, and resist replacing the
+disproven mechanism with a fresh guess in the same breath — that is how an
+investigation acquires a chain of unfalsified stories.
