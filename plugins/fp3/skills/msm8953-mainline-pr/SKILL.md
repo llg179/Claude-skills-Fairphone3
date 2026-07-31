@@ -231,6 +231,32 @@ ways:
 | **reused from the tree** | say the mechanism was already there and you only pointed at it. "reuses `SCALE_HW_CALIB_THERM_100K_PULLUP`, already used by the AMUX_THM channels" |
 | **new here** | say so plainly, and what it was modelled on if anything. "new here, modelled on this driver's existing `vbat_chan` handling — same optional `devm_iio_channel_get()`, same `-EPROBE_DEFER` passthrough" |
 
+☠️ **"New here" is a claim about the whole tree, so search the whole tree before
+making it.** The three categories are not a matter of where you personally got
+the idea — they are a matter of what already exists. A property name, a symbol,
+a helper or a binding can be established somewhere you never looked, most often
+under a *different* subsystem or a sibling chip's schema, and a driver reading
+an undocumented property tells you nothing about whether the name is documented
+elsewhere. The check is one grep of the entire source tree — not of the file, the
+driver, or the binding you are editing:
+
+```sh
+git grep -n '<the exact name>'            # every user, every schema, every doc
+```
+
+Read the whole result before writing the paragraph. If any hit is a binding, a
+header or another driver, the change is **reused from the tree**, and the honest
+form names that prior art and follows its spelling and wording rather than
+inventing a parallel one. Two schemas describing the same property in different
+words is a defect you introduced.
+
+Why it matters more than it looks: a false "new here" is invisible at review —
+it reads as ordinary, and it quietly tells the reviewer there is no prior art to
+be consistent with, which is exactly the thing they would otherwise check. It
+also survives: the wrong category gets copied into the docs organised by the
+same split. The cost of the grep is seconds; the cost of being wrong is a patch
+that argues against a convention it did not know it was breaking.
+
 Why this is worth the lines:
 
 - **it separates the trustworthy from the guessed.** A vendor-sourced number and
