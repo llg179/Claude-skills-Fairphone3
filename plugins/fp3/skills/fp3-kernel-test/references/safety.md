@@ -739,3 +739,56 @@ was therefore ruled out, keep the instrument in place so the effect can be
 caught passively if it happens during real use, and resist replacing the
 disproven mechanism with a fresh guess in the same breath — that is how an
 investigation acquires a chain of unfalsified stories.
+
+## When a person is the stimulus, the protocol is part of the instrument
+
+Measurements that need a human to do something physical — plug a jack, press a
+button, hold the phone somewhere — have a failure mode that automated ones do
+not: an under-specified request produces data whose ambiguity you created
+yourself, and it is invisible afterwards because the log looks the same either
+way.
+
+The case: a driver change was tested by asking for "in → out" five times. The
+run produced five interrupts for ten movements, which was read as proof that
+one direction was never detected — a mechanism. But the request never said how
+long to wait between insert and remove, and the block debounces both by
+roughly a tenth of a second. A fast in-out merging into one event explains the
+same number equally well, and the two were no longer separable.
+
+What to specify, every time:
+
+- **the spacing, not only the order** — "insert, wait five seconds, remove, wait
+  five seconds" rather than "in → out";
+- **a deliberate contrast case** at the end, chosen so the two candidate
+  explanations predict different results — here, one fast in-out after the slow
+  ones: if only that pair merges, debouncing is doing its job and the slow ones
+  measure the mechanism;
+- **the expected event count, stated before the run**, so a mismatch is visible
+  the moment the log is read instead of being reasoned about afterwards;
+- **what the person should not do** — the probe that perturbs the block, the
+  button that shares the detection path.
+
+And the general form of the trap: **a count is evidence about a mechanism only
+after everything else that moves the count is pinned down.** Debounce, merged
+events, a handler that masks its own source, and the operator's timing all
+change a count without any mechanism changing. Before reading N events as a
+mechanism, list what else produces N.
+
+## A rule you have written down is not a rule you are applying
+
+The rules above were in this file, and were violated hours after being added, in
+the same session that added them. That is worth recording rather than treating
+as bad luck: the reason is that they read as principles, and a principle is
+checked when you happen to remember it, which is not when it is needed.
+
+What makes them bite is attaching each one to a concrete moment in the loop:
+
+- before **asking anyone to do anything physical**, write the protocol out with
+  spacing and expected counts — that is where the stimulus-is-the-instrument
+  rule applies;
+- before **writing a conclusion into a message**, mark it measured, inferred or
+  assumed — that is where the one-sample rule applies;
+- before **turning a conclusion into a patch**, state what result would have
+  falsified it and confirm that result was actually looked for.
+
+If a rule cannot be attached to a step of the loop like that, it will not fire.

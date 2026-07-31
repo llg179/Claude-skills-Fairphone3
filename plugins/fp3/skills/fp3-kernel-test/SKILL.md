@@ -189,6 +189,8 @@ cost a device, a boot, or a wrong conclusion at least once.
 - When a working implementation turns up, diff it against your model — the delta is your gap.
 - A write that hangs can leave no D-state task: issue it from a disposable process.
 - ☠️ **One sample is not a mechanism.** Name the control before generalising a reading.
+- ☠️ **When a human applies the stimulus, the protocol is part of the instrument** — unspecified timing becomes a confound you built yourself.
+- A **count** is evidence about the mechanism only once everything else that changes the count is pinned down.
 - A register live in one window can be inert in another — a steady-state read says nothing about its value at probe/init time.
 - regmap debugfs serves the **cache** for non-volatile registers; check the driver's volatile list before believing a constant.
 - `cache_bypass` reads everything live, but every read crosses the bus: switch on, take **one** dump, switch off.
