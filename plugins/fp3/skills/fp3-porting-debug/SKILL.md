@@ -52,7 +52,7 @@ facts that expire.
 
 | kind | home | why there |
 |---|---|---|
-| **How the device works today**, and any procedure that must be current — deploy, base bump, branch model, what a subsystem's code is and whose it is | [`fp3-pmaports/docs/`](https://github.com/llg179/fp3-pmaports/tree/main/docs) | public, English, reviewed in diffs, and the only copy that actually gets updated when the device changes |
+| **How the device works today**, and any procedure that must be current — deploy, base bump, branch model, what a subsystem's code is and whose it is | [`fp3-pmaports/docs/`](https://github.com/llg179org/fp3-pmaports/tree/main/docs) | public, English, reviewed in diffs, and the only copy that actually gets updated when the device changes |
 | **How to find out** — method, instruments, traps, safety rules, what not to trust | these skills | outlives the specific bug; a trap keeps its value long after the thing it caught is fixed |
 | **What happened, dated** — chronologies, live trackers, raw dumps, dead leads | [`references/archive/`](references/archive/), or `docs/*/bringup/{data,tools}` | needed to answer "was X already tried?", useless as instruction |
 
@@ -66,8 +66,8 @@ Neither, and it is only "what we did on Tuesday" → archive.
 The visible consequence: **this skill carries no status section for any
 subsystem.** Whether audio, the camera or the charger works today, and what its
 code is, is in
-[`docs/`](https://github.com/llg179/fp3-pmaports/tree/main/docs) — start at
-[`docs/kernel/README.md`](https://github.com/llg179/fp3-pmaports/blob/main/docs/kernel/README.md)
+[`docs/`](https://github.com/llg179org/fp3-pmaports/tree/main/docs) — start at
+[`docs/kernel/README.md`](https://github.com/llg179org/fp3-pmaports/blob/main/docs/kernel/README.md)
 for whose code each change is, and the `docs/<subsystem>/bringup/` pages for how
 it was arrived at.
 
@@ -152,9 +152,9 @@ need it. The searchable index, including the "what did we already rule out" map,
 is [`references/data-index.md`](references/data-index.md) — **read it first.**
 
 **Audio (SLIMbus / WCD9335):** the settled account is
-[`docs/audio/`](https://github.com/llg179/fp3-pmaports/tree/main/docs/audio) (how
+[`docs/audio/`](https://github.com/llg179org/fp3-pmaports/tree/main/docs/audio) (how
 it works) and
-[`docs/audio/bringup/`](https://github.com/llg179/fp3-pmaports/tree/main/docs/audio/bringup)
+[`docs/audio/bringup/`](https://github.com/llg179org/fp3-pmaports/tree/main/docs/audio/bringup)
 (how it was brought up, including the traps worth carrying forward). Here:
 - `references/slimbus-audio-red-herrings.md` — the dead-lead catalogue: what was
   ruled out and why. Still live, because "do not re-chase this" does not expire.
@@ -942,7 +942,7 @@ The framing that belongs here, because it is what makes the rest affordable:
   into the OS on its own. Re-check SSH before believing in a brick.
 - **Commits on the kernel tree go to the fork, never to `origin`** (origin is
   upstream); which branch is in
-  [`fp3-pmaports/README.md`](https://github.com/llg179/fp3-pmaports#the-branch-model).
+  [`fp3-pmaports/README.md`](https://github.com/llg179org/fp3-pmaports#the-branch-model).
 
 ## Worked example: how the SLIMbus wall was localised (illustration — findings age; status in the docs)
 
@@ -977,7 +977,7 @@ The search walked down the stack, each rung a differential measurement:
 
 **Where it stands now:** not here — see the boundary above. The outcome, and what
 is still open, is in
-[`docs/audio/bringup/`](https://github.com/llg179/fp3-pmaports/tree/main/docs/audio/bringup).
+[`docs/audio/bringup/`](https://github.com/llg179org/fp3-pmaports/tree/main/docs/audio/bringup).
 
 **Why this example is in a *method* skill:** it shows the discipline that made
 progress possible — exonerate each layer with a register or a source diff before

@@ -8,21 +8,21 @@ description: >-
   postmarketOS bans it outright. Encodes the maintainer guidance received on the
   msm8953-mainline channel: one branch per subsystem (not sub-split), few
   well-formed commits, and never mix DTS with driver code. Use whenever
-  preparing a patch series from the llg179/linux fork.
+  preparing a patch series from the llg179org/linux fork.
 ---
 
 # FP3 kernel work → upstream submission
 
 This is a **process** skill: how to take device-support work that currently lives
-on the personal fork (`github.com/llg179/linux`) and shape it into something a
+on the personal fork (`github.com/llg179org/linux`) and shape it into something a
 maintainer will accept. The audio/WCD9335 series is the running worked example.
 
 The fork's layout — `wip/<base>/<category>` → `integration/<base>` →
 `submit/<base>/<category>`, and the rule that a change must land on both its wip
 branch and integration — is **not repeated here**. It is defined in
-[`fp3-pmaports/README.md`](https://github.com/llg179/fp3-pmaports#the-branch-model),
+[`fp3-pmaports/README.md`](https://github.com/llg179org/fp3-pmaports#the-branch-model),
 with the full base-bump procedure in
-[`docs/rolling-a-new-base.md`](https://github.com/llg179/fp3-pmaports/blob/main/docs/rolling-a-new-base.md).
+[`docs/rolling-a-new-base.md`](https://github.com/llg179org/fp3-pmaports/blob/main/docs/rolling-a-new-base.md).
 Read those for *what the branches are*; read this for *how to turn them into a
 series*.
 
@@ -478,7 +478,7 @@ The concrete moves for porting a `wip/<old>/<category>` branch onto the current
 integration base (e.g. `7.1.3/main`) and reshaping it into `submit/<new>/<category>`.
 The surrounding bookkeeping — which branches to create, delete and push, in what
 order — is in
-[`docs/rolling-a-new-base.md`](https://github.com/llg179/fp3-pmaports/blob/main/docs/rolling-a-new-base.md);
+[`docs/rolling-a-new-base.md`](https://github.com/llg179org/fp3-pmaports/blob/main/docs/rolling-a-new-base.md);
 what follows is only the git surgery:
 
 - **The base is a SHA, not a tracking ref.** `msm8953-mainline` branch names
@@ -830,7 +830,7 @@ requires every `Co-developed-by:` to be **immediately followed by a
 `Co-developed-by: Claude …` is structurally invalid upstream. `Assisted-by:`
 exists precisely to fill that gap: attribution without an authorship claim.
 
-- **Fork commits (llg179/linux):** keep the fork rule — author
+- **Fork commits (llg179org/linux):** keep the fork rule — author
   `Lajosházi, László Gergely <lajoshazilg@gmail.com>` + `Signed-off-by:` +
   `Co-authored-by: Claude Opus 4.8 <noreply@anthropic.com>`, kernel comments in
   **English only**. That is the local convention (CLAUDE.md), unaffected.

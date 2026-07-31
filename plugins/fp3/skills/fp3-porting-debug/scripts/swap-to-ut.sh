@@ -15,7 +15,7 @@
 # pmOS rootfs on `system_b` instead of `userdata`, so UT keeps `userdata` to
 # itself and the two OSes never overwrite each other.  Full description of the
 # layout and its one-time preparation:
-#   https://github.com/llg179/Claude-skills-Fairphone3#installing-the-two-oses
+#   https://github.com/llg179org/Claude-skills-Fairphone3#installing-the-two-oses
 #   ("Both at once: the dual-slot setup")
 #
 # THIS script is the REPAIR path, for one situation only: the developer-enabled

@@ -79,7 +79,7 @@ The ALSA mixer sequence to set by hand for audible sound (card `hw:0,0`; `aplay 
 - Test script (with the correct numid 13/14): not in `scripts/`; it is `fp3-audio-test.sh` in the project (ear|hp|spk|mic).
 
 ### ⚠️ The "Artefacts" block above is partly OUTDATED (folyt.208 correction)
-The `bert-repro` "NEVER push" is NO LONGER true: `origin` (upstream) is forbidden, BUT the user's fork (`github.com/llg179/linux`, branch **`fp3-7.0.9-audio`**, HEAD `2c2fd91`) is a valid push target — the 6 audio commits are pushed THERE (over port 443; SSH push on port 22 stalls on the live-USB network). The current aport is `pmaports/device/testing/linux-fp3-709` (pkgrel=3, patches `0001-wcd9335-efuse-sstate.patch` + `0002-fp3-audio-mclk.patch`).
+The `bert-repro` "NEVER push" is NO LONGER true: `origin` (upstream) is forbidden, BUT the user's fork (`github.com/llg179org/linux`, branch **`fp3-7.0.9-audio`**, HEAD `2c2fd91`) is a valid push target — the 6 audio commits are pushed THERE (over port 443; SSH push on port 22 stalls on the live-USB network). The current aport is `pmaports/device/testing/linux-fp3-709` (pkgrel=3, patches `0001-wcd9335-efuse-sstate.patch` + `0002-fp3-audio-mclk.patch`).
 
 > **THE ENTIRE SECTION BELOW (folyt.183 reframe, §0, addenda) IS HISTORICAL.** The individual MEASUREMENTS remain true, but the "wall / regression-test-is-the-way" FRAME is SUPERSEDED: the root cause is found and fixed. folyt.183 correctly predicted "not a physical wall" — the concrete cause was bit3.
 
@@ -571,7 +571,7 @@ Config-group live dispatch (folyt.114–118): handle = `memw(ctx+0xe18)`; `memw(
 - ☠️☠️ **NEVER restart the USB/link from the host** (remove/authorized toggle/USBDEVFS_RESET/unbind-rebind, `ip link down/up`, `nmcli` cycling). It does not fix the device-side NCM/gadget jam ("non-enumerating" for ~15 min), **AND `/mnt/1TB` is a USB-attached disk — a host USB reset can unmount `/mnt` mid-run** (2026-07-11: this happened, the working tree was lost). Recovery = passive polling or a DEVICE reboot. (The `fp3-link reset` verb was deleted for this reason.)
 - **NEVER `sudo adb`.** `sudo fastboot` is fine.
 - **The 10-minute Bash cap** kills `pmb install`/flash → run detached + poll. `pmb build` fits in the foreground.
-- **Kernel-tree commits are LOCAL** (origin=upstream), NEVER push. *(folyt.208 nuance: `origin` is still forbidden, but the user's own fork `github.com/llg179/linux` branch `fp3-7.0.9-audio` IS a valid push target — see the folyt.208 correction in §"Artefacts".)*
+- **Kernel-tree commits are LOCAL** (origin=upstream), NEVER push. *(folyt.208 nuance: `origin` is still forbidden, but the user's own fork `github.com/llg179org/linux` branch `fp3-7.0.9-audio` IS a valid push target — see the folyt.208 correction in §"Artefacts".)*
 - **Flashing is user-approved**; one change per run; reset the retry count between runs.
 - **Recovery from a boot loop:** power off (Power ~10 s) → Power+VolDown → lk2nd fastboot (18d1:d00d) →
   `fastboot set_active a && reboot` (UT) → from UT, fsck the pmOS rootfs (losetup -P p31 → `e2fsck -fy`)

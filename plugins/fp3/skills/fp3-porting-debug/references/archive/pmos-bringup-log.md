@@ -5,7 +5,7 @@
 > description of how the device works today, and it is not a plan.
 >
 > **Where the current state lives:** `fp3-pmaports/docs/` — start at
-> [`docs/kernel/README.md`](https://github.com/llg179/fp3-pmaports/blob/main/docs/kernel/README.md),
+> [`docs/kernel/README.md`](https://github.com/llg179org/fp3-pmaports/blob/main/docs/kernel/README.md),
 > then the per-subsystem `docs/<subsystem>/` pages. **Method** — how to acquire
 > ground truth, which instrument answers which question — is in the skill body
 > and in `references/{safety,firmware-re,recovery,devmem-oracle-kernel}.md`.

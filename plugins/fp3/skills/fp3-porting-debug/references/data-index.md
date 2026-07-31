@@ -27,8 +27,8 @@
 ═══════════════════════════════════════════════════════════════════════════════
 
 AUDIO (SLIMbus/WCD9335) → A MÉRVADÓ HELY A DOKUMENTÁCIÓ, NEM EZ A SKILL:
-  github.com/llg179/fp3-pmaports/tree/main/docs/audio          (hogyan működik ma)
-  github.com/llg179/fp3-pmaports/tree/main/docs/audio/bringup  (hogyan jött össze)
+  github.com/llg179org/fp3-pmaports/tree/main/docs/audio          (hogyan működik ma)
+  github.com/llg179org/fp3-pmaports/tree/main/docs/audio/bringup  (hogyan jött össze)
   Itt maradt: slimbus-audio-red-herrings.md (vakvágány-katalógus — nem évül el).
   A dátumozott nyomozási naplók: references/archive/ (lásd archive/README.md);
   a komponens-címtérkép: archive/slimbus-audio-context.md §7.

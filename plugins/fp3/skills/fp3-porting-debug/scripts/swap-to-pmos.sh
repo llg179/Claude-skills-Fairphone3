@@ -13,7 +13,7 @@
 #
 # That works because `setup-dualslot.sh` has already been run once (pmOS rootfs
 # on `system_b`, UT keeps `userdata`).  Layout + one-time preparation:
-#   https://github.com/llg179/Claude-skills-Fairphone3#installing-the-two-oses
+#   https://github.com/llg179org/Claude-skills-Fairphone3#installing-the-two-oses
 #   ("Both at once: the dual-slot setup")
 #
 # THIS script REINSTALLS postmarketOS from scratch.  Use it only when the pmOS

@@ -34,9 +34,9 @@ restating it:
 
 Two things deliberately live **outside** all three: what the device does *today*
 and how to build/deploy it are in
-[`llg179/fp3-pmaports/docs/`](https://github.com/llg179/fp3-pmaports/tree/main/docs),
+[`llg179org/fp3-pmaports/docs/`](https://github.com/llg179org/fp3-pmaports/tree/main/docs),
 and the branch model is in that repo's
-[README](https://github.com/llg179/fp3-pmaports#the-branch-model). The test for
+[README](https://github.com/llg179org/fp3-pmaports#the-branch-model). The test for
 which home something belongs in — *would it be wrong next month* vs *would it
 still be true on a different phone* — is written down in `fp3-porting-debug`
 under "Where knowledge lives".
@@ -44,7 +44,7 @@ under "Where knowledge lives".
 ## Installing the skills
 
 ```
-/plugin marketplace add llg179/Claude-skills-Fairphone3
+/plugin marketplace add llg179org/Claude-skills-Fairphone3
 /plugin install fp3@Claude-skills-Fairphone3
 ```
 
@@ -627,7 +627,7 @@ survives the "would it still be true on a different phone" test.
 Written against one specific device (`fairphone-fp3`, postmarketOS, the
 `msm8953-mainline` kernel — a *rolling* base, so no version is pinned here; the
 current one is the `pkgver` in
-[`fp3-pmaports/linux-fp3/`](https://github.com/llg179/fp3-pmaports/tree/main/linux-fp3)).
+[`fp3-pmaports/linux-fp3/`](https://github.com/llg179org/fp3-pmaports/tree/main/linux-fp3)).
 Many of the scripts under `scripts/` are single-use reverse-engineering artifacts
 kept as a record of what was tried — treat them as an archive, not a supported
 toolkit. The value that travels is in `SKILL.md` and `references/`.
@@ -636,9 +636,9 @@ Some notes are in Hungarian, mostly under `references/archive/`, which is dated
 record rather than instruction.
 
 Related: the kernel work this produced lives on the `wip/<base>/<category>` and
-`integration/<base>` branches of <https://github.com/llg179/linux>; the branch
+`integration/<base>` branches of <https://github.com/llg179org/linux>; the branch
 model and the current state are documented in
-<https://github.com/llg179/fp3-pmaports>.
+<https://github.com/llg179org/fp3-pmaports>.
 
 ## Safety
 

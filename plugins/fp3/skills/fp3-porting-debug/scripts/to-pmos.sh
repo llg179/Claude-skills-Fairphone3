@@ -7,7 +7,7 @@
 #   boot_a = Ubuntu Touch Halium boot image   -> `slot.sh set a` boots UT
 #   boot_b = lk2nd                            -> `slot.sh set b` boots pmOS
 # Switching OS needs NO flashing; see
-#   https://github.com/llg179/Claude-skills-Fairphone3#installing-the-two-oses
+#   https://github.com/llg179org/Claude-skills-Fairphone3#installing-the-two-oses
 #   ("Both at once: the dual-slot setup" — the one-time `setup-dualslot.sh`).
 # This wrapper only adds the "get out of TWRP first" step around that.
 #

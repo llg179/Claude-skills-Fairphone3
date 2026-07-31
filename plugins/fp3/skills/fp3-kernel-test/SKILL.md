@@ -21,7 +21,7 @@ measurement, but they age. Re-measure before you rely on any specific number.
 
 **What lives here and what lives in the docs** is settled in `fp3-porting-debug`
 "Where knowledge lives": current state and procedure go to
-[`fp3-pmaports/docs/`](https://github.com/llg179/fp3-pmaports/tree/main/docs),
+[`fp3-pmaports/docs/`](https://github.com/llg179org/fp3-pmaports/tree/main/docs),
 method and traps stay here, dated logs go to archive. This skill therefore
 carries no status for any subsystem.
 
@@ -92,10 +92,10 @@ reset: it clears the "unbootable"/retry state on a slot you just broke.
   (`fp3-ssh`, `fp3-link`) are just shorthand for those steps.
 - Kernel source tree is a detached checkout whose `origin` is upstream
   (msm8953-mainline / torvalds) — **never push to `origin`.** Publishing the FP3
-  work goes ONLY to the user's personal fork remote (`github.com/llg179/linux`);
+  work goes ONLY to the user's personal fork remote (`github.com/llg179org/linux`);
   which branch, and the rule that a change must land on both its
   `wip/<base>/<category>` branch and `integration/<base>`, is defined in
-  [`fp3-pmaports/README.md`](https://github.com/llg179/fp3-pmaports#the-branch-model).
+  [`fp3-pmaports/README.md`](https://github.com/llg179org/fp3-pmaports#the-branch-model).
   Commit as the user (author `Lajosházi, László Gergely`,
   `Signed-off-by:` + `Co-authored-by: Claude …`), English comments only, no
   Hungarian in code. Every commit body states **where the change came from** —
@@ -104,7 +104,7 @@ reset: it clears the "unbootable"/retry state on a slot you just broke.
   hangs/`unexpected disconnect while reading sideband packet` even though
   `ssh -T git@github.com` and `git ls-remote` are instant and the pack is tiny —
   it's a port-22 upload stall, not auth/size. Fix: push via
-  `ssh://git@ssh.github.com:443/llg179/linux.git` (`git remote set-url` the fork to
+  `ssh://git@ssh.github.com:443/llg179org/linux.git` (`git remote set-url` the fork to
   the 443 endpoint once). Example local tree path `$FP3_PMOS/bert-repro`.
 - Build system is pmbootstrap via a wrapper (`cd $FP3_PMOS && ./pmb …`).
   A `--src` build stamps an apk version `_pYYYYMMDDHHMMSS`; a plain upstream
@@ -377,7 +377,7 @@ method traps, all learned 07-21 on the FP3 rear camera:
   @0x50, and drove the dw9714-class VCM @0x0c through a focus sweep, all via `/dev/mem`
   + `/dev/i2c-3`, no kernel changes.)
 - **Userspace *audio* (pulseaudio UCM) has its own traps, learned 07-24 bringing the WCD9335 up
-  through pulse (full detail in `llg179/fp3-pmaports/userspace-audio/README.md`):**
+  through pulse (full detail in `llg179org/fp3-pmaports/userspace-audio/README.md`):**
   (a) **Validate "works" with the REAL audio server, not raw `aplay`/`arecord`** — apps go through
   pulseaudio (or pipewire-pulse; `apk info -e` decides which), whose UCM layer behaves nothing like raw
   ALSA. (b) **pulse's UCM wrapper `_ucm0001.hw:CARD,N` may resolve only for PCM device 0** on a qcom
@@ -699,7 +699,7 @@ build→install→boot procedure, and the traps that cost a cycle each (boot-dep
 regenerating `extlinux.conf`, taking the DTB from the *built package* rather than
 the source tree, the 404 from an unpushed `_commit`, `--force`/`--lax` being
 `build` subcommand flags), is maintained in
-[`fp3-pmaports/docs/deploy/README.md`](https://github.com/llg179/fp3-pmaports/blob/main/docs/deploy/README.md).
+[`fp3-pmaports/docs/deploy/README.md`](https://github.com/llg179org/fp3-pmaports/blob/main/docs/deploy/README.md).
 Follow it there; it is kept current, this skill is not.
 
 Two things that belong to the *method* rather than the procedure:
