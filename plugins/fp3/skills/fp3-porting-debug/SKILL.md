@@ -598,6 +598,33 @@ act?) → firmware identity (is the code the same?) → firmware internals (what
 decide?). Each rung either exonerates a layer or points into it. Spend your next
 measurement on the rung that eliminates the most remaining hypotheses.
 
+### The vendor device tree is ground truth about the board — read it by class, not by SoC
+
+A downstream device tree describes the *board*, and it is often the only
+statement anywhere about how a peripheral is physically wired. It is also the
+cheapest oracle available: no build, no flash, just a file.
+
+☠️ It usually carries **several configurations for the same SoC**, and taking the
+wrong one silently mis-describes the hardware. Identify the right one by a
+property only your variant has — the codec it names, the bus it hangs off — not
+by the SoC. On one occasion the same file held two settings of the same jack
+property, differing between boards with a PMIC-internal codec and boards with an
+external codec on a specific MI2S port; only the second describes this phone,
+and the two are opposites.
+
+**And check whether upstream has any reference at all before assuming a
+baseline.** A mainline board file can predate the subsystem you are working on
+entirely: if the pre-port device tree never described the peripheral, there is
+no upstream value to compare against, every setting is this port's invention,
+and the vendor tree is the only authority left. Finding *that* out is itself a
+result — it tells you which decisions have never been checked by anyone.
+
+Correcting the description to match the vendor tree is worth doing on its own
+terms. It is not, by itself, evidence that anything was fixed: verify the change
+reaches the hardware (read the register back), then measure the behaviour
+separately, and record the two conclusions apart. A plausible change credited
+with a repair it did not make sends the next investigation the wrong way.
+
 ## Web docs & community repos (what's actually usable, and how to reach them)
 - **postmarketOS** wiki device page + `pmaports` — primary reference for the native
   track (HW configs, firmware names, kernel patches).
