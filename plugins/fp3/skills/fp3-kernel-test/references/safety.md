@@ -792,3 +792,63 @@ What makes them bite is attaching each one to a concrete moment in the loop:
   falsified it and confirm that result was actually looked for.
 
 If a rule cannot be attached to a step of the loop like that, it will not fire.
+
+## Read a working implementation for its model, not for a line to copy
+
+The fastest way to waste a day is to find a driver that solves your problem,
+lift the statement that looks equivalent, and miss the design it belongs to.
+
+The case: two drivers handle the same detection block correctly. Both read the
+*arming* bit to learn the direction of an edge. What was taken from them was a
+snippet; what was not taken was the model behind it — **the state lives in one
+place, and the thing the hardware was armed for is what happened**. Three
+variants were then built and measured against a different register entirely,
+one no reference driver uses for that purpose. Each failed for the same reason
+and each failure was investigated as if it were new.
+
+Before writing code against a reference, write its rule in one sentence in your
+own words. If you cannot, you have read the text and not the design. The
+sentence is also what you check your own driver against: "ours stores the same
+state twice" is a defect statement that falls straight out of it, and it does
+not depend on any measurement.
+
+## Three variants on one question means the model is wrong
+
+One failed experiment is information about the variant. Two is a warning. Three
+is a statement about the model, and continuing to generate variants at that
+point is a way of avoiding the harder work of building one.
+
+The signal to watch for is a *class* of failure repeating while the details
+change: different code, same shape of wrong answer. When that happens, stop
+building, write down what the system must be doing for all of the results to be
+true at once, and only then decide whether there is an experiment left worth
+running. In the case that produced this note the model was two lines long and
+explained every measurement taken over the preceding hours, including the two
+that had looked like success.
+
+Corollary for the thing that already works: when the existing implementation
+survives every test the replacements fail, that is evidence about *why* it is
+built the way it is. Imposing an alternation rather than reading a status is not
+laziness if no readable status exists.
+
+## Do not let caution rules substitute for understanding
+
+Rules like "name the control" and "label the evidence class" are worth having
+and are elsewhere in this file. They have a failure mode: followed on their own
+they produce a sequence of small, individually defensible steps that never adds
+up to a model, and a retraction after each. Every step defensible, the sequence
+not intelligent.
+
+They are checks on a conclusion, not a method for reaching one. The method is to
+model the system, and the checks apply to what the model predicts. If several
+careful steps in a row have each ended in a correction, the problem is not that
+the steps were insufficiently careful.
+
+## The operator's framing is a constraint, not a suggestion
+
+"This is a development device", "not in daily use", "keep going until morning",
+"don't cling to what works" are standing permissions about acceptable risk. They
+are given once and remain in force. Re-deriving a conservative default against
+them - protecting a working configuration that the operator has explicitly said
+is not worth protecting - is not caution, it is ignoring an instruction, and it
+narrows the experiments that get run.

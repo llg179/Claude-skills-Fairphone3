@@ -188,6 +188,10 @@ cost a device, a boot, or a wrong conclusion at least once.
 - Error codes layer per phase; after each fix go looking for the NEXT error, not for success.
 - When a working implementation turns up, diff it against your model — the delta is your gap.
 - A write that hangs can leave no D-state task: issue it from a disposable process.
+- ☠️ **Read a working implementation for its model, not for a line to copy** — write its rule in one sentence first.
+- ☠️ **Three variants on one question means the model is wrong**, not the variant. Stop building and write the model.
+- Caution rules check a conclusion; they are not a way of reaching one. Careful steps that each end in a correction are a modelling failure.
+- The operator's framing (dev device, acceptable risk, keep going) is a standing constraint — re-deriving a conservative default against it ignores an instruction.
 - ☠️ **One sample is not a mechanism.** Name the control before generalising a reading.
 - ☠️ **When a human applies the stimulus, the protocol is part of the instrument** — unspecified timing becomes a confound you built yourself.
 - A **count** is evidence about the mechanism only once everything else that changes the count is pinned down.
