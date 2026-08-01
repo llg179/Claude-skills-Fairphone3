@@ -63,6 +63,58 @@ is why almost every technique below has a "golden side" and a "test side".
 
 ---
 
+## Say it unprompted: four things every report must carry
+
+These are **reporting** rules, not extra work. They exist because the failure
+they prevent is not "no check was run" — it is a check that ran, passed, and
+measured the wrong thing. That failure is invisible from the outside unless the
+report says what was compared and how, so state all four **without being
+asked**. A user should never have to ask "what did you compare it to?" to find
+out that the answer is "to itself".
+
+**1. Deploying anything to the device → name the source: which branch, which
+artifact.** Not "the freshly built DTB" — `debug-int/7.1.3`, extracted from
+`linux-fp3-7.1.3-r31`, or `wip/7.1.3/camera`, built in `<worktree>` by
+`make qcom/<board>.dtb`. The whole point is that the difference between those
+two is invisible in the file and decisive in the result: a `wip/<base>/<cat>`
+build carries that category and nothing else, so deploying one silently strips
+every other layer. If you cannot name the branch, you do not know what you are
+about to install.
+
+**2. Reporting a measurement → say what it was compared against.** A number
+alone is not a result; a result is a comparison. "md5 matches" is not a
+statement until it says *matches what* — the package, the oracle capture, the
+previous boot, the source tree it was built from. This is the sentence that
+distinguishes a real check from one that compares an artifact to itself, and
+writing it out is usually enough to notice which one you just did.
+
+**3. Reporting a check → print the command you ran.** One line, copy-pasteable,
+so the user can re-run it and so a reader can see whether it measures the claim.
+A check whose command is not shown is an assertion. The checks in
+`fp3-pmaports/tests/checks/` follow this in their own failure output — a `cmd:`
+line next to the verdict — for exactly this reason.
+
+**4. No command exists for a check → write one, don't do it by hand.** Put it in
+`fp3-porting-debug/scripts/`, add its row to `scripts/INDEX.md`, and use it. A
+hand-run check is unrepeatable, unreviewable and gone by the next session; a
+script is a measurement anyone can re-run against a known positive. And test it
+against one: a new checking tool that reports "clean" has proved nothing until
+it has been shown failing on a case you know is broken.
+
+☠️ **The case this cost.** A DTB built in a camera-only worktree was deployed to
+the device, dropping the audio, voice, charger, sensor and debug layers. The
+visible symptom was a battery reading 0% — not flat (91%, charging) but
+*undescribed*: no `charger@1000` in the tree meant no `pmi632-battery` supply,
+so nothing to ask. The file had been md5-verified, against the worktree it came
+from rather than against the package, and the mismatch would have been a
+one-line answer under rule 2. It is now a machine check
+(`fp3-pmaports/tests/checks/06-dtb-test.sh`) and a script
+(`scripts/deployed-provenance.sh`), which is what rule 4 means: the trap did not
+stop being a trap when it was written down in prose — the last time this class
+of error struck, the rule was *already* in this file.
+
+---
+
 ## The mental model: two slots, one oracle
 
 The device holds two OSes on A/B slots, and that is the whole reason the debugging
@@ -309,6 +361,21 @@ radius of your edit:
     the copied DTB was the pre-cherry-pick one, so `imx363` never probed and the media graph
     stayed empty.) Extract it from the apk (`boot/dtbs/qcom/<board>.dtb`) whenever the
     package is the thing you built, and keep the source-tree `make` for pure DT iterations.
+    - **☠️ And a worktree is a *branch*, not just a directory — check which one it is
+      parked on before copying anything out of it.** A DTB built on `wip/<base>/<cat>`
+      contains the base plus that one category; every other layer is simply absent from
+      it, and the file looks entirely normal. What that produces is not a camera bug but
+      an unrelated-subsystem outage: deploying a camera-branch DTB removed `charger@1000`,
+      so no `pmi632-battery` supply was created and the phone reported 0% while sitting at
+      91% and charging. **Verifying the md5 against the tree it was built from does not
+      catch this** — that comparison is true by construction. Compare against the package,
+      and say which branch and which artifact the file came from
+      (["Say it unprompted"](#say-it-unprompted-four-things-every-report-must-carry),
+      rules 1–2). Both directions are now machine-checked:
+      `fp3-porting-debug/scripts/deployed-provenance.sh` before trusting a measurement,
+      and `fp3-pmaports/tests/checks/06-dtb-test.sh` in the selftest (its sibling,
+      `40-camera` step 1, catches the opposite case — an apk operation overwriting a
+      hand-deployed DTB via the mkinitfs trigger).
 - **Kernel image / built-in (`=y`) code changed → full rootfs flash** (see below;
   slow, must run backgrounded).
 - **ADSP firmware changed → SSR-reload** (see the firmware section; ~2 s, no

@@ -371,6 +371,41 @@ terms of what question each answers:
 
 ## Acquiring ground truth locally — the core method
 
+### Rule zero: a measurement is a comparison, so say what it was compared against
+
+State it in the report, unprompted, every time — the number alone is not the
+result. The failure this guards is not a missing check but a check that ran,
+passed, and compared an artifact **to itself**: verifying a deployed file's md5
+against the tree it was built from is true by construction and proves nothing
+about whether that tree was the right one. Writing the comparand out in words is
+usually enough to notice.
+
+Three companions, same reason, also unprompted:
+
+- **Deploying to the device → name the source: which branch, which artifact.**
+  "The freshly built DTB" is not an origin; `debug-int/<base>` extracted from
+  `linux-fp3-<ver>-r<n>` is, and so is `wip/<base>/camera` built in a worktree —
+  and the difference between those two is invisible in the file and decisive in
+  the result.
+- **Reporting a check → print the command.** A check whose command is not shown
+  is an assertion. This is why the checks under `fp3-pmaports/tests/checks/`
+  emit a `cmd:` line beside the verdict.
+- **No command exists for a check → write one**, put it in `scripts/` here, add
+  its row to [`scripts/INDEX.md`](scripts/INDEX.md), and prove it by running it
+  against a **known positive**. A tool that reports "clean" has demonstrated
+  nothing until it has been seen failing on a case you know is broken. (Measured:
+  `deployed-provenance.sh` reported a clean module tree on its first run while
+  two `.ko.bak` files sat in it — an unexpanded `$(uname -r)` had sent `find`
+  down a path that does not exist, and "no output" read as "nothing found".)
+
+`scripts/deployed-provenance.sh` is the standing instrument for all four: it
+says, for the kernel, the device tree and every module, whether the file on the
+device traces to the installed package or was put there by hand — and it lists
+which port layers the live tree actually describes. Run it before trusting a
+measurement, not after the result confuses you. The full statement of these
+rules, with the case that produced them, is in `fp3-kernel-test` under
+"Say it unprompted".
+
 The whole approach rests on **differential measurement**: measure the same layer on
 the oracle and on the port, and let the *delta* localise the fault. Each technique
 below is one layer you can diff. The art is choosing the layer that will *split*
