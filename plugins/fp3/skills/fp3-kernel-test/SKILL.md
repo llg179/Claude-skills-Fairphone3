@@ -94,12 +94,16 @@ A check whose command is not shown is an assertion. The checks in
 `fp3-pmaports/tests/checks/` follow this in their own failure output — a `cmd:`
 line next to the verdict — for exactly this reason.
 
-**4. No command exists for a check → write one, don't do it by hand.** Put it in
-`fp3-porting-debug/scripts/`, add its row to `scripts/INDEX.md`, and use it. A
-hand-run check is unrepeatable, unreviewable and gone by the next session; a
-script is a measurement anyone can re-run against a known positive. And test it
-against one: a new checking tool that reports "clean" has proved nothing until
-it has been shown failing on a case you know is broken.
+**4. No command exists for a check → write one, don't do it by hand.** A hand-run
+check is unrepeatable, unreviewable and gone by the next session. Look first for
+the command that already exists (`fp3-selftest --only <fragment>` runs any subset
+of the checks); a new script that duplicates one rots on its own schedule and is
+worse than nothing. If there genuinely is none, the check belongs in
+`fp3-pmaports/tests/checks/` when it is a property of the device, and in
+`fp3-porting-debug/scripts/` (with its row in `scripts/INDEX.md`) when it is a
+host-side procedure. Either way, prove it against a **known positive**: a
+checking tool that reports "clean" has proved nothing until it has been shown
+failing on a case you know is broken.
 
 ☠️ **The case this cost.** A DTB built in a camera-only worktree was deployed to
 the device, dropping the audio, voice, charger, sensor and debug layers. The
@@ -108,10 +112,10 @@ visible symptom was a battery reading 0% — not flat (91%, charging) but
 so nothing to ask. The file had been md5-verified, against the worktree it came
 from rather than against the package, and the mismatch would have been a
 one-line answer under rule 2. It is now a machine check
-(`fp3-pmaports/tests/checks/06-dtb-test.sh`) and a script
-(`scripts/deployed-provenance.sh`), which is what rule 4 means: the trap did not
-stop being a trap when it was written down in prose — the last time this class
-of error struck, the rule was *already* in this file.
+(`fp3-pmaports/tests/checks/06-dtb-test.sh`, reachable on its own as
+`fp3-selftest --only dtb`), which is what rule 4 means: the trap did not stop
+being a trap when it was written down in prose — the last time this class of
+error struck, the rule was *already* in this file.
 
 ---
 
@@ -372,8 +376,8 @@ radius of your edit:
       and say which branch and which artifact the file came from
       (["Say it unprompted"](#say-it-unprompted-four-things-every-report-must-carry),
       rules 1–2). Both directions are now machine-checked:
-      `fp3-porting-debug/scripts/deployed-provenance.sh` before trusting a measurement,
-      and `fp3-pmaports/tests/checks/06-dtb-test.sh` in the selftest (its sibling,
+      `fp3-selftest --only identity,dtb,modules` before trusting a measurement, and
+      `fp3-pmaports/tests/checks/06-dtb-test.sh` in the full run (its sibling,
       `40-camera` step 1, catches the opposite case — an apk operation overwriting a
       hand-deployed DTB via the mkinitfs trigger).
 - **Kernel image / built-in (`=y`) code changed → full rootfs flash** (see below;

@@ -390,18 +390,27 @@ Three companions, same reason, also unprompted:
 - **Reporting a check → print the command.** A check whose command is not shown
   is an assertion. This is why the checks under `fp3-pmaports/tests/checks/`
   emit a `cmd:` line beside the verdict.
-- **No command exists for a check → write one**, put it in `scripts/` here, add
-  its row to [`scripts/INDEX.md`](scripts/INDEX.md), and prove it by running it
-  against a **known positive**. A tool that reports "clean" has demonstrated
-  nothing until it has been seen failing on a case you know is broken. (Measured:
-  `deployed-provenance.sh` reported a clean module tree on its first run while
-  two `.ko.bak` files sat in it — an unexpanded `$(uname -r)` had sent `find`
-  down a path that does not exist, and "no output" read as "nothing found".)
+- **No command exists for a check → write one.** First look for the one that
+  already exists — a new script that duplicates a selftest check rots on its own
+  schedule and is worse than no script. If there genuinely is none, put it in
+  `scripts/` here and add its row to [`scripts/INDEX.md`](scripts/INDEX.md).
+  Either way, prove it against a **known positive**: a tool that reports "clean"
+  has demonstrated nothing until it has been seen failing on a case you know is
+  broken. (Measured, and the reason this paragraph exists: a provenance script
+  written for exactly this purpose reported a clean module tree on its first run
+  while two `.ko.bak` files sat in it — an unexpanded `$(uname -r)` had sent
+  `find` down a path that does not exist, and "no output" read as "nothing
+  found". It was then deleted, because `--only` already covered it.)
 
-`scripts/deployed-provenance.sh` is the standing instrument for all four: it
-says, for the kernel, the device tree and every module, whether the file on the
-device traces to the installed package or was put there by hand — and it lists
-which port layers the live tree actually describes. Run it before trusting a
+The standing instrument for all four is the selftest, not a script here:
+
+```sh
+fp3-pmaports/tests/fp3-selftest --only identity,dtb,modules
+```
+
+Kernel, device tree and module tree in one run — for each, does the file on the
+device trace to the installed package or was it put there by hand, and which
+port layers does the live tree actually describe? Run it **before** trusting a
 measurement, not after the result confuses you. The full statement of these
 rules, with the case that produced them, is in `fp3-kernel-test` under
 "Say it unprompted".

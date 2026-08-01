@@ -52,7 +52,7 @@ directory.
 
 | script | what it does |
 |---|---|
-| `deployed-provenance.sh` | **Run this before trusting any measurement.** For the kernel, the device tree and every module: does the file on the device match the installed package, or was it hand-deployed? Also lists which port layers the live tree actually describes, so a wrong DTB names the subsystem it broke instead of surfacing as an unrelated symptom. |
+| *(provenance: no script here)* | "Does what runs on the device trace to the installed package?" is answered by `fp3-pmaports/tests/fp3-selftest --only identity,dtb,modules` — kernel, device tree and module tree in one run. A script here would duplicate it and rot separately. |
 | `test-slim-kernel.sh` | Install the freshly-built patched kernel into the pmOS rootfs, flash it to system_b (dual-slot), boot, and capture the slim/NGD bring-up dmesg (incl. … |
 | `deploy-dtb-and-trace.sh` | Deploy a freshly-built sdm632-fairphone-fp3.dtb to the live pmOS /boot (extlinux loads it standalone), reboot, then capture the SLIMbus/NGD bring-up d… |
 | `deploy-ko-dtb-trace.sh` | Deploy the rebuilt slim-qcom-ngd-ctrl.ko (CHECK_FRAMER_STATUS fix) + the slimbus-enabled sdm632-fairphone-fp3.dtb to the live pmOS, reboot, and captur… |
