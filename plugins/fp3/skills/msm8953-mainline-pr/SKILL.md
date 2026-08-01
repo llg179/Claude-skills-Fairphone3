@@ -1139,6 +1139,30 @@ longer described anything current. Two facts settled it, both fetched directly:
 the **current** file content at `master`, and blame on the line. Fetch the state,
 do not infer it from a chain of diffs.
 
+### "Applies clean" is a measurement, and for a one-file patch a cheap one
+
+A branch table that says *clean* against a maintainer tree is worthless if
+nobody ran it; the claim ages every time upstream touches the file. The full
+answer is the trial rebase onto the destination tip (see the checklist), and for
+a multi-file series there is no substitute. But a **single-file** patch —
+typically the standalone bugfix that carries `Fixes:` — can be settled in
+seconds without a rebase, without a full clone, and on a shallow tree where a
+rebase is not even possible:
+
+```sh
+gh api "repos/torvalds/linux/contents/<path>" --jq '.content' | base64 -d > /tmp/t/<path>
+git -C /tmp/t apply --check /path/to/one.patch    # silence = it applies today
+```
+
+This is the same discipline as the blame recipe above — fetch the upstream state
+and test against it, rather than reasoning from what the local base contains.
+Record the date with the result, because it is true only as of the fetch.
+
+☠️ It answers *applicability*, not *destination*. A patch can apply perfectly to
+a file that no maintainer will take it through, and a patch to a driver that is
+not upstream at all cannot apply to anything — check existence first (`404` from
+the same `contents` endpoint), then applicability.
+
 ### You cannot submit somebody else's unsigned WIP
 
 Two gates before building a series on an import, both of which stopped a sensor

@@ -632,6 +632,50 @@ reaches the hardware (read the register back), then measure the behaviour
 separately, and record the two conclusions apart. A plausible change credited
 with a repair it did not make sends the next investigation the wrong way.
 
+### When the register map is in no kernel at all — read the vendor's userspace blob
+
+Some vendor stacks deliberately keep a peripheral's register map **out of the
+kernel**. Qualcomm's camera stack is the clearest case: the downstream device
+tree node for a lens actuator is a bare `compatible` plus a bus index — no slave
+address, no registers — and the in-kernel driver is a *generic engine* that is
+fed the map from userspace over an ioctl at runtime.
+
+☠️ **The consequence is a misleading absence.** Grepping the entire downstream
+kernel for the part number returns nothing, or a single unrelated coincidence in
+some other subsystem. That reads as "this hardware was never supported", which
+is the opposite of the truth. Before concluding a peripheral is undocumented,
+ask *where this vendor's stack keeps that class of data* — if the kernel driver
+takes its configuration from userspace, the kernel was never going to have it.
+
+Where to look: the board's own Android vendor partition, which is already on
+disk if the device has ever been imaged for a port. The libraries are named by
+class and part, so the whole field is one listing:
+
+```sh
+find <vendor>/proprietary -iname '*<class>*'    # e.g. *actuator*, *eeprom*
+```
+
+The map is a C structure in the library's `.data` section. Reading it means
+**asserting a struct layout**, and an asserted layout produces confident,
+plausible, wrong numbers — every field is a small integer, so nothing looks
+out of place when the offsets are off by one field.
+
+☠️ **Validate the layout with a known-answer control before believing a single
+value.** Vendor trees ship a library per part, so pick a *sibling* part that
+already has an upstream driver, run the identical decode on it, and check the
+result field for field against that driver's source. If the control does not
+reproduce what mainline already states, the layout is wrong and every number
+read from the target is fiction. A second, independent check is stronger still:
+a part whose power-up sequence is documented should have that sequence come back
+out of the decode verbatim. Two known answers reproduced is enough; one is
+suggestive.
+
+The same vendor tree holds a second kind of ground truth: **the board vendor's
+own edits to the generic kernel driver.** Those carry facts that appear in no
+datasheet — a polarity inversion, a per-board clamp, a delay — usually guarded
+by a check naming the parts they do *not* apply to, so read the condition
+carefully to work out whether your part is inside or outside it.
+
 ## Web docs & community repos (what's actually usable, and how to reach them)
 - **postmarketOS** wiki device page + `pmaports` — primary reference for the native
   track (HW configs, firmware names, kernel patches).
