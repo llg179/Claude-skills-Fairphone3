@@ -632,6 +632,24 @@ because it landed in code shared by every device the driver serves.
   writing — that footnote is the cheapest line on this page. Writing it down every
   time is what let a third round reopen the question in an afternoon instead of
   rebuilding the argument from nothing.
+- **☠️ Before believing a subsystem is broken, check that your REQUEST was valid.
+  An unsupported parameter is rejected by the framework, not by the hardware, and
+  the rejection is indistinguishable from a dead driver.** This project recorded
+  "camera streaming does not work end to end" as a finding and carried it for
+  weeks. Re-measured, the pipeline streamed on the first attempt: the earlier
+  request had asked `/dev/video0` for a pixel format the node does not offer
+  (`RG10`, unpacked, where it only lists the *packed* 10-bit Bayer formats).
+  `v4l2-ctl` then silently kept the node's previous format, media pipeline
+  validation found it disagreed with the pads, and `VIDIOC_STREAMON` returned
+  `-EPIPE` — **"Broken pipe", with nothing whatsoever in dmesg.** No driver ran,
+  so no driver could log. The tell is exactly that silence: a hardware or driver
+  failure at this depth almost always leaves *something* in the log, so an error
+  returned to userspace with an empty kernel log points back at the ioctl
+  arguments. Before filing the negative, enumerate what the interface actually
+  accepts — `v4l2-ctl --list-formats`, `--list-ctrls`, `arecord -D … --dump-hw-params`,
+  a driver's `*_formats[]` table — and check your parameters appear in it. This is
+  the "validate the pattern against a known positive" rule pointed the other way:
+  validate the *stimulus* before trusting the *null*.
 - **☠️ A source comment, or a comment in a device tree, is not evidence — and must not
   reopen a lead that a live measurement closed.** One mainline DTS comment ("this PD
   frames the bus") reopened a question that a golden-side measurement had already

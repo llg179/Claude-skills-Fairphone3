@@ -201,6 +201,39 @@ well-formed commits. Fifteen incremental commits become a handful of logical one
 Keep a genuinely standalone bugfix as its own commit (so it can carry `Fixes:`),
 but squash the "and then I also had to…" follow-ups into their final form.
 
+### 2a. Ordering a split so that every patch builds on its own
+
+When one commit has to become three — the usual shape being *refactor →
+implementation → API* — the order is not a matter of taste. It is decided by
+what each intermediate tree must compile to, and the obvious order is usually
+wrong.
+
+Worked example: making a shared file take a second backend behind a function
+table. The tempting order is refactor → make the choice a parameter → add the
+second implementation. It does not work: the middle patch gives callers an
+argument whose only interesting value nothing implements. Swap the last two and
+the middle patch adds a `static const` table that nothing selects, which is dead
+code and warns.
+
+What works is **refactor → implementation → API**:
+
+1. introduce the table and populate it with the *existing* code, selected
+   unconditionally. No functional change, and say so in the message — a reviewer
+   who trusts that sentence reads the patch in a minute.
+2. add the second implementation, selected from whatever internal state already
+   decides the behaviour, even if that state is still a constant. Reachable, so
+   no dead-code warning; inert, so no behaviour change.
+3. turn that internal state into the API argument, and update every caller in
+   one small mechanical patch.
+
+The general rule the example illustrates: **each patch may only widen what the
+code can express, never leave a gap between an expression and its meaning.**
+Ordering it this way also puts the patch that touches *other people's drivers*
+last and smallest, which is where you want the reviewer's risk to be.
+
+Check it rather than reasoning about it — build every intermediate commit, not
+just the tip.
+
 ### 2b. Split the import from the invention, and make the import traceable
 
 Two rules, and the first one is structural:
@@ -391,6 +424,24 @@ Three refinements the FP3 history forces on the rule as stated above:
 3. **Style and cleanup never ride along with functional changes.** They get their
    own commits: *"Move status properties last"*, *"Add newlines between regulator
    nodes"*. If a reviewer asks for reformatting, that is a separate patch.
+
+   ☠️ **But a style fix to a line YOUR OWN series adds belongs in the commit that
+   adds it, not in a later one.** On a wip branch the natural order is the
+   discovery order — write the code, run `checkpatch` later, fix what it found in
+   a fresh commit. Distil that verbatim and every earlier patch is unclean *on its
+   own* while the final tree is perfectly fine, which is exactly the view a
+   reviewer has: they read patch 3, not your tree. Run `checkpatch` **per patch**
+   (`checkpatch.pl *.patch`, one file at a time) and attribute each complaint to
+   the patch that introduced the line; if a later patch in your series is the one
+   that fixes it, you have found churn, not a clean series.
+
+   ☠️ **And do not "fix" the neighbours.** `checkpatch` only complains about lines
+   you add, so pre-existing code alongside yours is not your problem — realigning
+   it is drive-by churn on files the series does not otherwise touch. Where your
+   new lines and the old ones then disagree, match the *checker*, not the
+   neighbour: new code should pass, and inconsistency with untouched code is the
+   tree's, not yours. (Measured once: nine realigned `SOC_SINGLE_S8_TLV` lines
+   that had been in mainline for years, riding inside a jack-detection patch.)
 
 **Verb convention** (visible throughout the history above): **"Enable X"** when the
 node already exists in the SoC `.dtsi` and the board turns it on / wires it up;
