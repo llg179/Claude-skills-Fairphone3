@@ -394,6 +394,27 @@ Three companions, same reason, also unprompted:
   already exists — a new script that duplicates a selftest check rots on its own
   schedule and is worse than no script. If there genuinely is none, put it in
   `scripts/` here and add its row to [`scripts/INDEX.md`](scripts/INDEX.md).
+
+### A null result deserves an instrument a person can look at
+
+A headless script that reports "no effect" is the hardest result to act on: it
+is indistinguishable between a working measurement of a dead system and a broken
+measurement of a live one. The cheapest way to tell them apart is usually to
+build the thing that shows the phenomenon to a human, side by side with the same
+number the script computes — then the operator's eye and the metric are checking
+each other, and a disagreement between them localises the fault to the
+instrument.
+
+This is not a fallback for when the script fails; it is worth building before
+believing a null. `scripts/focus-view.py` is the pattern: a viewfinder that owns
+the device, drives the control from a slider, prints the *same* sharpness metric
+the sweep uses, and zooms — and the effect the sweep had declared absent was
+plainly visible in it at 8×, because the phenomenon lived in detail that a
+scaled-down preview throws away. Two properties made it work and are the
+transferable part: **the instrument owns the whole path**, so nothing else can
+touch the device while it runs, and **it displays the metric, not just the
+phenomenon**, so a human observation and a machine number can be compared
+directly rather than through memory.
   Either way, prove it against a **known positive**: a tool that reports "clean"
   has demonstrated nothing until it has been seen failing on a case you know is
   broken. (Measured, and the reason this paragraph exists: a provenance script

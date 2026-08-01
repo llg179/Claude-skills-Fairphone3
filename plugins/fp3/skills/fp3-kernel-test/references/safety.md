@@ -897,3 +897,47 @@ are given once and remain in force. Re-deriving a conservative default against
 them - protecting a working configuration that the operator has explicitly said
 is not worth protecting - is not caution, it is ignoring an instruction, and it
 narrows the experiments that get run.
+
+## The shape of the expected response decides the contrast pair
+
+A two-point A/B is the reflex when a control is suspected of doing nothing, and
+"the two ends of the range" is the reflex choice of points. That choice is only
+correct when the response is expected to be **monotone in the input**. When the
+response has an interior optimum, both ends sit in the same flat tail and the
+test is structurally blind: it can return "no effect" from a control that works
+perfectly.
+
+Worked example, and it cost a whole day of wrong conclusions. A camera focus
+actuator was A/B'd at position 0 against position 1023 and reported motionless.
+The full sweep afterwards: 387.3 at 0, 380.6 at 1023 - a difference of 6.7,
+inside the noise - and 428.7 at position 409. The peak stood 48 above both ends.
+Every property of the experiment was sound except the two positions it chose,
+and those were chosen from the input range instead of from the physics.
+
+Before picking the comparison points, say what the response is expected to look
+like as a function of the input: monotone, peaked, thresholded, periodic. A
+peaked response needs a sweep or a bracketing triple; a thresholded one needs
+points either side of the threshold, not at the extremes; a periodic one cannot
+be sampled at a fixed step at all. Extremes are the right answer for exactly one
+of those four.
+
+## Re-arming the instrument between samples injects the effect you are measuring
+
+If each sample restarts the acquisition - reopening a stream, re-triggering a
+capture, reloading a module, restarting a service - then every sample carries
+that restart's settling transient, and the transient does not cancel: it is
+correlated with the sample, which is precisely the thing the sample is being
+compared on.
+
+Same worked example. The first focus sweep launched a fresh `v4l2-ctl` capture
+per position; each launch resets auto-exposure, and the settling that follows is
+as large as the focus effect being looked for. Holding one capture open for the
+whole run and changing the control underneath it dropped the within-position
+spread from the same order as the signal to 3.4 against a 48 signal - a 14:1
+measurement out of the same hardware, the same metric and the same scene.
+
+The general form: **acquire continuously, vary the input inside the acquisition.**
+Where that is impossible, the restart is a factor in the experiment and must be
+balanced like any other - which is the sibling rule, that a sweep in time order
+confounds position with order, and interleaved passes of alternating direction
+separate them and *measure* the drift instead of assuming it away.

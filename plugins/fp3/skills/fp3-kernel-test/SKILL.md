@@ -270,6 +270,9 @@ cost a device, a boot, or a wrong conclusion at least once.
 - The oracle is a source of *configuration* too: read back the registers it programs.
 - A register field's width can be the design limit; work out what the hardware can encode.
 - When the question is "which unit in the interface", compute the difference, don't argue it.
+- ☠️ Pick the contrast pair from the **expected response shape**, not from the ends of the input range — an extremes-vs-extremes A/B is blind to a peaked response.
+- ☠️ Re-arming the instrument per sample (reopening a stream, retriggering a capture) injects a transient correlated with the sample; acquire **once**, vary the input inside the acquisition.
+- A sweep in time order confounds input with order; interleaved passes of alternating direction separate them and **measure** the drift.
 - ☠️ `dtbs_check` is a differential too — this base fails it 44 times alone; diff base vs yours.
 - ☠️ An undocumented `compatible` is skipped **silently**: a clean `dtbs_check` may mean nothing was checked.
 - Never hand-review a schema you have not run; the checker finds your schema's bugs.

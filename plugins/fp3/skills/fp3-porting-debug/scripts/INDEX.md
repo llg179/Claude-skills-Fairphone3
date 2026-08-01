@@ -141,6 +141,14 @@ directory.
 | `ut-diag-adsp.py` | ut-diag-adsp.py  — on-device (UT) ADSP/LPASS diag F3 capture via /dev/diag Pure python, no compilation. Constants verified against downstream source: |
 | `ut_diag_f3.py` | UT (downstream 4.9 diagchar) ADSP F3 capture via /dev/diag. Unlike mainline rpmsg, UT uses the classic Qualcomm diagchar node: |
 
+### Camera and lens
+
+| script | what it does |
+|---|---|
+| `focus-view.py` | Live viewfinder that owns `/dev/video0` itself: focus slider, live sharpness number, 1–16x zoom (slider or pinch), cheap 2x2 demosaic and a rotate button. Run it on the device under the user's session, e.g. `systemd-run --user --unit=focus-view /usr/bin/python3 /tmp/focus-view.py`. It exists because a lens movement can be invisible in a scaled-down preview and a headless null result is hard to trust; it is also the only instrument here that lets a human confirm what a script measured. |
+| `focus-ramp.py` | Walks the focus control slowly from one end to the other (`--seconds`, `--steps`, `--sweeps`, `--hold`) so a person can watch somebody else's camera app while the lens moves. Use when the question is "does anything change on screen", not "how much". |
+| *(measurement: no script here)* | The scoring sweep is `fp3-pmaports/userspace-camera/focus-sweep.py` — one capture held open for the run, interleaved passes of alternating direction, per-pass table plus within-position spread and drift. It ships with the userspace package because it is also the acceptance test; duplicating it here would rot separately. |
+
 ### Power, battery and thermal
 
 | script | what it does |
