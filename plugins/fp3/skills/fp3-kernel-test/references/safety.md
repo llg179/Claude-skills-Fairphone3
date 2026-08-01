@@ -941,3 +941,45 @@ Where that is impossible, the restart is a factor in the experiment and must be
 balanced like any other - which is the sibling rule, that a sweep in time order
 confounds position with order, and interleaved passes of alternating direction
 separate them and *measure* the drift instead of assuming it away.
+
+## When you cannot interleave, revisit the first point and measure the drift
+
+Interleaved passes are the right answer for an experiment you run by hand, but
+some measurements have to be a single ordered walk: anything running inside a
+control loop, on a device, in front of a user, where the whole sweep has a time
+budget of a second or two. The confounder does not go away because the budget is
+small; it just stops being affordable to average out.
+
+The cheap substitute is one extra sample: **end the pass where it started.** The
+two visits to that point differ only in when they happened, so their difference
+*is* the drift over the pass, and a ramp through them can be subtracted from
+everything in between. One measurement buys the correction.
+
+Then take the second step, which is the one that is easy to skip: **compare the
+drift against what is left of the signal, and throw the pass away if the
+correction was bigger.** Removing a linear drift is not the same as the drift
+not having happened - what remains includes its non-linear part, and if that is
+the same size as the response then the "peak" is a residue of the correction. A
+result that reports failure and changes nothing beats a confident wrong answer,
+because the wrong answer is acted on.
+
+## A regulated quantity is not a settling signal - watch the actuator
+
+Waiting for a system to settle before measuring is right, but the thing you wait
+on has to be chosen by what the loop is *doing*, not by what is convenient to
+read. Any closed loop holds its regulated quantity still: that is its purpose.
+Reading that quantity therefore says the loop is working, not that it has
+stopped moving - and everything the loop moves to hold it there is still in
+flight, still changing whatever else depends on it.
+
+Worked example: an autofocus gated its scan on the mean brightness being stable,
+and the gate passed - 15.42, then 15.44 - while the focus measure went on
+doubling underneath it. In a dim scene the auto-exposure holds brightness by
+raising gain, and amplified noise carries no focus, so the sharpness metric
+tracked the gain ramp perfectly while the brightness sat still. Gating on the
+exposure and gain themselves fixed it.
+
+The general form: **gate on the actuator, not on the controlled variable** -
+duty cycle rather than temperature, valve position rather than pressure, gain
+rather than brightness. If only the controlled variable is readable, the settle
+test is not a settle test and something else has to carry the weight.
