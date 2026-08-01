@@ -145,7 +145,7 @@ directory.
 
 | script | what it does |
 |---|---|
-| `focus-view.py` | Live viewfinder that owns `/dev/video0` itself: focus slider, live sharpness number, 1–16x zoom (slider or pinch), cheap 2x2 demosaic and a rotate button. Run it on the device under the user's session, e.g. `systemd-run --user --unit=focus-view /usr/bin/python3 /tmp/focus-view.py`. It exists because a lens movement can be invisible in a scaled-down preview and a headless null result is hard to trust; it is also the only instrument here that lets a human confirm what a script measured. |
+| *(viewfinder: no script here)* | The live viewfinder is `fp3-pmaports/userspace-camera/focus-view.py` — focus slider, live sharpness number, 1-16x zoom, cheap demosaic. It ships with the userspace package next to the sweep it shares a metric with; a copy here would rot separately. Run it under the user's session: `systemd-run --user --unit=focus-view /usr/bin/python3 ./focus-view.py`. |
 | `focus-ramp.py` | Walks the focus control slowly from one end to the other (`--seconds`, `--steps`, `--sweeps`, `--hold`) so a person can watch somebody else's camera app while the lens moves. Use when the question is "does anything change on screen", not "how much". |
 | *(measurement: no script here)* | The scoring sweep is `fp3-pmaports/userspace-camera/focus-sweep.py` — one capture held open for the run, interleaved passes of alternating direction, per-pass table plus within-position spread and drift. It ships with the userspace package because it is also the acceptance test; duplicating it here would rot separately. |
 
