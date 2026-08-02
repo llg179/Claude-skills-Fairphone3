@@ -273,6 +273,8 @@ cost a device, a boot, or a wrong conclusion at least once.
 - ☠️ Pick the contrast pair from the **expected response shape**, not from the ends of the input range — an extremes-vs-extremes A/B is blind to a peaked response.
 - ☠️ Re-arming the instrument per sample (reopening a stream, retriggering a capture) injects a transient correlated with the sample; acquire **once**, vary the input inside the acquisition.
 - A sweep in time order confounds input with order; interleaved passes of alternating direction separate them and **measure** the drift.
+- Where interleaving is unaffordable (a sweep inside a control loop), **end the pass where it started**: the two visits differ only in time, so their difference is the drift — and throw the pass away when the correction exceeded what was left of the signal.
+- ☠️ Gating a measurement on a **regulated** quantity is not a settle test — holding it still is the loop's purpose. Gate on the actuator (gain, duty cycle, valve), not on the controlled variable.
 - ☠️ `dtbs_check` is a differential too — this base fails it 44 times alone; diff base vs yours.
 - ☠️ An undocumented `compatible` is skipped **silently**: a clean `dtbs_check` may mean nothing was checked.
 - Never hand-review a schema you have not run; the checker finds your schema's bugs.

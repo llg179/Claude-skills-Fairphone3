@@ -953,6 +953,41 @@ carefully to work out whether your part is inside or outside it.
   the retry right after them succeeds. Hours went into a message that was noise.
   Before building on a log line, grep for it in a run you know is healthy.
 
+## Building a feature across layers you do not own
+
+A device feature rarely lives in one place: a kernel driver exposes it, a
+framework interprets it, a transport carries it, an application asks for it.
+Each boundary can silently drop what the one below it publishes, and the layer
+that *fails* is usually not the layer that is wrong. Three rules, each of which
+cost a build cycle before it was written down.
+
+- **Prove the last mile by hand before writing code for it.** The expensive
+  mistake is to implement the whole chain and then discover the final hop does
+  not exist. Whatever the application will eventually do, do it manually first
+  with whatever CLI the transport offers — set the property, send the message,
+  poke the node — and confirm the *bottom* layer reacted, in its own log.
+  Worked example: before writing an app that focuses the camera, the control was
+  set by hand on the running node (`pw-cli set-param <node> Props { <id>: <v> }`)
+  and the IPA's log was checked for a scan. Ten minutes; it would have been a
+  wasted 40-minute build otherwise.
+
+- **☠️ A layer can publish a capability that the transport quietly drops.** Do
+  not infer from "the framework supports it" that an application can reach it.
+  Transports commonly carry only the simple types and bail out of the rest, and
+  they do so *silently* — the control is simply absent, with no error anywhere.
+  Read the transport's own mapping code, not its documentation: the answer is
+  usually one `switch` on the type, plus an early return for anything harder.
+  A control that survives and one that does not can be neighbours in the same
+  enum.
+
+- **☠️ Asking a running pipeline to renegotiate can stop it dead.** Media
+  pipelines look reconfigurable and often are not: changing the format a live
+  source already agreed on may end in `not-negotiated` and a stream that never
+  restarts — which the user sees as a freeze, not as an error. Where a feature
+  needs a different configuration, the safe shape is the one Megapixels uses for
+  its preview and capture modes: stop, reconfigure, restart, act, and put it
+  back. Slower and visible, but it works, and it fails in a way you can see.
+
 ## Observing a co-processor that has no obvious debug port
 
 Recurring sub-problem: you need a value from inside the ADSP, which has no bound
