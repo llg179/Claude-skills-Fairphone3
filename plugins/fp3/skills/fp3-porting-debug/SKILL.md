@@ -809,6 +809,29 @@ carefully to work out whether your part is inside or outside it.
   pipes, and NGD registers showed the SLIMbus AP side byte-for-byte matching the
   oracle — narrowing the fault to the co-processor internals.)
 
+- **A fault that depends on a *parameter* reads as intermittent — find the
+  selector before you believe the word.** "Sometimes it works" is a description of
+  a distribution, not of a mechanism, and it sends you looking for timing, settle
+  and races. Before accepting it, ask **what differs between the runs that work and
+  the runs that do not** — a mode, a resolution, a link frequency, a size, a
+  temperature. A parameter-selected fault is fully deterministic once the selector
+  is named, and the selector is usually visible in the code path that maps the
+  parameter to a resource (a frequency table, a mux table, a quirk list). Two runs
+  of the same command are the *worst* experiment here: vary the parameter instead.
+  (Worked example: a camera clock that failed for some sensor modes and worked for
+  others, because the driver picked a different table entry from the sensor's link
+  frequency and only one entry's source was broken. Everyone before had called it a
+  settle problem and retried harder.)
+
+- **A one-line table value is a hypothesis you can test without hardware:
+  compare it against its siblings.** Mux selects, register offsets, bit widths and
+  frequency tables come in families; a value that disagrees with every other member
+  of its family in the same file is a typo candidate, and finding it costs one
+  `grep`. Do this *before* any measurement — it either hands you the answer or
+  costs a minute. (Worked example: three RCGs claimed a parent at a source select
+  no other mux in the same block used; every other camera mux in the file used a
+  different number.)
+
 - **Register proof over log-reading.** A dmesg "OK" can coexist with silent
   hardware. (Worked example: `/dev/mem` showed the RX pipe armed but its event
   register never advancing = the framer writes nothing = the bus is unclocked — a
@@ -979,6 +1002,19 @@ cost a build cycle before it was written down.
   usually one `switch` on the type, plus an early return for anything harder.
   A control that survives and one that does not can be neighbours in the same
   enum.
+
+- **☠️ One driver error can take a userspace session manager down with it, and
+  the symptom then appears at a layer that is not broken.** A device daemon that
+  holds hardware open (a session manager, a media server) can deadlock on a driver
+  failure and stop answering — after which the hardware is *absent* from every
+  application, and the honest report becomes "there is no camera / no sound card",
+  which is a lie about a different layer. Two tells that a daemon is wedged rather
+  than the device missing: its control tool **hangs** instead of erroring, and a
+  dump tool **succeeds with empty output** (exit status 0, zero bytes) because it
+  was granted a connection whose object list never arrives. Restarting the daemon
+  brings the device straight back, which is both the workaround and the proof that
+  the fault is below it. Do not stop at the restart: the thing that wedged it is
+  still there, and it will happen again on the next unlucky call.
 
 - **☠️ Asking a running pipeline to renegotiate can stop it dead.** Media
   pipelines look reconfigurable and often are not: changing the format a live

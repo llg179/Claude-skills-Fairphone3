@@ -783,11 +783,22 @@ mount the rootfs), so the vehicle is the `linux-fp3` package. The whole
 build→install→boot procedure, and the traps that cost a cycle each (boot-deploy
 regenerating `extlinux.conf`, taking the DTB from the *built package* rather than
 the source tree, the 404 from an unpushed `_commit`, `--force`/`--lax` being
-`build` subcommand flags), is maintained in
+`build` subcommand flags, a build silently skipped as "up to date" because an
+older experiment left a higher-sorting version in the local repo, the target
+architecture defaulting to the host's, a reused buildroot missing a toolchain the
+package needs, and a local-tree build losing tracked files its own `.gitignore`
+names), is maintained in
 [`fp3-pmaports/docs/deploy/README.md`](https://github.com/llg179org/fp3-pmaports/blob/main/docs/deploy/README.md).
 Follow it there; it is kept current, this skill is not.
 
-Two things that belong to the *method* rather than the procedure:
+Three things that belong to the *method* rather than the procedure:
+
+- **Never run two builds against the same chroot at once.** They share one
+  buildroot, and the collision surfaces as compile errors that describe the source
+  tree as broken — missing headers, missing generated files — in whichever build
+  loses. The give-away is that the errors name files nobody touched and that a
+  serial re-run is clean. Serialise, and when a build fails with an implausible
+  error, check what else was running before you debug the code.
 
 - **There is no auto-fallback on this bootloader.** Testing unattended means
   making the new kernel the default for that boot, so the moment SSH returns,
@@ -858,6 +869,35 @@ question it answers, the how, and how to interpret — with example values.
   runtime-PM force-resume **perturbs** the block — resuming the NGD drove the framer's dynamic markers
   (`+0x200/+0x400`) from their idle `0` to activity values while the real state bit (`FS`, `+0x604`)
   stayed `0`; stable *config* registers don't move, but read *dynamic* ones knowing the resume drives them.
+
+### A register dump wired into the driver's own failure path (when the errno cannot distinguish)
+
+- **Answers:** *which* of the several states a single error code covers is the one
+  you are in. `-EBUSY` from a clock enable, `-EPIPE` from a stream start, `-EIO`
+  from a bus: each collapses three or four distinct hardware states into one
+  number, and no amount of re-running separates them.
+- **How:** in the error branch that already exists, `ioremap()` the two or three
+  registers that decide between the explanations, read them, `iounmap()`, and print
+  them in one `dev_info()` with the fields decoded. Reads only. Gate it on the SoC
+  whose address map you hardcoded (`res->version`, a compatible) so the same driver
+  stays safe elsewhere, and keep it on the debug layer — it is an instrument, not a
+  fix.
+- **Why not `/dev/mem`:** the failure is often a *transient* — the register is
+  interesting for the microseconds around the failed call, and a userspace reader
+  arrives long after the driver has rolled the state back. Being inside the failure
+  path is the whole value; it is also the only way to catch a state that a
+  successful retry would erase.
+- **Interpret:** decode into the *question*, not into hex. For a clock branch that
+  will not start, three registers answer three different questions — the RCG
+  command register says whether the root ever turned on, the config register says
+  which source and divider were selected, the branch register says whether the gate
+  is open and whether the hardware ever reported the clock running. "Root off with
+  a source selected" and "gate closed" and "gate open, clock never runs" are three
+  different bugs; the errno is the same for all three.
+- **☠️ Pair it with the cheap table check first** (porting-debug, "compare it
+  against its siblings"): if the dump says the hardware never accepted the source
+  you selected, the next question is whether that source number is even right, and
+  that costs a `grep` rather than a build.
 
 ### Dynamic kprobes (arguments and return values where mainline has no tracepoint)
 - **Answers:** did this kernel function run, with which arguments, and what did it
