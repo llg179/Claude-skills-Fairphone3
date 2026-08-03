@@ -610,6 +610,35 @@ in `cc1`'s own argv: when ccache drives the compile, its output path is
 `drivers/`/`kernel/`, not one preprocessing a `.dts`. (Recipe re-validated 2026-07-29: with the three
 steps above the kernel build does use ccache.)
 
+🐢 **A Rust package can compile under QEMU while pmbootstrap says it is cross compiling — and
+one word in the meson command is enough to cause it.** `=> pkg: Building package (cross compiling:
+crossdirect)` is printed from the *intent*, not from what happened, so it is not evidence. crossdirect
+works by putting `cargo`/`rustc` shims first on `PATH`; the `cargo` shim recognises `build`, `test` and
+`run` **as the first word only**, and when it does not recognise one it removes itself from `PATH` and
+hands the whole build to the emulated `cargo`. Every crate in the dependency tree then compiles under
+`qemu-<arch>-static`, which is the difference between minutes and most of an hour. sccache does not save
+you either: pmbootstrap wires it up correctly, but the wrapper that would reach it is the one being
+bypassed — an empty `work/cache_sccache` is a *symptom* of this, not a separate problem.
+
+**The one command that answers it**, before theorising about meson, PATH or sccache:
+
+```sh
+grep "command not supported" work/log.txt | tail
+```
+
+That warning names the exact command the shim refused. Cross-check the same way you would any build
+claim — sample the compiler's argv (`ps` for `rustc`): a real cross build runs `/native/usr/bin/rustc`
+with `--target=<triplet>` and leaves a `target/<triplet>/` directory; an emulated one runs
+`qemu-<arch>-static /usr/bin/rustc` with no `--target` and writes straight into `target/release/`.
+
+☠️ **Two plausible explanations for this class of slowness are wrong, and both are reachable by pure
+reasoning from the source.** "sccache is not enabled" and "meson resolved the tool by absolute path and
+missed the shim" both survive a careful read of the shim script and of pmbootstrap's build backend; the
+log refutes both in one line, because meson prints which program it found and the shim prints when it
+declines. Read the build log before you read the build system. The specific fix this port carries, and
+the measured before/after, are in `fp3-pmaports/docs/deploy/README.md` — with the reason it cannot be
+sent upstream, and therefore has to be reapplied after a `pmbootstrap pull`.
+
 ```bash
 rm -rf /tmp/pmbootstrap-local-source-copy
 touch <edited-file>            # force pmb to see the change
