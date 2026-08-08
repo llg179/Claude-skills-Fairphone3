@@ -788,6 +788,23 @@ desynced us):
 When the change is a whole new base (e.g. porting the FP3 tree from 7.0.9 to
 7.1.3), the deploy vehicle is heavier than a hot-swapped `.ko`. Two build paths:
 
+### ☠️ The package build is not incremental, and that is the whole cost
+
+`pmbootstrap` starts from a fresh source tarball on every `_commit` bump, so
+nothing survives between builds: a six-file change costs what a clean tree
+costs. Measured across one evening on the same machine, five consecutive
+builds of the same kernel took 16, 28, 31, 32 and 33 minutes — the spread is
+ccache hitting on files that happen to be byte-identical, not incrementality.
+Before choosing to iterate that way, notice that **the second build onwards is
+the one that matters**, and there is a path where it costs minutes: envkernel
+below, wrapped by `scripts/fp3-kbuild.sh` in the umbrella skill. Its own first
+build is no faster (envkernel forces `CCACHE_DISABLE=1`), so set it up when you
+expect more than one round — which, on anything you have not measured yet, is
+always.
+
+Two things it does not replace: the package is still what gets installed, and
+the artifact gate below still applies to whatever you deploy.
+
 ### Fast compile-check with `envkernel` (no device, catches your edits)
 
 `pmbootstrap`'s `helpers/envkernel.sh`, sourced from the kernel dir, wraps `make`
