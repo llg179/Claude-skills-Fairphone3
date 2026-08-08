@@ -395,6 +395,19 @@ Three companions, same reason, also unprompted:
   schedule and is worse than no script. If there genuinely is none, put it in
   `scripts/` here and add its row to [`scripts/INDEX.md`](scripts/INDEX.md).
 
+☠️ **And name the quantity the complaint is actually about, before picking the
+instrument.** The obvious throughput number for a subsystem is often the one it
+is *least* sensitive in, and measuring it produces a confident "no difference
+here" that closes the investigation. A media pipeline capped by something else
+absorbs a large change in work as idle time rather than as frames, so the frame
+rate barely moves while the processor time moves a lot — and a user complaining
+that *the rest of the interface* stutters is describing the processor time,
+because the compositor competes for the same cores. Ask what the person
+noticed, decide which quantity that is, and only then choose the instrument.
+Wall-clock throughput, processor time, memory bandwidth and latency are four
+different questions and a pipeline can be flat in one while it doubles in
+another.
+
 ### A null result deserves an instrument a person can look at
 
 A headless script that reports "no effect" is the hardest result to act on: it
@@ -1018,6 +1031,27 @@ carefully to work out whether your part is inside or outside it.
   was 32 and 16 bytes, not 160 and 80. The consumer was asking for far more
   than the hardware needs, and a fix sized from its request would have been
   wrong about why it works.)
+
+- ☠️ **But the allocator's answer is a hypothesis, and the importer is the one
+  that will reject you.** What a driver *prefers* to allocate and what it will
+  *accept* on import are answered by different code paths, and only the second
+  one decides whether a zero-copy path exists. Ask it directly, which is nearly
+  as cheap: allocate **one** buffer generously — wider than any layout you mean
+  to test — export it, and import that same fd several times while varying only
+  the claimed pitch. Every import stays in bounds because the allocation is
+  larger than all of them, so the only variable is the number, and the answer
+  comes back as accept/reject per candidate rather than as an inference. Do this
+  before writing kernel code sized from the allocator's preference; a padding
+  requirement inferred from one path and paid for in another is a change you
+  cannot defend when it does not work.
+
+- **A truncated function pointer segfaults instead of failing.** `ctypes`
+  defaults a foreign function's return type to `int`, so
+  `eglGetProcAddress(...)` hands back a 64-bit address with its top half cut
+  off, and the crash lands at the first call through it — nowhere near the line
+  that is wrong. Set `.restype = c_void_p` on every lookup function before using
+  it. A probe that dies with `SIGSEGV` and no output is usually this, not the
+  driver refusing.
 
 ## Building a feature across layers you do not own
 

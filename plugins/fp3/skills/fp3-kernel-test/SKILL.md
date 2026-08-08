@@ -720,7 +720,16 @@ regen changes the host key. `pmb build` alone (~8 min) fits one foreground call.
 
 ### Step 4 — Read the result as your pre-declared measurement
 Compare against the pass/fail you wrote in Step 0. Express both as concrete
-signals so the answer is unambiguous. (Worked example, framer bring-up:
+signals so the answer is unambiguous. ☠️ **A state the hardware only passes
+through cannot be sampled — track the transition instead.** If a periodic poll
+has to land inside a window the hardware leaves as fast as it can, shortening
+the interval is a losing race and a caught sample is luck, not a measurement.
+Take the pair of states either side of it: the state that precedes it, latched,
+plus the state it settles into is a condition the hardware holds for you, and it
+survives any interval. The same shape recurs whenever a periodic reader has to
+observe an edge — and a poll that *also* feeds a filter can lose a correctly
+caught value afterwards, so latch it out of the filter's reach as well as out of
+the sampler's. (Worked example, framer bring-up:
 **pass** = NGD `INT_STAT != 0` *and* the codec's `Failed to get logical address`
 line is gone *and* `/sys/bus/slimbus/devices/` shows a codec laddr; **fail/baseline**
 = `capability exchange timed-out`, NGD `STATUS=0x40c CFG=0x0 INT_STAT=0x0`, no
@@ -1018,6 +1027,15 @@ echo 1 > /sys/kernel/tracing/events/kprobes/enable
 - **Interpret:** these are *live* values, so they answer "what is programmed", not "who
   programmed it". A value that matches neither the vendor's nor yours is usually the
   hardware's power-on default.
+- **☠️ A register at its reset value is a finding, and the easiest one to skip.** The
+  attention goes to registers holding something surprising, but a config register that
+  is *zero* is exactly what a missing write looks like — and it will not appear in
+  `dmesg`, will not fail probe, and often costs nothing until one specific transition
+  never happens. When a driver carries **per-variant init sequences** built by copying
+  and pruning one another, diff them register by register and account for every entry
+  the newer one dropped: "that peripheral moved" is a reason, "nobody carried it across"
+  is a bug. Confirm against the board's own downstream device tree, which usually names
+  the choice in a property.
 
 ### Vendor votables (who is limiting this, on a downstream/oracle kernel)
 - **Answers:** on a Qualcomm downstream stack, why a limit has the value it has — every
