@@ -57,6 +57,8 @@ directory.
 | `deploy-dtb-and-trace.sh` | Deploy a freshly-built sdm632-fairphone-fp3.dtb to the live pmOS /boot (extlinux loads it standalone), reboot, then capture the SLIMbus/NGD bring-up d… |
 | `deploy-ko-dtb-trace.sh` | Deploy the rebuilt slim-qcom-ngd-ctrl.ko (CHECK_FRAMER_STATUS fix) + the slimbus-enabled sdm632-fairphone-fp3.dtb to the live pmOS, reboot, and captur… |
 | `build_fg.sh` | Config lives in fp3-env.sh; every value there has a documented default. |
+| `egl_import_test.py` | Does the GPU accept the raw camera buffer at all? Enumerates the dmabuf formats Mesa will import (surfaceless EGL, so it neither needs nor takes the compositor's DRM master). |
+| `gbm_stride_test.py` | What stride does the GPU require for a given format and width? Asks the GBM allocator, which shares its layout code with the importer, and finds the alignment step by bisection rather than inferring it from a driver's complaint. |
 | `gcc_snapshot.py` | Zero-risk full GCC block snapshot for UT<->pmOS environmental diff (context §9 step 1). GCC (msm8953 qcom,gcc-msm8953) reg = <0x01800000 0x80000> is a… |
 | `fdt_slim.py` | Minimal flattened-device-tree reader: walk a .dtb and print nodes and properties without needing dtc. |
 | `build_ut_p1.py` | Build a UT p1 (vfat firmware) image from a PAS-signed adsp mbn, using the PROVEN compact-mdt + full-split recipe (folyt.80, confirmed vs ut-p1-hwl4.im… |
