@@ -976,6 +976,49 @@ carefully to work out whether your part is inside or outside it.
   the retry right after them succeeds. Hours went into a message that was noise.
   Before building on a log line, grep for it in a run you know is healthy.
 
+- **☠️ A debugfs counter's name is not its definition — read the code that
+  prints it.** Concluding from a value whose meaning you assumed is the same
+  mistake as trusting a log line, with a number's air of authority on top. A
+  display encoder's status node printed `frame_done_cnt:0`, which reads as *no
+  frame ever completed* and would mean the pipeline is wedged; the field is the
+  **timeout** counter, so zero was the healthy value and the reading exonerated
+  the layer it appeared to convict. One `grep` of the format string in the
+  driver settles it: `grep -rn "<the literal label>" drivers/`.
+
+- **☠️ Count what a log line *means*, not how often it appears.** A fallback
+  latched once per session logs once per session, so a handful of lines can
+  describe a decision that then governs every frame — and a per-frame line
+  would be throttled anyway. Before reading a low count as a rare event, find
+  where the flag is set and how long it lives. (Worked example: 69 lines of
+  "DMABuf import failed, falling back to upload" across 69 camera sessions
+  looked incidental; the flag is sticky, so it meant every frame of every
+  session took the copy path.)
+
+- **☠️ Anchor a journal correlation on the specific service, not on a phrase.**
+  Grepping for a user action by its generic wording matches *your own* access:
+  a search for the string a graphical login writes also matches every `sshd`
+  login the investigation itself makes, so the window you extract is your own
+  session and the event you wanted is not in it. Anchor on the PAM service or
+  the unit (`greetd:session`, `systemd-logind ... class 'user' and type
+  'wayland'`), and check the count before trusting the last match.
+
+- **Ask the allocator what the hardware requires, instead of inferring it from
+  a driver's complaint.** When a zero-copy import fails for an alignment or
+  layout reason, the graphics stack can be interrogated directly and offline —
+  `eglQueryDmaBufFormatsEXT` lists what the GPU will import at all, and a GBM
+  allocation of the same format and width reports the stride it *chooses*,
+  which is the constraint the importer applies because both go through the same
+  layout code. Neither needs the device that is failing, nor the peripheral
+  holding it. This is worth doing before any kernel change, for two reasons:
+  it separates "the format is unsupported" from "the geometry is wrong", and
+  the number it returns is the real requirement rather than what the consumer
+  happened to ask for. (Worked example: a camera stack requested strides of
+  2560 and 5120 and a driver granted 2400 and 5040, from which the requirement
+  looked like 256-byte alignment; the GPU wanted **64**, so the padding needed
+  was 32 and 16 bytes, not 160 and 80. The consumer was asking for far more
+  than the hardware needs, and a fix sized from its request would have been
+  wrong about why it works.)
+
 ## Building a feature across layers you do not own
 
 A device feature rarely lives in one place: a kernel driver exposes it, a
@@ -1015,6 +1058,20 @@ cost a build cycle before it was written down.
   brings the device straight back, which is both the workaround and the proof that
   the fault is below it. Do not stop at the restart: the thing that wedged it is
   still there, and it will happen again on the next unlucky call.
+
+  **The daemon can also be killed outright, and then the first instrument is
+  `coredumpctl`, not the log.** A media daemon that loads plugins runs other
+  people's code — and your own, if the port carries local patches — inside its
+  own process, so an `abort()` anywhere in that code takes the whole thing down
+  and the hardware vanishes from every application at once. `coredumpctl list`
+  then `coredumpctl info <pid>` names the failing function and the thread, which
+  is a diagnosis rather than a symptom, and it costs one command. Two things the
+  trace tells you immediately: a frame in `__glibcxx_assert_fail` /
+  `__libcpp_verbose_abort` means a hardened-libc bounds check fired rather than
+  the code failing on its own terms, so look for an index, not for logic; and a
+  frame in a plugin or an out-of-tree patch means the fault is yours to fix even
+  though the process that died was not. Check `git log` for who wrote the file
+  the trace names before assuming it is upstream's.
 
 - **☠️ Asking a running pipeline to renegotiate can stop it dead.** Media
   pipelines look reconfigurable and often are not: changing the format a live

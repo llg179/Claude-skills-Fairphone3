@@ -547,6 +547,17 @@ bug, not a config typo.)
   check catches every rename, every dropped dependency, and every `olddefconfig` surprise.
 - The generic lesson: **a green build is not evidence that your change is in the binary.**
   Whatever you rely on, confirm it exists in the output before you spend time on the device.
+- ☠️ **When the change goes into a distro patch rather than a git tree, do not hand-edit
+  the diff.** A unified diff's hunk header states how many lines the hunk carries
+  (`@@ -0,0 +1,725 @@`), and `patch` believes it: add lines to the body without
+  correcting the count and the hunk is applied **truncated, without an error**. The
+  failure then surfaces as a compiler complaint about the *end of the file*
+  (`expected '}' at end of input`) — a message that describes neither your edit nor
+  its location, and sends you looking for a brace you never touched. Either fix the
+  count in the same edit, or apply the patch to a checkout, edit the source, and
+  regenerate with `git diff`. Cheap check before building: for every `@@` header,
+  count the body lines and compare (mind that a trailing `-- ` git signature is not
+  a deletion).
 - **★ The artifact gate works for a DT change too, and needs no `dtc`.** The host often
   has no `dtc`, which tempts you to skip the check on exactly the edit most likely to go
   missing. A ~25-line FDT walker (read `magic`/`off_struct`/`off_strings` from the header,
@@ -837,7 +848,37 @@ Three things that belong to the *method* rather than the procedure:
   compile and the config gate are green.
 - **Free the rootfs first.** slot_b sits near 100 %; new modules (~40 MB) will not
   fit, and 100 % also kills the graphical session, which reads as a kernel
-  regression and is not one.
+  regression and is not one. **Each deploy also leaves its package in the
+  distro's cache** — a ~30 MB kernel apk per cycle — so a day of iteration fills
+  the disk on its own even when nothing else grows. When space runs out, check
+  the package cache, not only the tree.
+
+- ☠️ **Installing one local package re-solves the whole system, and can carry out
+  removals that somebody else's interrupted transaction left pending.** On
+  apk-tools 3 an `apk add ./<pkg>.apk` is not a file copy: it re-derives the whole
+  world against the configured repositories. So if an earlier `apk upgrade` died
+  half-way — out of disk, or a 404 on one package — the *next* install anybody
+  runs is what executes its planned deletions. The two events can be days apart,
+  which makes the second one look like the cause and the person who ran it look
+  responsible for a change they did not choose. Method: **`--simulate` first,
+  every time**, and read the output for `Purging`, not for errors; if there are
+  purges you did not intend, repair the world before deploying anything. Then
+  confirm what you changed with `apk info -v <pkg>` rather than with the absence
+  of complaints.
+  (Worked example, and it cost most of a session: a kernel deploy carried out 39
+  removals planned by a five-day-old failed upgrade, one of them the package
+  shipping the shell's systemd unit. The desktop then reached its session target
+  with no shell in it — which presents as a frozen screen after entering the
+  password, and reads as a display or kernel regression. Nothing in the kernel was
+  wrong; reinstalling the purged packages fixed it. The tell was that the
+  compositor was alive and the *shell* process absent, and the confirmation was in
+  the package manager's own log, not in the journal.)
+
+- ☠️ **A wrapper's exit status is not the build's.** Running a build in the
+  background as `(cmd > log 2>&1; echo EXIT=$?)` reports the *subshell's* status,
+  so a harness watching for completion announces success for a build that failed.
+  Write the inner command's status into the log and grep for that — and check for
+  the artifact by name and architecture before believing any of it.
 
 ---
 
