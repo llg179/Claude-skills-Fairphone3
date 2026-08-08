@@ -262,6 +262,16 @@ than a deleted one.
   there, none of which is in the repo.) Locate it once per session; the path drifts
   with the disks.
 
+  ☠️ **A `find` that hit its timeout is not a negative result, and treating it as one
+  is expensive.** The tree is under an Android/hybris build root on a slow spinning
+  disk, so an unanchored search across it will run past any reasonable limit and come
+  back empty-handed — which reads exactly like "not on this machine" and sends you off
+  to guess at register semantics instead. Anchor the search: the build roots are a
+  short list of top-level directories, the kernel sits under `<root>/kernel/<vendor>/
+  <soc>/`, and `ls` down that path costs nothing. If a search is abandoned rather than
+  completed, say so in those words and do not spend the rest of the session acting on
+  its silence.
+
 ## The three OS tracks — and the *role* each plays in debugging
 
 The reason to keep three OSes on one phone is that they check each other. Think in

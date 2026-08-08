@@ -1027,6 +1027,15 @@ echo 1 > /sys/kernel/tracing/events/kprobes/enable
 - **Interpret:** these are *live* values, so they answer "what is programmed", not "who
   programmed it". A value that matches neither the vendor's nor yours is usually the
   hardware's power-on default.
+- **☠️ A bit that reads back exactly as you programmed it, while nothing else moves,
+  usually means you wrote the wrong register.** The read-back proves the write landed;
+  it proves nothing about what that address *is*. Register offsets are reused across
+  PMIC or SoC generations for entirely different purposes, so an offset lifted from
+  the half of the driver that serves the other generation can be a live, writable,
+  perfectly innocent register — a threshold where you wanted a selector, say. Confirm
+  the offset against the vendor header for **this** part before writing it, and treat
+  "programmed successfully, no effect" as an addressing question rather than as
+  evidence the theory was wrong.
 - **☠️ A register at its reset value is a finding, and the easiest one to skip.** The
   attention goes to registers holding something surprising, but a config register that
   is *zero* is exactly what a missing write looks like — and it will not appear in
